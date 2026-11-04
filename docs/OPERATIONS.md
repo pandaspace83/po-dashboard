@@ -86,17 +86,18 @@ owner deletes the data folder.
 
 ## 10. Sign-in and lost access (PD-1.9)
 
-Designed in ARCHITECTURE §10.1; not built yet. Run these at the office Mac, as the account that runs the app. Each is recorded
+Designed in ARCHITECTURE §10.1. **Working now:** `create-admin`, `create`, `reset-password`, `unlock`, `list`. The rest (the second factor, the Users screen) is not built. Run these at the office Mac, as the account that runs the app. Each is recorded
 in the audit trail.
 
 | Problem | Do this |
 |---|---|
 | New install, no admin yet | `uv run po-dashboard user create-admin` |
-| Forgot a password | An admin resets it on the Users screen; if no admin can sign in, `uv run po-dashboard user reset-password` |
-| Lost the phone | Sign in with a recovery code, then re-enrol. With no codes left: an admin resets it, or `uv run po-dashboard user reset-2fa` |
+| Forgot a password | `uv run po-dashboard user reset-password <email>` prints a temporary password (the Users screen comes in PD-1.9c) |
+| Add a person | `uv run po-dashboard user create <email> --role buyer` prints a temporary password, shown once |
+| *(when the second factor returns)* Lost the phone | Sign in with a recovery code, then re-enrol. With no codes left: an admin resets it, or `uv run po-dashboard user reset-2fa` |
 | "Too many wrong attempts" | Wait 15 minutes, or `uv run po-dashboard user unlock` |
-| "Sign-in is unavailable: cannot read the key" | Unlock the login Keychain at the Mac and answer any Keychain prompt. The scanner keeps running meanwhile |
-| Database restored on another Mac | Passwords still work. Run `reset-2fa` for each person, because the sealing key stayed in the old Mac's Keychain |
+| *(when the second factor returns)* "Sign-in is unavailable: cannot read the key" | Unlock the login Keychain at the Mac and answer any Keychain prompt. The scanner keeps running meanwhile |
+| *(when the second factor returns)* Database restored on another Mac | Passwords still work. Run `reset-2fa` for each person, because the sealing key stayed in the old Mac's Keychain |
 
 ## 11. Letting a laptop in (PD-6.3a)
 

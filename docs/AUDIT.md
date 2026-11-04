@@ -14,9 +14,9 @@ test; **HT** is a step in `test-evidence/HUMAN_TEST_CHECKLIST.md`; **SOAK** is t
 |---|---|
 | Requirements (33 REQ and 14 NFR) | 47 |
 | Met | 0 |
-| Partly met | 4 (NFR-05, NFR-08, NFR-09, NFR-10) |
+| Partly met | 5 (NFR-05, NFR-08, NFR-09, NFR-10, NFR-13) |
 | Not met | 0 |
-| Not built yet | 43 (including REQ-FU-04, which is Later) |
+| Not built yet | 42 (including REQ-FU-04, which is Later) |
 | Targets (T-1 to T-6) met | 0 of 6 |
 
 Phase 0 (the app shell) is built, apart from CI. No requirement is fully met yet. The model trial of 2026-11-04
@@ -76,7 +76,7 @@ Phase 0 (the app shell) is built, apart from CI. No requirement is fully met yet
 | NFR-10 | Model is a setting, one gateway | Partly (Phase 4) | The model name is a setting, and `models/llm.py` makes the only call so far. A test that enforces the single gateway is still to come | pytest `test_llm.py` |
 | NFR-11 | One document in 2 minutes or less | Not built (Phase 4) | | |
 | NFR-12 | Keyboard use, no accessibility violations | Not built (Phase 5) | | |
-| NFR-13 | Sign-in, roles, lockout, CSRF, second factor | Not built (Phase 1) | | |
+| NFR-13 | Sign-in, roles, lockout, CSRF, second factor | Partly (Phase 1) | Passwords, sessions, lockout, roles, audit and the user commands are built. No web pages or CSRF yet (PD-1.9c); the second factor is paused (DEC-34) | pytest `test_auth.py`, `test_cli.py` |
 | NFR-14 | Reached from laptops on the office network | Not built (Phase 6) | | |
 
 ## 4. Targets

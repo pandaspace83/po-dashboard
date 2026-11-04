@@ -33,7 +33,7 @@ The rest is following this plan, which suits Sonnet. I will say before each swit
 
 ## Phase 1: Sign-in, ledger, status engine and dashboard (no mailbox, no AI)
 
-*Needs: OPEN-08 answered (DEC-24). OPEN-10 is answered (DEC-28), so the allowed names and HTTPS are settings from the start. OPEN-13(b) decides whether PD-1.9b includes the 6-digit code. DEC-26, DEC-27 and DEC-32 are for the owner to confirm. Built in the order below, agreed 2026-11-04, so task numbers are not in numeric order.*
+*Needs: OPEN-08 answered (DEC-24). OPEN-10 is answered (DEC-28), so the allowed names and HTTPS are settings from the start. The 6-digit code is paused (DEC-34). DEC-26, DEC-27 and DEC-32 are for the owner to confirm. Built in the order below, agreed 2026-11-04, so task numbers are not in numeric order.*
 
 - [x] PD-1.0 Documentation pass (DEC-25), and the Phase 0 bugs it found.
 - [x] PD-1.9a The sign-in design, on Opus: ARCHITECTURE §10.1.
@@ -42,9 +42,10 @@ The rest is following this plan, which suits Sonnet. I will say before each swit
 
 - [x] PD-1.1a Database plumbing: SQLAlchemy, Alembic, WAL, an owner-only data folder, and only the tables sign-in needs
   (`app_user`, `session`, `recovery_code`, `audit_log`).
-- [ ] PD-1.9b Sign-in core: argon2id, sessions, lockout, TOTP with the sealing key in the Keychain, recovery codes, and
-  the `po-dashboard user` commands, including `create-admin`.
-- [ ] PD-1.9c Sign-in web: the default-deny gate, the sign-in, code, enrol and change-password pages, CSRF, Host and
+- [x] PD-1.9b Sign-in core: argon2id, sessions, lockout, temporary passwords, the last-admin rule, audit, and the
+  `po-dashboard user` commands (`create-admin`, `create`, `reset-password`, `unlock`, `list`). **The 6-digit code, recovery
+  codes and the Keychain sealing key are paused (DEC-34)**; they are added when a second factor is settled.
+- [ ] PD-1.9c Sign-in web: the default-deny gate, the sign-in and change-password pages (the code and enrol pages are paused), CSRF, Host and
   Origin checks, security headers, and the admin Users screen. `/health` shrinks to up or down. The allowed names and HTTPS are settings from the start (DEC-28).
 - [ ] PD-1.9d The security tests listed in ARCHITECTURE §10.1, and a run-through by hand in a real browser with a real
   authenticator app.
@@ -148,7 +149,7 @@ reopens it as a slip.
 - [ ] PD-6.2 A check that the app can read each connected mailbox and is **refused** on any other (RISK-04), and has no
   write permission.
 - [ ] PD-6.3 Re-run the golden set shape on real mail only after the owner confirms each real document (DEC-13).
-- [ ] PD-6.3a Network access (DEC-28, NFR-14): HTTPS with a certificate for the office Mac's name, the app refuses to listen on the network without it, the firewall check, the one-time certificate step on a laptop, and a real sign-in from a second laptop on the real office network (RISK-12).
+- [ ] PD-6.3a Network access (DEC-28, NFR-14), **only once a second factor exists (DEC-34)**: HTTPS with a certificate for the office Mac's name, the app refuses to listen on the network without it, the firewall check, the one-time certificate step on a laptop, and a real sign-in from a second laptop on the real office network (RISK-12).
 - [ ] PD-6.4 launchd service, restart on failure, start at login (DEC-12); stay-awake settings; what really happens after a power cut, and the Keychain prompt (RISK-10, RISK-11).
 - [ ] PD-6.5 Backups with a tested restore, 35-day pruning; migrations preceded by a backup (§11).
 - [ ] PD-6.6 24-hour soak test with a restart in the middle (T-6).

@@ -295,6 +295,11 @@ accessibility test (NFR-12).
 
 ### 10.1 Sign-in design (DEC-20, DEC-26, DEC-27; built in PD-1.9)
 
+**Paused (DEC-34): the 6-digit code, recovery codes and the Keychain sealing key.** Everything below that mentions them is
+design for when a second factor is added. Built so far (PD-1.9b): argon2id passwords and rules, sessions with idle and
+absolute expiry, lockout, temporary passwords, the last-admin rule, audit, and the `user` commands. A session is `full`
+right after the password, or `pending` (10 minutes) while a temporary password must be changed.
+
 Starts from LegalLens (`services/auth.py`, `secretbox.py`), which is the same idea with tests behind it. The differences
 are listed at the end of this section.
 

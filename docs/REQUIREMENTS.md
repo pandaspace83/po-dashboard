@@ -110,7 +110,7 @@ appear in the open-items report.
 | NFR-07 | A new user installs from Git and reaches a working demo with the documented steps, on a clean machine, without help (DEC-11). | Must |
 | NFR-08 | No secret, real vendor document or database is ever committed to Git (DEC-13). | Must |
 | NFR-09 | The app listens on 127.0.0.1 by default, is turned on for the network on the office Mac (DEC-28), and refuses to listen on the network without HTTPS (DEC-20). | Must |
-| NFR-13 | Sign-in: argon2id password hashes, roles (admin, buyer), session idle timeout, lockout after repeated failures, CSRF protection, and a second factor (TOTP). An unauthenticated request reaches nothing but the sign-in page, its stylesheet and an up-or-down health check (DEC-20, DEC-26). | Must |
+| NFR-13 | Sign-in: argon2id password hashes, roles (admin, buyer), session idle timeout, lockout after repeated failures, CSRF protection, and a second factor (TOTP, paused until Sign in with Microsoft is settled, DEC-34). An unauthenticated request reaches nothing but the sign-in page, its stylesheet and an up-or-down health check (DEC-20, DEC-26). | Must |
 | NFR-14 | People reach the app from a browser on their own laptops, on the office network. A laptop installs nothing, and trusts the app's certificate once (DEC-28). | Must |
 | NFR-10 | The extraction model is a setting, and every model call goes through one gateway module (DEC-05). | Must |
 | NFR-11 | One document is processed in 2 minutes or less on the target machine. | Should |
