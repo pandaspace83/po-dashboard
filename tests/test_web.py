@@ -24,3 +24,9 @@ def test_non_loopback_host_refused() -> None:
 def test_remote_model_server_refused() -> None:
     with pytest.raises(ConfigError):
         Settings(ollama_url="http://example.com:11434")
+
+
+def test_no_api_schema_is_served() -> None:
+    client = TestClient(create_app(Settings()))
+    for path in ("/openapi.json", "/docs", "/redoc"):
+        assert client.get(path).status_code == 404

@@ -17,7 +17,9 @@ HERE = Path(__file__).parent
 
 def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or Settings.from_env()
-    app = FastAPI(title="PO Dashboard", version=__version__, docs_url=None, redoc_url=None)
+    app = FastAPI(
+        title="PO Dashboard", version=__version__, docs_url=None, redoc_url=None, openapi_url=None
+    )
     templates = Jinja2Templates(directory=HERE / "templates")
 
     def health() -> dict[str, str]:

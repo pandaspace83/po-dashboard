@@ -1,6 +1,6 @@
 # PO Dashboard audit: requirements against what was built
 
-**Date:** 2026-11-04 (written before the build) · **Scope:** every requirement in [REQUIREMENTS.md](REQUIREMENTS.md) ·
+**Date:** 2026-11-04 (updated at the documentation pass before Phase 1) · **Scope:** every requirement in [REQUIREMENTS.md](REQUIREMENTS.md) ·
 **How to read it:** *Met* means built and checked by the test named in the last column; *Partly* says what is
 missing; *Not met* says why; *Not built* means planned, with the phase. Updated at the end of every phase and
 completed in PD-7.4.
@@ -12,14 +12,15 @@ test; **HT** is a step in `test-evidence/HUMAN_TEST_CHECKLIST.md`; **SOAK** is t
 
 | | Count |
 |---|---|
-| Requirements (31 REQ and 13 NFR) | 44 |
+| Requirements (33 REQ and 14 NFR) | 47 |
 | Met | 0 |
-| Partly met | 0 |
+| Partly met | 4 (NFR-05, NFR-08, NFR-09, NFR-10) |
 | Not met | 0 |
-| Not built yet | 44 (including REQ-FU-04, which is Later) |
+| Not built yet | 43 (including REQ-FU-04, which is Later) |
 | Targets (T-1 to T-6) met | 0 of 6 |
 
-Nothing is built. The model trial of 2026-11-04 (BUILD_HISTORY) is the only evidence so far and covers none of these.
+Phase 0 (the app shell) is built, apart from CI. No requirement is fully met yet. The model trial of 2026-11-04
+(BUILD_HISTORY) is the only evidence on extraction so far.
 
 ## 2. Functional requirements
 
@@ -31,6 +32,7 @@ Nothing is built. The model trial of 2026-11-04 (BUILD_HISTORY) is the only evid
 | REQ-IN-04 | Originals kept, facts link to source | Not built (Phase 3) | | |
 | REQ-IN-05 | Skip repeats | Not built (Phase 3) | | |
 | REQ-IN-06 | Interchangeable mail sources | Not built (Phase 3, 6) | | |
+| REQ-IN-07 | Connect, reconnect, disconnect a mailbox; truthful wording | Not built (Phase 3, 6) | | |
 | REQ-PO-01 | Create a PO by hand | Not built (Phase 1) | | |
 | REQ-PO-02 | CSV import | Not built (Phase 1) | | |
 | REQ-PO-03 | Read a PO from an emailed document | Not built (Phase 4) | | |
@@ -52,6 +54,7 @@ Nothing is built. The model trial of 2026-11-04 (BUILD_HISTORY) is the only evid
 | REQ-DB-02 | PO list and detail with line timeline | Not built (Phase 1) | | |
 | REQ-DB-03 | Open-items report and CSV | Not built (Phase 1) | | |
 | REQ-DB-04 | Review queue | Not built (Phase 4) | | |
+| REQ-DB-05 | Company-wide visibility | Not built (Phase 1) | | |
 | REQ-FU-01 | Rule-based in-app alerts | Not built (Phase 5) | | |
 | REQ-FU-02 | Contacted, snooze, dismiss, reopen | Not built (Phase 5) | | |
 | REQ-FU-03 | Drafted follow-up message | Not built (Phase 5) | | |
@@ -65,15 +68,16 @@ Nothing is built. The model trial of 2026-11-04 (BUILD_HISTORY) is the only evid
 | NFR-02 | Documents are data | Not built (Phase 4) | | |
 | NFR-03 | Audit trail | Not built (Phase 1) | | |
 | NFR-04 | Runs unattended, recovers | Not built (Phase 6) | | |
-| NFR-05 | Health page, stale-scan alert | Not built (Phase 5) | | |
+| NFR-05 | Health page, stale-scan alert | Partly (Phase 5) | Health strip with the model check. No scanner yet, so "last scan" is a placeholder, and no alert | pytest `test_web.py`, `test_llm.py` |
 | NFR-06 | Backup and tested restore | Not built (Phase 6) | | |
 | NFR-07 | Installs from Git on a clean machine | Not built (Phase 7) | | |
-| NFR-08 | No secrets or real documents in Git | Not built (Phase 0, 7) | | |
-| NFR-09 | Listens on 127.0.0.1 only | Not built (Phase 0) | | |
-| NFR-10 | Model is a setting, one gateway | Not built (Phase 4) | | |
+| NFR-08 | No secrets or real documents in Git | Partly (Phase 7) | `.gitignore` and the pre-commit guard. The repository scan comes in PD-7.3 | pytest `test_precommit_guard.py`, against real staged files |
+| NFR-09 | 127.0.0.1 by default; HTTPS on the network | Partly (Phase 6) | A non-loopback address is refused at start. Network access with HTTPS is not built (PD-6.3a) | pytest `test_web.py` |
+| NFR-10 | Model is a setting, one gateway | Partly (Phase 4) | The model name is a setting, and `models/llm.py` makes the only call so far. A test that enforces the single gateway is still to come | pytest `test_llm.py` |
 | NFR-11 | One document in 2 minutes or less | Not built (Phase 4) | | |
 | NFR-12 | Keyboard use, no accessibility violations | Not built (Phase 5) | | |
 | NFR-13 | Sign-in, roles, lockout, CSRF, second factor | Not built (Phase 1) | | |
+| NFR-14 | Reached from laptops on the office network | Not built (Phase 6) | | |
 
 ## 4. Targets
 

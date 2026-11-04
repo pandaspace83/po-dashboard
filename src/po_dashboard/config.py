@@ -1,7 +1,7 @@
 """Settings read from the environment, with safe defaults.
 
 Two rules are enforced here, not left to the caller:
-- the app listens on this machine's own address unless network access is turned on later (NFR-09, OPEN-10);
+- the app listens on this machine's own address unless network access is turned on later (NFR-09, DEC-28);
 - the model server must be on this machine (DEC-01).
 """
 
@@ -50,7 +50,7 @@ class Settings:
         if not is_loopback_host(self.host):
             raise ConfigError(
                 f"host {self.host!r} is not this machine's own address. Network access needs sign-in "
-                "and HTTPS first (DEC-20, OPEN-10) and is not built yet."
+                "and HTTPS first (DEC-20, DEC-28) and is not built yet."
             )
         ollama_host = urlparse(self.ollama_url).hostname or ""
         if not is_loopback_host(ollama_host):

@@ -1,6 +1,6 @@
 #!/bin/sh
 # Installed by scripts/setup.sh as .git/hooks/pre-commit
-files=$(git diff --cached --name-only --diff-filter=ACM)
-[ -z "$files" ] && exit 0
-# shellcheck disable=SC2086
-python3 "$(git rev-parse --show-toplevel)/scripts/check_no_real_docs.py" $files
+# -z gives the exact names: Git does not quote non-ASCII names and spaces do not split them.
+# R and T are included so a rename or type change out of tests/data/ is checked too.
+root=$(git rev-parse --show-toplevel)
+git diff --cached --name-only --diff-filter=ACMRT -z | xargs -0 python3 "$root/scripts/check_no_real_docs.py"

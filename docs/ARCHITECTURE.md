@@ -1,21 +1,24 @@
 # PO Dashboard: Technical Architecture
 
-2026-11-04 · Shashank Panda · **v0.1, design only: nothing is built yet**
+2026-11-04 · Shashank Panda · **v0.3. Phase 0 (the app shell) is built; everything else here is design.** What is
+built is tracked in [AUDIT.md](AUDIT.md).
 
-PO Dashboard watches one mailbox for vendor replies to purchase orders, extracts what they say with a local model,
-lets a person accept it, and tracks every PO line from "sent" to "closed". It runs entirely on the user's computer.
+PO Dashboard watches the company's purchasing mailbox or mailboxes for vendor replies to purchase orders, extracts what they say with a local model,
+lets a person accept it, and tracks every PO line from "sent" to "closed". It runs entirely on one always-on Mac in the office, and people use it from a browser on their own laptops (DEC-28).
 Requirements: [REQUIREMENTS.md](REQUIREMENTS.md). DEC and OPEN IDs: [DECISIONS.md](DECISIONS.md). The build order is
 [PLAN.md](PLAN.md). Each choice below is **Decided**, **Assumed** (a default to confirm) or **Open**.
 
 ## 1. Design constraints
 
-- **Nothing leaves the machine** except the mailbox fetch (DEC-01). Extraction, database, files and logs are local.
+- **Nothing leaves the office Mac** except the mailbox fetch, provider sign-in if chosen (DEC-32), and encrypted browser
+  traffic to laptops on the office network (DEC-01, DEC-28). Extraction, database, files and logs stay on it.
 - **The mailbox is read-only** (DEC-07). There is no code path that sends, moves or deletes mail.
 - **A person decides** (DEC-08). Extraction proposes; a person accepts. Only accepted facts change a PO.
 - **Documents are data** (DEC-09). Fenced in prompts, validated after the model, never trusted.
 - **One gateway for the model** (DEC-05). Swapping or re-testing a model touches one module.
 - **Nothing is lost.** Every original is kept, every fact points back to its source, every change is in the audit trail.
-- **Several people, one login each** (DEC-20), and **installs from Git** (DEC-11) on someone else's machine.
+- **Several people, one login each** (DEC-20), **everyone sees the same company-wide data** (DEC-29), and **installs from
+  Git** (DEC-11).
 - **Runs unattended** (DEC-12).
 
 ## 2. System overview
@@ -24,12 +27,12 @@ One app process does the work; Ollama is the only other process. The scanner is 
 
 ```mermaid
 flowchart LR
-  subgraph Mailbox["Mailbox (read-only)"]
-    G[Microsoft Graph<br/>production]
-    M[Gmail<br/>testing]
+  subgraph Mailbox["Purchasing mailboxes (read-only)"]
+    G[Microsoft Graph<br/>expected production]
+    M[Gmail<br/>build and demo]
     F[.eml folder<br/>tests, demo]
   end
-  subgraph App["PO Dashboard process (127.0.0.1)"]
+  subgraph App["PO Dashboard process on the office Mac"]
     S[Scanner loop<br/>every 5 min] --> I[Intake<br/>store originals, dedupe]
     I --> T[Text extraction<br/>PDF, OCR, XLSX, DOCX]
     T --> X[Extractor<br/>prompt + schema]
@@ -44,9 +47,10 @@ flowchart LR
   G & M & F --> S
   X <--> O
   App --> D[(SQLite + file store<br/>data folder)]
+  B[Browsers on laptops] -->|HTTPS, office network| UI
 ```
 
-- **Scanner** asks the mail source for what is new since its saved position, then hands each message to intake.
+- **Scanner** asks each connected mailbox for what is new since its saved position, then hands each message to intake.
 - **Intake** stores the raw message and each attachment unchanged, records a content hash and skips repeats.
 - **Text extraction** turns each part into text with page or cell references.
 - **Extractor** sends fenced text and a JSON schema to the model through `models/llm.py` and gets structured fields.
@@ -68,11 +72,13 @@ flowchart LR
 | Extraction model | `qwen2.5:14b-instruct` (9 GB), temperature 0, fixed seed | Decided | DEC-05 |
 | PDF text | pdfplumber (text PDFs); Tesseract OCR for scans and images | Assumed | Tesseract is already installed on the owner's Mac |
 | Spreadsheets, Word | openpyxl, csv, python-docx | Assumed | |
-| Mail: Microsoft 365 | Microsoft Graph, app-only sign-in, read-only, one mailbox, message delta query per folder | Decided | DEC-06, DEC-07. Delta tracking is per folder and returns a saved delta link for the next round. How attachments come back through delta is **to verify in Phase 6** |
-| Mail: Gmail | IMAP with an app password, or the Gmail API | Open | OPEN-04 |
+| Mail: Microsoft 365 | Microsoft Graph, read-only, message delta query per folder. Access to the one shared mailbox is verified at PD-6.0 (§7) | Expected, confirmed at the switch (OPEN-14) | DEC-06, DEC-30, DEC-31. Delta tracking is per folder and returns a saved delta link for the next round. How attachments come back through delta is **to verify in Phase 6** |
+| Mail: Gmail | The Gmail API with Google's sign-in page, or IMAP with an app password. Used for the build and the demo until the switch | Open | DEC-31, OPEN-04 |
 | Mail: files | Folder of `.eml` files | Decided | DEC-06 |
 | Secrets | macOS Keychain through `keyring`; never a file in the repo | Assumed | NFR-08 |
+| Sign-in | `argon2-cffi`, `pyotp`, `cryptography` (sealing), `segno` (a QR code made locally, no outside service) | Assumed | DEC-26, §10.1 |
 | Service | launchd user agent | Assumed | DEC-12 |
+| Network | HTTPS served by Uvicorn, with a certificate made for the office Mac's name | Assumed | DEC-28, §11 |
 | Tests | pytest; Playwright for browser tests; a golden set scored against the real model | Assumed | Same layers as LegalLens |
 
 ## 4. Data model
@@ -85,7 +91,8 @@ Tables, with the fields that matter. Every table has `id`, `created_at`; accepte
 | `vendor` | name, contact name and email, `vendor_domain` (many), notes |
 | `purchase_order` | po_number (unique), vendor_id, date_sent, currency, buyer, status (derived), source (manual, csv, document) |
 | `po_line` | po_id, line_no, item, description, ordered_qty, unit, unit_price, requested_date, closed_reason (none, received, short, cancelled) |
-| `source_message` | mail source, provider message id, sender, subject, received_at, raw_path, content_hash |
+| `mailbox` | address, provider, connected_by, connected_at, state (connected, needs reconnect, disconnected). Its token or secret is in the Keychain, never here |
+| `source_message` | mailbox_id, folder, provider message id, sender, subject, received_at, raw_path, content_hash |
 | `source_document` | message_id, filename, kind, stored_path, content_hash, text_path, pages |
 | `extraction` | document_id, model, prompt_version, raw JSON, doc_type, po_number, vendor_match, validation flags, state (pending, accepted, rejected, unmatched) |
 | `extraction_line` | extraction_id, line_no, item, qty, price, promised_date, flags |
@@ -94,12 +101,25 @@ Tables, with the fields that matter. Every table has `id`, `created_at`; accepte
 | `shipment` / `shipment_line` | carrier, tracking_number, shipped_at, eta; line_id, qty |
 | `invoice` / `invoice_line` | invoice_number, invoice_date, total; line_id, qty, price |
 | `alert` | po_line_id (or po_id), rule, state (open, snoozed, dismissed, cleared), snoozed_until, first_seen, last_changed |
-| `contact_log` | alert_id, note, contacted_at: "marked contacted" entries |
-| `app_user` | email, password hash, role, totp secret (sealed), failed attempts, locked_until, disabled |
-| `session` | user_id, token hash, created, last_seen |
-| `audit_log` | at, user_id, action, object, before, after |
-| `scan_state` | mail source, saved position (delta link or last uid), last_success, last_error |
-| `setting` | key, value (interval, thresholds, model name, mail source) |
+| `contact_log` | alert_id, user_id, note, contacted_at: "marked contacted" entries |
+| `app_user` | email (lower case, unique), password hash, role, sealed TOTP secret, totp_confirmed_at, last_totp_step, failed attempts, locked_until, must_change_password, temp_password_expires_at, disabled_at |
+| `session` | user_id, token hash, stage (pending, full), csrf_token, created_at, last_seen_at, expires_at |
+| `recovery_code` | user_id, code hash, used_at |
+| `audit_log` | at, user_id (empty for a command-line action or an unknown account), client_address, action, object, before, after |
+| `scan_state` | mailbox_id, folder, saved position (delta link or last uid), last_success, last_error |
+| `setting` | key, value (interval, thresholds, model name, allowed names) |
+
+### Quantities, money and tax (DEC-24, OPEN-11)
+
+SQLite has no exact decimal type, and SQLAlchemy's `Numeric` goes through floats on SQLite, which DEC-24 rules out. So
+Python uses `Decimal` and the database holds scaled integers through one custom column type: quantities × 10,000 (four
+decimal places), prices and amounts × 1,000,000 (six). SQL can still sum them. A value with more decimal places than
+that is refused, never rounded. Status is computed from these exact values. Each PO has one ISO 4217 currency code;
+amounts are never converted, and never added across currencies. Each line has its own unit, and units are never
+converted, so a confirmation in another unit is flagged for a person.
+
+Tax is undecided (OPEN-11, Phase 2). Until then `invoice.total` holds the total as written and there is no tax field;
+adding one later is a migration.
 
 ### How the standard EDI documents map
 
@@ -120,13 +140,19 @@ Status is computed from accepted facts. It is never stored as typed text, so it 
 For each line: `ordered`, `confirmed` (latest accepted ack, else none), `shipped` (sum of accepted shipment lines),
 `invoiced` (sum of accepted invoice lines).
 
+`target` is `confirmed` if present, else `ordered`. The rows are checked from the top and the first match wins:
+
 | Status | Rule |
 |---|---|
-| Sent | no accepted acknowledgement |
-| Acknowledged | an accepted ack and `shipped` = 0 |
-| Partially shipped | 0 < `shipped` < the target, where target is `confirmed` if present, else `ordered` |
-| Shipped | `shipped` ≥ target and `invoiced` < `ordered` |
 | Closed | `invoiced` ≥ `ordered`, or closed by hand: received, short, cancelled (reason and person recorded) |
+| Shipped | `shipped` > 0 and `shipped` ≥ target |
+| Partially shipped | 0 < `shipped` < target |
+| Acknowledged | an accepted ack and `shipped` = 0 |
+| Sent | anything else |
+
+**Assumed, for the owner to correct:** a shipment or invoice with no acknowledgement still moves the
+line, because the evidence wins over the missing step. A line confirmed at 0 stays Acknowledged, not Shipped, and raises
+`unconfirmed_balance`. The first version of this table was unordered and contradicted itself on both cases.
 
 `open_qty` = `ordered` − `invoiced` for an open line. A PO is **Closed** when all its lines are closed, **Open** when
 any line is open, and shows "partially invoiced" when some but not all quantity is invoiced. A line confirmed short
@@ -134,8 +160,10 @@ any line is open, and shows "partially invoiced" when some but not all quantity 
 
 ## 6. Intake and extraction pipeline
 
-1. **Scan.** The scanner (one at a time, never overlapping) asks the mail source for changes since `scan_state`.
-2. **Store.** Write the raw message to the file store, then each attachment, with its SHA-256. Known hash → skip.
+1. **Scan.** The scanner (one at a time, never overlapping) asks each connected mailbox in turn for changes in its Inbox
+   and Sent Items since `scan_state`.
+2. **Store.** Write the raw message to the file store, then each attachment, with its SHA-256. Known hash → skip, even if it came through another
+   mailbox, because the data is company-wide.
    The saved position moves only after the message is safely stored, so a crash repeats work instead of losing mail.
 3. **Text.** Body (HTML → text), PDF text, OCR for scanned pages or images, spreadsheet rows, Word text. Quoted
    earlier messages in a thread are marked so they are not mistaken for the current message.
@@ -147,7 +175,8 @@ any line is open, and shows "partially invoiced" when some but not all quantity 
   document the PO number must be new, and the vendor is found from the recipient domain (DEC-17);
    - each line number exists on the PO; the item agrees with the PO line, else flagged;
    - quantity is a positive number and not above what is still open; dates parse and are plausible (not years away);
-   - invoice total agrees with lines × price, where the total is given;
+   - invoice total agrees with lines × price, where the total is given (this fails on an invoice with tax, so its
+     final form waits for OPEN-11);
    - a value present in the document text. The extracted PO number and each date must appear in the source text,
      so a value the model invented cannot pass;
    - differences against the PO (price, quantity, date) are listed beside the line.
@@ -173,23 +202,44 @@ golden set in Phase 2 re-scores it.
 
 ## 7. Mail sources
 
-All implement `MailSource`: `fetch_new(position) -> (messages, new_position)` and `health()`. No write methods exist.
+Mailboxes are purchasing-only (DEC-30), so the whole Inbox is read, plus Sent Items, where a PO sent from that address
+lands. A mailbox is only a source of documents: the ledger is company-wide (DEC-29), whoever connected it. **Version 1 reads one shared mailbox (DEC-33).** More mailboxes, with keyword rules for ones that
+are not purchasing-only, are version 2; the design already allows it, because each mailbox has its own row, saved
+position and Keychain entry. The scanner reads mailboxes one at a time and the model takes one document at a time.
 
-- **Microsoft Graph (production).** App-only sign-in with a client secret or certificate held in the Keychain.
-  `Mail.Read` for one mailbox, limited by Exchange Online RBAC for Applications, with the broad Entra grant removed
-  (otherwise the limit does not apply). Permission changes can take 30 minutes to 2 hours to apply. Messages are
-  tracked with the folder delta query; the saved delta link is the position. Delta tokens depend on a server-side
-  cache, so if a token is refused the scanner re-reads a recent window and relies on dedupe.
-- **Gmail (testing).** OPEN-04. IMAP with an app password on a dedicated account is the leading option. The position is
-  the last UID per folder.
+All providers implement `MailSource`: `fetch_new(position) -> (messages, new_position)` and `health()`. No write methods
+exist. Once a provider is built, choosing it is a setting and the rest of the app cannot tell which one is in use.
+
+- **Gmail (the build and the demo, DEC-31).** A dedicated test account from the owner, holding only synthetic mail
+  (DEC-13). The method is OPEN-04. The position is the Gmail history id, or the last UID per folder with IMAP.
+- **Microsoft Graph (expected production, DEC-31).** Built at the switch, with the company admin's part. Messages are
+  tracked with the folder delta query, and the saved delta link is the position. Delta tokens depend on a server-side
+  cache, so if a token is refused the scanner re-reads a recent window and relies on dedupe. Access to the shared mailbox is to verify at PD-6.0 (a delegated sign-in token lasts 90 days and can end early, for
+  example after a password change, so the mailbox then shows "needs reconnect" rather than failing silently). The candidates are `Mail.Read.Shared` for someone with access to it, or
+    the app-only route as first designed: `Mail.Read` limited to that mailbox by Exchange Online RBAC for Applications,
+    with the broad Entra grant removed (otherwise the limit does not apply; such changes can take 30 minutes to 2 hours).
 - **Folder (tests, demo).** Reads `.eml` files from a directory; the position is the set of file hashes seen.
 
-Switching provider is a setting; the rest of the app cannot tell which one is in use.
+### Connecting a mailbox
+
+The Mailboxes screen connects, reconnects and disconnects (REQ-IN-07). One person, usually an admin, connects the shared mailbox once. It never blocks sign-in, so a provider outage or a
+pending admin approval only leaves the mailbox "not connected". Disconnecting deletes the token from the Keychain and
+stops scanning that mailbox; documents already stored stay (REQ-IN-04).
+
+The page says this, and every line must stay true:
+
+> **Connect your mailbox.** You'll sign in on Microsoft's own page, so PO Dashboard never sees your password. It gets
+> read-only access: it cannot send, move or delete your mail. The purchase orders and vendor emails it finds are stored
+> on the office Mac, and everyone signed in to PO Dashboard can see them. You can disconnect it at any time.
+
+The page must not claim that nothing can read a password typed into it. A password box only hides the characters on
+screen, and any page that receives a password can read it. If the Gmail test uses an IMAP app password (OPEN-04), the
+first line does not hold and the read-only line rests on our code, so the wording changes to say so.
 
 ## 8. Alert rules
 
 Evaluated after every accepted document and once an hour. An alert is keyed by (line or PO, rule), so the same
-condition never creates two. It clears itself when the condition clears. Defaults are settings (OPEN-07).
+condition never creates two. It clears itself when the condition clears. Defaults are settings (DEC-22).
 
 | Rule | Raised when | Default |
 |---|---|---|
@@ -220,8 +270,9 @@ Server-rendered pages; HTMX updates parts of a page (accept a document, snooze a
 | Open items | the open-items report, filters, CSV export |
 | Follow-ups | the alert queue with Contacted, Snooze, Dismiss and the drafted message |
 | Vendors | vendors, their domains and contacts |
+| Mailboxes | connect, reconnect and disconnect, with each mailbox's last scan |
 | Sign-in, Users | sign-in with a second factor; admins add and disable people |
-| Settings and health | mail source, interval, thresholds, model name, scan status, backup status, audit trail |
+| Settings and health | interval, thresholds, model name, scan status, backup status, audit trail |
 
 Design: one stylesheet with tokens, light and dark themes, a status colour and a text label on every status
 (colour is never the only signal), works from a phone width up, keyboard-reachable, checked with an automated
@@ -229,12 +280,11 @@ accessibility test (NFR-12).
 
 ## 10. Security and privacy
 
-- **Sign-in (DEC-20, NFR-13).** Every page and API call needs a session except the sign-in page and the health check.
-  Passwords are hashed with argon2id; roles are admin and buyer; sessions time out when idle; repeated failures lock the
-  account for a while; every form carries a CSRF token; a TOTP second factor is required. The first run creates the
-  first admin. The same design as LegalLens, so its tested approach is reused.
-- Listens on `127.0.0.1` only until the owner chooses network access (OPEN-10). Network access needs HTTPS.
-- Mailbox secret in the Keychain, never in the repo, the database or a log. Logs hold ids and counts, not document text.
+- **Sign-in (DEC-20, NFR-13).** Every page and API call needs a session except the sign-in page, its stylesheet and the
+  health check. The design is §10.1.
+- Listens on `127.0.0.1` by default. On the office Mac it listens on the network (DEC-28), and the app refuses to do so
+  without HTTPS. Ollama stays on `127.0.0.1` either way, so the model is never reachable from the network.
+- Each mailbox's token or secret is in the Keychain, never in the repo, the database or a log. Logs hold ids and counts, not document text.
 - Originals are served only through the app, with the content type set from the stored file and a download header, so an
   attachment cannot run in the page.
 - A 25 MB limit per attachment, an allowed list of file types, and a page limit on PDFs, so a hostile attachment cannot
@@ -243,11 +293,130 @@ accessibility test (NFR-12).
 - The audit trail covers every change (NFR-03).
 - Real vendor documents are never committed (DEC-13); tests use synthetic data only.
 
+### 10.1 Sign-in design (DEC-20, DEC-26, DEC-27; built in PD-1.9)
+
+Starts from LegalLens (`services/auth.py`, `secretbox.py`), which is the same idea with tests behind it. The differences
+are listed at the end of this section.
+
+**What it defends against.**
+
+| Threat | Defence |
+|---|---|
+| Someone on the office network, or someone else on the office Mac, opens the app | Sign-in with a second factor; nothing is served without a session |
+| Someone reads traffic on the office network | HTTPS; the app refuses to listen on the network without it |
+| A web page open in the buyer's browser sends requests to the app (CSRF), or reaches it through a DNS trick (DNS rebinding) | SameSite=Strict cookie, CSRF token, Origin check, Host allow-list |
+| Password guessing | Lockout, argon2id, TOTP |
+| A copied backup or database file | Password hashes only; TOTP secrets sealed with a key in the Keychain; session tokens and recovery codes hashed |
+| Who did it | Every audit entry names a person; roles are read from the database on every request |
+
+**What it does not defend against (DEC-27).** Anyone who can act as the macOS account running the app can read the
+database and originals directly. Other macOS accounts cannot, because the folder is 700 and the database 600.
+On the office Mac that means anyone with that account's password, so it goes to a few people only. The data is
+company-wide anyway (DEC-29), but the mailbox access is held there too.
+
+**The sign-in flow.**
+
+1. **No admin yet.** The sign-in page says to run `po-dashboard user create-admin`. There is no setup page, so nobody
+   can reach the app first and claim the admin account. The password is typed at a hidden prompt, never as an argument,
+   so it stays out of the shell history.
+2. **Password.** Correct → a new *pending* session, valid for 10 minutes. A pending session reaches only the steps below.
+3. **Change password,** if the current one is temporary.
+4. **Enrol,** if no second factor is confirmed yet: a QR code made locally and the secret as text. One correct code
+   confirms it, then 10 recovery codes are shown once.
+5. **Code.** A correct TOTP or recovery code → a new *full* session, with a new token.
+6. **Connect mailbox** (§7), for the admin who connects the shared one. This never blocks sign-in.
+
+**Later (DEC-32, OPEN-13).** Sign-in with the company's provider is added at the switch. Whether it replaces steps 2 to 5
+or sits beside them is decided then. The gate, sessions, roles, CSRF checks and audit trail below stay either way.
+
+**Values.**
+
+| Item | Value |
+|---|---|
+| Password hash | argon2id with `argon2-cffi`'s defaults (64 MiB, 3 passes, 4 lanes), re-hashed at sign-in if those change. At most 2 hashes run at once, so a burst of attempts cannot exhaust the memory the model needs |
+| Password rules | 12 to 128 characters; must not contain the email address or be on a short bundled list of common passwords |
+| Lockout | 5 wrong passwords or codes in a row lock the account for 15 minutes. While locked, the password is not checked, so a right guess reveals nothing. Someone on the office network could lock a colleague out on purpose; that is accepted, because the audit trail records the address and an admin can unlock at once |
+| Session | 256-bit random token; only its SHA-256 is stored. 30 minutes idle, 12 hours at most. A self-refreshing page part does not count as activity |
+| Cookie | `HttpOnly`, `SameSite=Strict`, `Path=/`. `Secure` whenever HTTPS is on, so always on the office network. Off only on plain `http://127.0.0.1` during the build, because Safari drops `Secure` cookies there |
+| TOTP | RFC 6238: 6 digits, 30 seconds, one step of drift. **Each time step is accepted once** (`last_totp_step`), so an observed code cannot be replayed |
+| Recovery codes | 10 random codes, single use, stored as SHA-256 (they have enough randomness that a slow hash adds nothing) |
+| Temporary password | 20 random characters from an admin, shown once, expires in 72 hours, must be changed at first use |
+| Sealing key | A Fernet key in the Keychain, entry "PO Dashboard sealing key". If it cannot be read, sign-in is refused with a clear message; the scanner carries on |
+
+**Enforcement.**
+
+- **Default deny.** A gate in front of every route refuses anything without a full session, except an exact list:
+  `/sign-in` and its steps, `/health` and `/static/app.css`. A route added later is protected without anyone remembering
+  to. HTML requests go to the sign-in page; HTMX and API requests get a 401.
+- **Admin routes** share one router with an admin check. The role comes from the database on every request, so a demotion
+  applies at once.
+- **CSRF.** Every POST, PUT, PATCH and DELETE needs the session's token (a hidden form field, or an HTMX header) and an
+  `Origin` that is this app. The sign-in form uses a double-submit cookie, since no session exists yet. No GET changes
+  anything; sign-out is a POST.
+- **Host allow-list.** Only `127.0.0.1`, `localhost` and the office Mac's configured name are accepted, which defeats DNS
+  rebinding. The names and HTTPS are settings from the start, so network access needs no rewrite (PD-6.3a).
+- **Headers.** A Content-Security-Policy of `default-src 'self'; frame-ancestors 'none'; base-uri 'none'; object-src
+  'none'; form-action 'self'`, so no inline script or style (the Phase 0 page's inline style moves to `app.css`, and HTMX
+  is set to `allowEval: false` and `includeIndicatorStyles: false`). `X-Content-Type-Options: nosniff`,
+  `Referrer-Policy: no-referrer`, and `Cache-Control: no-store` on signed-in pages.
+- **`/health` says only up or down** to someone not signed in. Model and scan details are on signed-in pages, so the
+  Phase 0 response shrinks. The API schema and docs routes are off.
+- **Nothing secret in logs or URLs.** Passwords, codes, tokens and seeds are never logged or put in a URL. Uvicorn's access
+  log is off. The audit trail records sign-ins, failures, lockouts, sign-outs, recovery-code use and every user change. A
+  failed attempt on an unknown account is recorded as just that: the typed text is not stored, because people sometimes
+  type a password into the email box.
+- **Same refusal** for an unknown email and a wrong password, with a dummy hash so the timing matches. A locked account
+  does say it is locked, since a person needs to know; in a small team that small disclosure is accepted.
+
+**People and recovery.**
+
+- An admin adds a person and gets a temporary password to hand over. The app cannot send mail (DEC-07).
+- Disabling a person, resetting their password or second factor, or changing their role ends their sessions at once. So
+  does changing your own password, except for the session that did it.
+- The last enabled admin cannot be disabled or demoted, and an admin cannot disable themselves.
+- **Locked out entirely?** `po-dashboard user reset-password | reset-2fa | unlock | list`, at the Mac, recorded in the
+  audit trail. This is not a new hole: whoever can run it could already read the files (DEC-27).
+- **A restored database on another Mac** has no sealing key, so passwords still work and each person re-enrols the second
+  factor with `reset-2fa`.
+
+**Different from LegalLens, on purpose.**
+
+| LegalLens | Here | Why |
+|---|---|---|
+| A development mode accepts any password | No such mode exists | One wrong setting must not be able to turn sign-in off. Tests go through the real flow |
+| Sealing key in a file beside the database | In the Keychain | A copied data folder or backup must not reveal the TOTP secrets |
+| A TOTP code can be reused within its window | Each step once | RFC 6238 asks for single use |
+| No recovery codes | 10 codes | A lost phone should not need the command line |
+| JSON API; a required header stops cross-site writes | Forms and HTMX, so CSRF tokens, Origin and Host checks | Plain HTML forms can be sent from any site |
+
+**Security tests (PD-1.9d).**
+
+1. Every route, listed from `app.routes` and not by hand, refuses a request with no session, so a new route is covered
+   automatically. Only the exact allow-list answers.
+2. A pending session reaches only the sign-in steps; a buyer gets 403 on every admin route.
+3. Password then code signs in. A wrong password and an unknown email get the same refusal.
+4. Five failures lock the account even for the right password; it opens again after 15 minutes.
+5. A code cannot be used twice, a recovery code cannot be used twice, and an expired temporary password is refused.
+6. Idle and absolute expiry; the token changes at each stage; only its hash is in the database.
+7. Disabling, demoting and resetting a person takes effect on their very next request.
+8. The last admin cannot be removed.
+9. A write with no CSRF token, a wrong token, a foreign `Origin` or a foreign `Host` is refused.
+10. No password, code, token or TOTP secret appears in the database in the clear, or in any log or audit entry.
+11. The data folder is 700 and the database 600; cookie flags and security headers are on every response.
+12. With the sealing key unavailable, sign-in refuses with a clear message. Tests use an in-memory key store, never the
+    real Keychain.
+
 ## 11. Running locally after go-live
 
 The full runbook is [OPERATIONS.md](OPERATIONS.md). The design points that make it possible:
 
-- **Service.** A launchd user agent starts the app at login and restarts it if it stops (DEC-12).
+- **Service.** A launchd user agent starts the app at login and restarts it if it stops (DEC-12). It runs under the office
+  Mac's account, because the Keychain needs that login. After a restart nothing runs until someone logs in there, and
+  FileVault asks for a password at boot anyway (RISK-11).
+- **Network (DEC-28).** The app serves HTTPS with its own certificate for the office Mac's name, valid for two years.
+  Each laptop trusts that one certificate, once. It is deliberately not a certificate authority, so trusting it cannot be
+  used to impersonate any other site. Bonjour's `.local` name is the first choice, because the address can change; a fixed
+  address is the fallback (RISK-12). Laptops off the office network need the company's VPN.
 - **Catch-up.** The saved mailbox position means a sleeping or switched-off Mac misses nothing. The first scan after
   waking reads everything since the last success.
 - **Visible failure.** A failed scan, a missing model or a rejected mailbox credential shows as a banner and a
@@ -256,13 +425,14 @@ The full runbook is [OPERATIONS.md](OPERATIONS.md). The design points that make 
   update never touches them. Alembic migrates the database on start, after a backup.
 - **Backups.** A nightly copy of the database and stored files to a folder the user chooses, outside iCloud, with a
   tested restore and 35 days kept (LegalLens's rule).
-- **Sleep.** The Mac is not woken to scan; the app tells the user how to keep it awake if they need scans overnight.
+- **Sleep.** The office Mac is set not to sleep. If it does stop, laptops cannot reach the app at all, so no banner can
+  appear; the catch-up scan still recovers the mail.
 
 ## 12. Distribution to a second machine
 
-The friend clones the repo, runs `scripts/setup.sh` (installs uv's Python and the dependencies, checks for Ollama and
+Whoever sets up an office Mac, at this company or another, clones the repo and runs `scripts/setup.sh` (installs uv's Python and the dependencies, checks for Ollama and
 Tesseract, offers to pull the model: **9 GB**, so the script states the size and asks first), then `scripts/demo.sh`,
-which loads the synthetic sample mailbox and opens the app. Then they enter their own mailbox settings. The model
+which loads the synthetic sample mailbox and opens the app. Then they connect the mailbox (§7). The laptops install nothing, and each trusts the certificate once (§11). The model
 needs about 9 GB of memory; on a smaller machine the model name can be changed in settings, with lower accuracy.
 A clean-machine rehearsal is a Phase 7 task (NFR-07).
 
@@ -289,6 +459,8 @@ documents with planted instructions. A change that lowers its score needs a reas
 ```
 po-dashboard/
   src/po_dashboard/
+    config.py cli.py web.py            settings, the command line, the app itself
+    auth/        passwords, sessions, TOTP, sealing, the default-deny gate
     api/ pages/ templates/ static/     web layer
     mail/        MailSource, graph.py, gmail.py, folder.py
     intake/      store, dedupe, text extraction
@@ -308,9 +480,14 @@ po-dashboard/
 |---|---|---|
 | RISK-01 | The model misreads a document and a person accepts it | Validator flags, source shown beside fields, golden set, human accept (DEC-08) |
 | RISK-02 | Planted instructions in a vendor email | DEC-09: fencing, validation, no model-driven actions, a person accepts |
-| RISK-03 | The 14b model is too slow or too big for the friend's machine | Model is a setting; the friend's machine is probably a 16 GB Mac, to confirm (DEC-18); target of 2 minutes per document (NFR-11) |
-| RISK-04 | Mailbox permission is broader than intended | RBAC scoping, remove the unscoped grant, a Phase 6 check that other mailboxes are refused |
-| RISK-05 | The Mac sleeps and scans stop | Catch-up on wake, health banner, `scan_stale` |
-| RISK-06 | Gmail test behaviour differs from Microsoft 365 | `MailSource` interface and the shared contract tests; re-run the golden set on real Microsoft mail in Phase 6 |
-| RISK-07 | Real vendor data reaches Git | `.gitignore`, a pre-commit check for `.eml`, PDFs and databases outside `tests/data/`, and the rule in CLAUDE.md |
+| RISK-03 | The 14b model is too slow or too big for the office Mac | Model is a setting; 16 GB is the practical minimum; target of 2 minutes per document (NFR-11) |
+| RISK-04 | Mailbox permission is broader than intended | Read-only permission on each connected mailbox only, by the method PD-6.0 settles; a Phase 6 check that other mailboxes are refused |
+| RISK-05 | The office Mac sleeps and scans stop | Set not to sleep, catch-up on wake, health banner, `scan_stale` |
+| RISK-06 | Gmail test behaviour differs from the company's mail system, and the switch is more than a setting | `MailSource` interface and the shared contract tests; re-run the golden set on the real system in Phase 6; confirm the system early (OPEN-14) so the provider and the admin's part are not left to the week of the demo |
+| RISK-07 | Real vendor data reaches Git | `.gitignore`, a pre-commit check for mail, documents, spreadsheets, databases and keys outside `tests/data/`, tested against real staged files, and the rule in CLAUDE.md. The hook only exists after `scripts/setup.sh`, and `--no-verify` skips it, so PD-7.3 scans the repository as well |
 | RISK-08 | Vendors send in formats the golden set does not cover | Add each new real format to the golden set (with the owner's confirmation) |
+| RISK-09 | Someone with the office Mac's account reads the database, stored emails and mailbox tokens, bypassing sign-in | DEC-27: few people have that password, FileVault, owner-only files. The data is company-wide anyway (DEC-29) |
+| RISK-10 | The Keychain shows a permission prompt after Python is updated, with nobody at the Mac to answer it | Sign-in refuses with a clear message and the scanner is unaffected. Check this for real in PD-6.4 |
+| RISK-11 | The office Mac restarts or loses power. Scans stop and laptops cannot reach the app, until someone logs in at that Mac | Runbook (OPERATIONS §3), catch-up scan, a Mac on a battery backup. Laptops see a plain connection error, because the app is down. Check for real in PD-6.4 |
+| RISK-12 | The office network blocks laptop-to-laptop traffic or `.local` names (Wi-Fi isolation, separate networks), or a guest network can reach the app | Test on the real network in PD-6.3a; a fixed address as fallback; ask the company's admin about guest Wi-Fi |
+| RISK-13 | There is no always-on Mac after all (the owner: "hoping") | Revisit DEC-28. Only where the app runs changes; a copy on each laptop would lose the shared view |

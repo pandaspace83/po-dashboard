@@ -16,10 +16,18 @@ if [ -d .git ]; then
 fi
 
 MODEL="qwen2.5:14b-instruct"
-if ollama list 2>/dev/null | grep -q "^$MODEL"; then
+# Read the list first: `ollama list | grep -q` can fail under pipefail when grep stops reading early.
+installed=$(ollama list 2>/dev/null || true)
+if grep -q "^$MODEL[[:space:]]" <<<"$installed"; then
   echo "Model $MODEL is already present."
 else
-  read -r -p "Download $MODEL (about 9 GB)? [y/N] " yn
-  [ "$yn" = "y" ] && ollama pull "$MODEL" || echo "Skipped. Pull it later with: ollama pull $MODEL"
+  # Printed with echo: `read -p` shows its prompt only on a terminal, and the size must always be stated.
+  echo "The model $MODEL is not installed. It is about 9 GB."
+  read -r -p "Download it now? [y/N] " yn || yn=n
+  if [ "$yn" = "y" ]; then
+    ollama pull "$MODEL"
+  else
+    echo "Skipped. Pull it later with: ollama pull $MODEL"
+  fi
 fi
 echo "Done. Start with: uv run po-dashboard serve"
