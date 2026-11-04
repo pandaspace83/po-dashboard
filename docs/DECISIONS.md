@@ -34,6 +34,7 @@ Status: **Decided** (the owner agreed), **Assumed** (a working default to confir
 | DEC-21 | 2026-11-04 | **Scan the whole Inbox** of the mailbox. | Decided | The owner: only vendor mail arrives there (OPEN-05). Keep the validator: anything that is not a PO document is classed "other" and ignored. |
 | DEC-22 | 2026-11-04 | **Alert defaults as in ARCHITECTURE §8** (2 business days, 1 day grace, 2 days, 3 days). All are settings; the owner will finalise them later. | Decided | The owner (OPEN-07). |
 | DEC-23 | 2026-11-04 | **Licence: all rights reserved** (readable, not reusable), the same text as LegalLens. The repository is public. | Decided | The owner (OPEN-03). |
+| DEC-24 | 2026-11-04 | **Several currencies, decimal quantities.** Each PO carries its own ISO currency code (amounts are never converted or summed across currencies). Quantities are decimals with a unit on each line (pieces, m, kg), stored as exact decimals, not floats. Tax is not modelled in v1. | Decided | The owner (OPEN-08). Tax: not asked, assumed out of scope; say if you need it. |
 
 ## 2. Open questions
 
@@ -46,6 +47,6 @@ Status: **Decided** (the owner agreed), **Assumed** (a working default to confir
 | OPEN-05 | ~~Which mail folder is scanned.~~ **Answered 2026-11-04:** the whole Inbox (DEC-21). | Closed |
 | OPEN-06 | ~~More than one person per install.~~ **Answered 2026-11-04:** yes, with a login (DEC-20). | Closed |
 | OPEN-07 | ~~Alert thresholds.~~ **Defaults accepted 2026-11-04** (DEC-22); the owner will finalise later. | Closed |
-| OPEN-08 | **Units, currencies, tax:** one currency, or several? Are partial-quantity units (metres, kilos) used? | Phase 1 |
+| OPEN-08 | ~~Units, currencies, tax.~~ **Answered 2026-11-04:** several currencies, decimal quantities (DEC-24). | Closed |
 | OPEN-10 | **How do the other people reach the shared installation?** (a) They sit at the same Mac and use its browser, or (b) they open it from their own computers over the office network. (b) needs the app to listen on the network, which requires HTTPS (a certificate made for the Mac) and a firewall check; the app stays on this machine's own address until you choose (b). | Phase 1 (login), Phase 6 (network) |
 | OPEN-09 | **Real sample documents** from the owner, when available, to re-score the model and shape the fields. | Phase 2 and later |

@@ -27,7 +27,7 @@ The rest is following this plan, which suits Sonnet. I will say before each swit
 
 ## Phase 1: Ledger, status engine and dashboard (no mailbox, no AI)
 
-*Needs: OPEN-08 (units, currency), OPEN-10 (how others reach the app; does not block the login).*
+*Needs: OPEN-08 answered (DEC-24: several currencies, decimal quantities), OPEN-10 (how others reach the app; does not block the login).*
 
 - [ ] PD-1.1 Tables and migrations for ARCHITECTURE §4.
 - [ ] PD-1.2 Vendors screen; PO entry by hand; CSV import (REQ-PO-01, -02, -04).
