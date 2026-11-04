@@ -45,6 +45,13 @@ class Settings:
     data_dir: Path = default_data_dir()
     model: str = DEFAULT_MODEL
     ollama_url: str = DEFAULT_OLLAMA_URL
+    # Extra names the app answers to (the office Mac's name, DEC-28). Loopback names are always allowed.
+    allowed_hosts: tuple[str, ...] = ()
+    https: bool = False  # true once HTTPS is on; makes the cookie Secure
+
+    @property
+    def accepted_hosts(self) -> frozenset[str]:
+        return frozenset({"127.0.0.1", "localhost", "::1", *(h.lower() for h in self.allowed_hosts)})
 
     def __post_init__(self) -> None:
         if not is_loopback_host(self.host):
@@ -69,4 +76,6 @@ class Settings:
             data_dir=Path(env["PO_DASHBOARD_DATA"]) if "PO_DASHBOARD_DATA" in env else default_data_dir(),
             model=env.get("PO_DASHBOARD_MODEL", DEFAULT_MODEL),
             ollama_url=env.get("PO_DASHBOARD_OLLAMA_URL", DEFAULT_OLLAMA_URL),
+            allowed_hosts=tuple(h for h in env.get("PO_DASHBOARD_ALLOWED_HOSTS", "").split(",") if h.strip()),
+            https=env.get("PO_DASHBOARD_HTTPS") == "1",
         )

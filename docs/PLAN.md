@@ -45,7 +45,7 @@ The rest is following this plan, which suits Sonnet. I will say before each swit
 - [x] PD-1.9b Sign-in core: argon2id, sessions, lockout, temporary passwords, the last-admin rule, audit, and the
   `po-dashboard user` commands (`create-admin`, `create`, `reset-password`, `unlock`, `list`). **The 6-digit code, recovery
   codes and the Keychain sealing key are paused (DEC-34)**; they are added when a second factor is settled.
-- [ ] PD-1.9c Sign-in web: the default-deny gate, the sign-in and change-password pages (the code and enrol pages are paused), CSRF, Host and
+- [x] PD-1.9c Sign-in web: the default-deny gate, the sign-in and change-password pages (the code and enrol pages are paused), CSRF, Host and
   Origin checks, security headers, and the admin Users screen. `/health` shrinks to up or down. The allowed names and HTTPS are settings from the start (DEC-28).
 - [ ] PD-1.9d The security tests listed in ARCHITECTURE §10.1, and a run-through by hand in a real browser with a real
   authenticator app.

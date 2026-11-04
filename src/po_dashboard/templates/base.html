@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}PO Dashboard{% endblock %}</title>
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+<main>
+{% block nav %}
+{% if me %}
+<nav aria-label="Main">
+  <strong>PO Dashboard</strong>
+  <a href="/">Home</a>
+  {% if me.role == 'admin' %}<a href="/admin/users">People</a>{% endif %}
+  <span class="spacer"></span>
+  <span>{{ me.email }}</span>
+  <a href="/change-password">Change password</a>
+  <form method="post" action="/sign-out" class="inline">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <button type="submit">Sign out</button>
+  </form>
+</nav>
+{% endif %}
+{% endblock %}
+{% block content %}{% endblock %}
+</main>
+</body>
+</html>

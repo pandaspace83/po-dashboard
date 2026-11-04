@@ -360,6 +360,8 @@ or sits beside them is decided then. The gate, sessions, roles, CSRF checks and 
   anything; sign-out is a POST.
 - **Host allow-list.** Only `127.0.0.1`, `localhost` and the office Mac's configured name are accepted, which defeats DNS
   rebinding. The names and HTTPS are settings from the start, so network access needs no rewrite (PD-6.3a).
+- **CSRF token delivery (as built).** A urlencoded form carries a `csrf_token` field; any other request (a file upload, a
+  script) sends an `X-CSRF-Token` header. A form body over 64 KB is refused unless it uses the header.
 - **Headers.** A Content-Security-Policy of `default-src 'self'; frame-ancestors 'none'; base-uri 'none'; object-src
   'none'; form-action 'self'`, so no inline script or style (the Phase 0 page's inline style moves to `app.css`, and HTMX
   is set to `allowEval: false` and `includeIndicatorStyles: false`). `X-Content-Type-Options: nosniff`,

@@ -1,31 +1,12 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>PO Dashboard</title>
-  <style>
-    :root { --bg:#fff; --fg:#1a1a1a; --muted:#555; --line:#d8d8d8; --ok:#14532d; --bad:#7f1d1d; }
-    @media (prefers-color-scheme: dark) {
-      :root { --bg:#16181d; --fg:#eee; --muted:#aaa; --line:#333; --ok:#86efac; --bad:#fca5a5; }
-    }
-    body { background:var(--bg); color:var(--fg); font:16px/1.5 system-ui, sans-serif; margin:0; padding:0 16px; }
-    main { max-width:60rem; margin:0 auto; }
-    .strip { display:flex; flex-wrap:wrap; gap:8px 24px; padding:12px 0; border-bottom:1px solid var(--line); color:var(--muted); }
-    .ok { color:var(--ok); } .bad { color:var(--bad); }
-  </style>
-</head>
-<body>
-<main>
-  <h1>PO Dashboard</h1>
-  <div class="strip" role="status" aria-label="Health">
-    <span>App: <strong class="ok">{{ health.app }}</strong></span>
-    <span>Last scan: {{ health.last_scan }}</span>
-    <span>Model {{ health.model_name }}:
-      <strong class="{{ 'ok' if health.model == 'reachable' else 'bad' }}">{{ health.model }}</strong></span>
-    <span>v{{ version }}</span>
-  </div>
-  <p>No purchase orders yet.</p>
-</main>
-</body>
-</html>
+{% extends "base.html" %}
+{% block content %}
+<h1>PO Dashboard</h1>
+<div class="strip" role="status" aria-label="Health">
+  <span>App: <strong class="ok">ok</strong></span>
+  <span>Last scan: {{ health.last_scan }}</span>
+  <span>Model {{ health.model_name }}:
+    <strong class="{{ 'ok' if health.model == 'reachable' else 'bad' }}">{{ health.model }}</strong></span>
+  <span>v{{ version }}</span>
+</div>
+<p>No purchase orders yet.</p>
+{% endblock %}

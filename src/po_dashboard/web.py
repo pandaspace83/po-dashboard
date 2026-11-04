@@ -1,43 +1,41 @@
-"""The web app. Phase 0: one page with the health strip."""
+"""The web app: the gate in front, then pages (ARCHITECTURE §9, §10.1)."""
 
 from __future__ import annotations
 
 from pathlib import Path
 
-from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi import FastAPI
+from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from sqlalchemy import Engine
 
 from po_dashboard import __version__
+from po_dashboard.auth.gate import Gate
 from po_dashboard.config import Settings
-from po_dashboard.models import llm
+from po_dashboard.db.migrate import upgrade
+from po_dashboard.pages import account, admin
 
 HERE = Path(__file__).parent
 
 
-def create_app(settings: Settings | None = None) -> FastAPI:
+def create_app(settings: Settings | None = None, engine: Engine | None = None) -> FastAPI:
     settings = settings or Settings.from_env()
+    engine = engine or upgrade(settings)
     app = FastAPI(
         title="PO Dashboard", version=__version__, docs_url=None, redoc_url=None, openapi_url=None
     )
-    templates = Jinja2Templates(directory=HERE / "templates")
-
-    def health() -> dict[str, str]:
-        return {
-            "app": "ok",
-            "last_scan": "no scan yet",
-            "model": "reachable" if llm.is_reachable(settings) else "not reachable",
-            "model_name": settings.model,
-        }
-
-    @app.get("/", response_class=HTMLResponse)
-    def home(request: Request) -> HTMLResponse:
-        return templates.TemplateResponse(
-            request, "home.html", {"health": health(), "version": __version__}
-        )
+    app.state.settings = settings
+    app.state.engine = engine
+    app.state.templates = Jinja2Templates(directory=HERE / "templates")
 
     @app.get("/health")
-    def health_check() -> JSONResponse:
-        return JSONResponse(health())
+    def health() -> JSONResponse:
+        """Up or down only. Model and scan details are on the signed-in home page."""
+        return JSONResponse({"status": "ok"})
 
+    app.include_router(account.router)
+    app.include_router(admin.router)
+    app.mount("/static", StaticFiles(directory=HERE / "static"), name="static")
+    app.add_middleware(Gate, settings=settings, engine=engine)
     return app

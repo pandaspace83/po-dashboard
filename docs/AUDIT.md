@@ -76,7 +76,7 @@ Phase 0 (the app shell) is built, apart from CI. No requirement is fully met yet
 | NFR-10 | Model is a setting, one gateway | Partly (Phase 4) | The model name is a setting, and `models/llm.py` makes the only call so far. A test that enforces the single gateway is still to come | pytest `test_llm.py` |
 | NFR-11 | One document in 2 minutes or less | Not built (Phase 4) | | |
 | NFR-12 | Keyboard use, no accessibility violations | Not built (Phase 5) | | |
-| NFR-13 | Sign-in, roles, lockout, CSRF, second factor | Partly (Phase 1) | Passwords, sessions, lockout, roles, audit and the user commands are built. No web pages or CSRF yet (PD-1.9c); the second factor is paused (DEC-34) | pytest `test_auth.py`, `test_cli.py` |
+| NFR-13 | Sign-in, roles, lockout, CSRF, second factor | Partly (Phase 1) | Passwords, sessions, lockout, roles, audit, the sign-in and People pages, CSRF/Origin/Host checks and security headers are built. The second factor is paused (DEC-34); the by-hand browser check is PD-1.9d | pytest `test_auth.py`, `test_cli.py`, `test_gate.py` |
 | NFR-14 | Reached from laptops on the office network | Not built (Phase 6) | | |
 
 ## 4. Targets

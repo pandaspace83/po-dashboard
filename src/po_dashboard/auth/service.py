@@ -82,7 +82,7 @@ def find_user(db: Session, email: str) -> AppUser | None:
     return db.scalar(select(AppUser).where(AppUser.email == email.strip().lower()))
 
 
-def _start_session(db: Session, user: AppUser, now: datetime) -> SignedIn:
+def start_session(db: Session, user: AppUser, now: datetime) -> SignedIn:
     stage = "pending" if user.must_change_password else "full"
     token = secrets.token_urlsafe(32)
     row = SignInSession(
@@ -130,7 +130,7 @@ def sign_in(
     user.locked_until = None
     if passwords.needs_rehash(user.password_hash):
         user.password_hash = passwords.hash_password(password)
-    result = _start_session(db, user, now)
+    result = start_session(db, user, now)
     audit(db, "sign_in", user, client_address=client_address)
     db.commit()
     return result

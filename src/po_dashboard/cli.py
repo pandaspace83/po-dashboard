@@ -86,8 +86,7 @@ def main(argv: list[str] | None = None) -> None:
     settings = Settings.from_env()
     engine = upgrade(settings)
     if args.command == "serve":
-        engine.dispose()
-        uvicorn.run(create_app(settings), host=settings.host, port=settings.port, access_log=False)
+        uvicorn.run(create_app(settings, engine), host=settings.host, port=settings.port, access_log=False)
         return
     try:
         with Session(engine) as db:
