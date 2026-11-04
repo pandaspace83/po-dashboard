@@ -1,0 +1,19 @@
+Copyright (c) 2026 Shashank Panda. All rights reserved.
+
+This repository is published so that people can read the code and judge the work. Publishing it does not give
+anyone a licence to use it.
+
+You may view the code and clone or fork it on GitHub for the sole purpose of reading it and evaluating it.
+Without the written permission of the copyright holder, you may not:
+
+  - copy, modify, merge, publish, distribute, sublicense or sell any part of the code, documents or designs
+    in this repository, or works derived from them;
+  - use the code, in whole or in part, in any product or service, commercial or not;
+  - use the repository or its contents to train or fine-tune a machine-learning model.
+
+The software is provided "as is", without warranty of any kind. The copyright holder is not liable for any claim
+or damage arising from it. It must not be used with real vendor documents or credentials in this repository (see the
+README).
+
+Third-party components keep their own licences. The sample purchase orders, acknowledgements, shipment notices and
+invoices in tests/data are synthetic, made up for testing, and describe no real company.

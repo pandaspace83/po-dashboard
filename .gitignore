@@ -1,0 +1,57 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.venv.nosync/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+*.egg-info/
+
+# Local state: the database, stored originals, logs and backups live outside the repo,
+# but a developer may point them inside it
+data/
+backups/
+*.db
+*.db-wal
+*.db-shm
+*.sqlite*
+*.log
+
+# Secrets and credentials (PO Dashboard stores mailbox secrets in the macOS Keychain, never in a file)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+.envrc
+credentials*.json
+client_secret*.json
+token*.json
+*secret*.json
+*.token
+.netrc
+id_rsa*
+
+# Real vendor documents: never committed (DEC-13). Synthetic test data lives in tests/data/.
+real-docs/
+inbox-samples/
+*.eml.real
+.DS_Store
+
+# Exports and scratch that the project does not use
+*.xlsx
+!tests/data/**/*.xlsx
+*.numbers
+*.docx
+!tests/data/**/*.docx
+*.zip
+scratch/
+
+# Laptop-only notes
+LEARNING_JOURNAL.md
