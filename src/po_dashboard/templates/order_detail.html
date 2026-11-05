@@ -14,9 +14,15 @@
   <div class="tile">{{ icon("user") }}<div><span class="label">Buyer</span><span class="value">{{ order.buyer or "not set" }}</span></div></div>
   <div class="tile">{{ icon("clipboard") }}<div><span class="label">Currency</span><span class="value">{{ order.currency }}</span></div></div>
 </div>
+{% if error %}<p class="error" role="alert">{{ icon("alert") }}<span>{{ error }}</span></p>{% endif %}
+<div class="actions bar">
+  <a class="button" href="/orders/{{ order.id }}/ack/new">{{ icon("check-circle") }}Record acknowledgement</a>
+  <a class="button" href="/orders/{{ order.id }}/shipments/new">{{ icon("truck") }}Record shipment</a>
+  <a class="button" href="/orders/{{ order.id }}/invoices/new">{{ icon("clipboard") }}Record invoice</a>
+</div>
 <div class="table-wrap">
 <table>
-  <thead><tr><th>#</th><th>Item</th><th class="num">Ordered</th><th class="num">Unit price</th><th>Requested</th><th class="num">Confirmed</th><th class="num">Shipped</th><th class="num">Invoiced</th><th class="num">Open</th><th>Status</th></tr></thead>
+  <thead><tr><th>#</th><th>Item</th><th class="num">Ordered</th><th class="num">Unit price</th><th>Requested</th><th>Promised</th><th class="num">Confirmed</th><th class="num">Shipped</th><th class="num">Invoiced</th><th class="num">Open</th><th>Status</th></tr></thead>
   <tbody>
   {% for line in lines %}
   {% set st = states[line.id] %}
@@ -26,6 +32,7 @@
     <td class="num">{{ line.ordered_qty|quantity }} {{ line.unit }}</td>
     <td class="num">{{ line.unit_price|money(order.currency) }}</td>
     <td>{{ line.requested_date or "" }}</td>
+    <td>{% for step in promised.get(line.id, []) %}{% if not loop.first %} &rarr; {% endif %}<span class="{{ 'bad' if step.slipped }}">{{ step.promised }}</span>{% if step.slipped %} <span class="pill bad">slipped</span>{% endif %}{% endfor %}</td>
     <td class="num">{{ st.facts.confirmed|quantity if st.facts.confirmed is not none else "" }}</td>
     <td class="num">{{ st.facts.shipped|quantity }}</td>
     <td class="num">{{ st.facts.invoiced|quantity }}</td>
@@ -33,6 +40,7 @@
     <td>
       {% if st.status.value == "Closed" %}<span class="pill ok">{{ icon("check-circle") }}Closed</span>
       {% else %}<span class="pill">{{ st.status.value }}</span>{% endif %}
+      {% for note in notes.get(line.id, []) %}<p class="flag">{{ icon("alert") }}{{ note }}</p>{% endfor %}
       {% if st.po_needs_update %}<p class="flag">{{ icon("alert") }}The vendor confirmed {{ st.facts.confirmed|quantity }}, not {{ line.ordered_qty|quantity }}. Update the original purchase order.</p>{% endif %}
     </td>
   </tr>
@@ -40,5 +48,32 @@
   </tbody>
 </table>
 </div>
-<p class="muted">Acknowledgements, shipments and invoices are entered next (PD-1.4); status follows them automatically.</p>
+<h2>History</h2>
+{% if history %}
+<div class="table-wrap">
+<table>
+  <thead><tr><th>When</th><th>Entry</th><th>Details</th><th>Entered by</th><th>Take back</th></tr></thead>
+  <tbody>
+  {% for h in history %}
+  <tr>
+    <td>{{ h.at.strftime("%Y-%m-%d %H:%M") }} UTC</td>
+    <td><strong>{{ h.title }}</strong></td>
+    <td>{% for d in h.details %}{{ d }}{% if not loop.last %}<br>{% endif %}{% endfor %}</td>
+    <td>{{ h.who or "" }}</td>
+    <td>
+      <form method="post" action="/orders/{{ order.id }}/entries/{{ h.kind }}/{{ h.id }}/remove" class="inline-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <input name="reason" required maxlength="500" placeholder="Why?" aria-label="Reason for removing {{ h.title }}">
+        <button type="submit" class="small">{{ icon("x") }}Remove</button>
+      </form>
+    </td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+<p class="muted">A wrong entry is removed, not edited. The reason and what it said are kept in the audit trail.</p>
+{% else %}
+<p class="muted">Nothing recorded yet. Record the vendor's acknowledgement, shipments and invoices above; each line's status follows automatically.</p>
+{% endif %}
 {% endblock %}

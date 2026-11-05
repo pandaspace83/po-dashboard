@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block title %}Record acknowledgement · {{ app_name }}{% endblock %}
+{% block content %}
+<p class="muted"><a href="/orders">Purchase orders</a> / <a href="/orders/{{ order.id }}">PO {{ order.po_number }}</a> /</p>
+<h1>Record an acknowledgement</h1>
+<p>Fill in only what the vendor stated, for the lines they covered. A confirmed quantity of <strong>0</strong> means they cannot supply that line.</p>
+{% if errors %}
+<div class="error" role="alert">{{ icon("alert") }}<div>{% if errors|length == 1 %}{{ errors[0] }}{% else %}Please fix these:<ul>{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}</div></div>
+{% endif %}
+<form method="post" action="/orders/{{ order.id }}/ack">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <div class="table-wrap">
+  <table class="entry">
+    <thead><tr><th>#</th><th>Item</th><th class="num">Ordered</th><th class="num">Price on PO</th><th>Confirmed quantity</th><th>Confirmed price</th><th>Promised date</th></tr></thead>
+    <tbody>
+    {% for line in lines %}
+    {% set r = rows[line.id] %}
+    <tr>
+      <td>{{ line.line_no }}<input type="hidden" name="line_id" value="{{ line.id }}"></td>
+      <td>{{ line.item }}</td>
+      <td class="num">{{ line.ordered_qty|quantity }} {{ line.unit }}</td>
+      <td class="num">{{ line.unit_price|money(order.currency) }}</td>
+      <td><input name="line_qty" inputmode="decimal" aria-label="Confirmed quantity, line {{ line.line_no }}" value="{{ r.qty }}" {{ "autofocus" if loop.first }}></td>
+      <td><input name="line_price" inputmode="decimal" aria-label="Confirmed price, line {{ line.line_no }}" value="{{ r.price }}"></td>
+      <td><input name="line_promised" type="date" aria-label="Promised date, line {{ line.line_no }}" value="{{ r.promised }}"></td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  <div class="card">
+    <label class="check"><input type="checkbox" name="without_details" value="1" {{ "checked" if header.without_details }}> The vendor acknowledged the order but gave no quantities, prices or dates (marks every line without figures as acknowledged)</label>
+    <label for="reference">Vendor's reference (optional)</label>
+    <input id="reference" name="reference" maxlength="64" value="{{ header.reference or '' }}">
+  </div>
+  <p class="form-actions"><button class="primary" type="submit">{{ icon("check") }}Record acknowledgement</button>
+    <a class="button" href="/orders/{{ order.id }}">Cancel</a></p>
+</form>
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block title %}Record invoice · {{ app_name }}{% endblock %}
+{% block content %}
+<p class="muted"><a href="/orders">Purchase orders</a> / <a href="/orders/{{ order.id }}">PO {{ order.po_number }}</a> /</p>
+<h1>Record an invoice</h1>
+<p>Fill in a quantity for each line the invoice covers. The price starts as the price on the PO: change it to what the invoice says.</p>
+{% if errors %}
+<div class="error" role="alert">{{ icon("alert") }}<div>{% if errors|length == 1 %}{{ errors[0] }}{% else %}Please fix these:<ul>{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}</div></div>
+{% endif %}
+<form method="post" action="/orders/{{ order.id }}/invoices">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <div class="card">
+    <div class="form-row">
+      <div><label for="invoice_number">Invoice number</label><input id="invoice_number" name="invoice_number" required maxlength="64" value="{{ header.invoice_number or '' }}" autofocus></div>
+      <div><label for="invoice_date">Invoice date</label><input id="invoice_date" name="invoice_date" type="date" value="{{ header.invoice_date or '' }}"></div>
+      <div><label for="total">Total as written ({{ order.currency }})</label><input id="total" name="total" inputmode="decimal" value="{{ header.total or '' }}"></div>
+    </div>
+    <p class="muted">The total is kept as written, with no tax figure for now.</p>
+  </div>
+  <div class="table-wrap">
+  <table class="entry">
+    <thead><tr><th>#</th><th>Item</th><th class="num">Ordered</th><th class="num">Invoiced so far</th><th>Quantity on this invoice</th><th>Unit price</th></tr></thead>
+    <tbody>
+    {% for line in lines %}
+    {% set r = rows[line.id] %}
+    <tr>
+      <td>{{ line.line_no }}<input type="hidden" name="line_id" value="{{ line.id }}"></td>
+      <td>{{ line.item }}</td>
+      <td class="num">{{ line.ordered_qty|quantity }} {{ line.unit }}</td>
+      <td class="num">{{ states[line.id].facts.invoiced|quantity }}</td>
+      <td><input name="line_qty" inputmode="decimal" aria-label="Quantity invoiced, line {{ line.line_no }}" value="{{ r.qty }}"></td>
+      <td><input name="line_price" inputmode="decimal" aria-label="Unit price, line {{ line.line_no }}" value="{{ r.price }}"></td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  <p class="form-actions"><button class="primary" type="submit">{{ icon("check") }}Record invoice</button>
+    <a class="button" href="/orders/{{ order.id }}">Cancel</a></p>
+</form>
+{% endblock %}

@@ -11,6 +11,7 @@ from starlette.concurrency import run_in_threadpool
 from starlette.datastructures import UploadFile
 
 from po_dashboard.db.ledger import POLine, PurchaseOrder, Vendor
+from po_dashboard.ledger import events
 from po_dashboard.ledger import orders as rules
 from po_dashboard.ledger.errors import LedgerError
 from po_dashboard.ledger.status import LineState, line_states, po_state, po_states
@@ -151,15 +152,25 @@ async def import_file(request: Request, db: Db, user: CurrentUser) -> Response:
     return RedirectResponse(f"/orders?imported={count}", status_code=303)
 
 
+def missing_order(request: Request, user: CurrentUser) -> HTMLResponse:
+    return render(request, "orders.html", user, 404, orders=[], line_counts={}, states={}, q="", imported=None,
+                  error="That purchase order was not found.")  # fmt: skip
+
+
+def order_view(request: Request, db: Db, user: CurrentUser, order: PurchaseOrder, error: str | None = None,
+               status: int = 200) -> HTMLResponse:  # fmt: skip
+    vendor = db.get(Vendor, order.vendor_id)
+    lines = db.scalars(select(POLine).where(POLine.po_id == order.id).order_by(POLine.line_no)).all()
+    states: dict[int, LineState] = line_states(db, order.id)
+    summary = po_state(states[line.id] for line in lines)
+    return render(
+        request, "order_detail.html", user, status, order=order, vendor=vendor, lines=lines, states=states,
+        summary=summary, notes=events.line_warnings(db, order), promised=events.promised_history(db, order),
+        history=events.entries(db, order), error=error,
+    )  # fmt: skip
+
+
 @router.get("/{po_id}", response_class=HTMLResponse)
 def order_page(request: Request, db: Db, user: CurrentUser, po_id: int) -> HTMLResponse:
     order = db.get(PurchaseOrder, po_id)
-    if order is None:
-        return render(request, "orders.html", user, 404, orders=[], line_counts={}, states={}, q="", imported=None,
-                      error="That purchase order was not found.")  # fmt: skip
-    vendor = db.get(Vendor, order.vendor_id)
-    lines = db.scalars(select(POLine).where(POLine.po_id == po_id).order_by(POLine.line_no)).all()
-    states: dict[int, LineState] = line_states(db, po_id)
-    summary = po_state(states[line.id] for line in lines)
-    return render(request, "order_detail.html", user, order=order, vendor=vendor, lines=lines, states=states,
-                  summary=summary)  # fmt: skip
+    return missing_order(request, user) if order is None else order_view(request, db, user, order)

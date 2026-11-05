@@ -36,6 +36,16 @@ Open http://127.0.0.1:8000 and sign in. If you restart the server, run the `cd` 
 | 15 | Search the PO list for `2001`, then for `%`. | `2001` finds PO-2001. `%` finds nothing ("No purchase orders match"). | | |
 | 16 | Add a vendor named `<b>Bold</b>`. Look at the vendor list and at the vendor page. | The name is shown literally as `<b>Bold</b>`, not in bold. | | |
 | 17 | Sign in as a **buyer** (add one on **People**), and open **Vendors** and **Purchase orders**. | A buyer can use all of these pages, not only an admin. | | |
+| 18 | Open PO-1001 (from step 8). Click **Record acknowledgement**. | A form listing each line, with **the cursor already in the first Confirmed quantity box**. | | |
+| 19 | Enter confirmed quantity `6` (the PO ordered `10.5`), price `2.75`, promised date in the future. Record. | Back on the PO page: the line shows **Acknowledged**, the promised date, a note "The vendor's price 2.75 differs from the PO price 2.5", and "confirmed 6, not 10.5. Update the original purchase order". | | |
+| 20 | Record a **second** acknowledgement with a promised date **later** than the first. | Both dates are shown, joined by an arrow, with a red **slipped** label on the later one. | | |
+| 21 | Click **Record shipment**: carrier `UPS`, tracking `1Z999`, quantity `3`. Record. | Status becomes **Partially shipped**. The history lists the shipment with who entered it. | | |
+| 22 | Record another shipment of `3`. | Status becomes **Shipped**. | | |
+| 23 | Click **Record invoice**, number `INV-1`, quantity `6`. Notice the price box starts at the PO price. Record. | The line still shows **Shipped** with open quantity `4.5`, because it was confirmed short. The update-the-PO note stays until someone settles it. | | |
+| 24 | Record an invoice `INV-2` for quantity `20`, price `3`. | Recorded, with notes "Invoiced ... more than the 10.5 ordered" and "above the PO price". The line becomes **Closed**. | | |
+| 25 | In **History**, remove `INV-2`: first press Remove with the reason empty, then with a reason. | Without a reason the browser asks for one. With one, the entry goes, the notes clear and the line returns to **Shipped**. | | |
+| 26 | Press **Reload** after recording or removing anything. | Nothing is recorded or removed a second time. | | |
+| 27 | Make a mistake on purpose in a form (a negative quantity, a date typed as `soon`). | The message names the line and the field, and every box keeps what you typed. | | |
 
 ## Things to look at while you do it
 

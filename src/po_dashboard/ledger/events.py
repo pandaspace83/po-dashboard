@@ -1,0 +1,367 @@
+"""Recording what a vendor said and did, by hand: acknowledgements, shipments and invoices (PD-1.4).
+
+A person typing an entry is the person accepting it, so each entry is stored as accepted, with who and when. Entries are
+never edited. A wrong one is removed with a reason, and the audit trail keeps what it said. Status follows
+automatically (ledger/status.py). Odd figures are flagged, not refused: a vendor may really bill more than was ordered.
+"""
+
+from __future__ import annotations
+
+from collections.abc import Callable, Sequence
+from dataclasses import dataclass, field
+from datetime import date, datetime
+from decimal import Decimal
+from typing import Literal
+
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from po_dashboard.auth.service import audit
+from po_dashboard.db.base import utcnow
+from po_dashboard.db.ledger import (
+    AckLine,
+    Acknowledgement,
+    Invoice,
+    InvoiceLine,
+    POLine,
+    PromisedDateHistory,
+    PurchaseOrder,
+    Shipment,
+    ShipmentLine,
+)
+from po_dashboard.db.models import AppUser
+from po_dashboard.db.types import Money, Quantity
+from po_dashboard.ledger.errors import LedgerError, number, text, when
+
+Kind = Literal["ack", "shipment", "invoice"]
+KINDS: tuple[Kind, ...] = ("ack", "shipment", "invoice")
+
+
+@dataclass(frozen=True)
+class AckInput:
+    po_line_id: int
+    confirmed_qty: Decimal | None = None
+    confirmed_price: Decimal | None = None
+    promised_date: date | None = None
+
+
+@dataclass(frozen=True)
+class ShipLineInput:
+    po_line_id: int
+    qty: Decimal
+    eta: date | None = None
+
+
+@dataclass(frozen=True)
+class InvoiceLineInput:
+    po_line_id: int
+    qty: Decimal
+    price: Decimal
+
+
+def _blank(*values: str | None) -> bool:
+    return not any((value or "").strip() for value in values)
+
+
+def _labelled[T](label: str, build: Callable[[], T]) -> T:
+    try:
+        return build()
+    except LedgerError as problem:
+        raise LedgerError(f"{label}: {problem}") from None
+
+
+def parse_ack_line(label: str, po_line_id: int, qty: str, price: str, promised: str) -> AckInput | None:
+    """None when the row is empty. A confirmed quantity of 0 is allowed: the vendor can not supply the line."""
+    if _blank(qty, price, promised):
+        return None
+    return _labelled(
+        label,
+        lambda: AckInput(
+            po_line_id,
+            number(qty, "Confirmed quantity", Quantity, positive=False) if (qty or "").strip() else None,
+            number(price, "Confirmed price", Money, positive=False) if (price or "").strip() else None,
+            when(promised, "Promised date"),
+        ),
+    )
+
+
+def parse_ship_line(label: str, po_line_id: int, qty: str, eta: str) -> ShipLineInput | None:
+    if _blank(qty, eta):
+        return None
+    return _labelled(
+        label,
+        lambda: ShipLineInput(po_line_id, number(qty, "Quantity", Quantity, positive=True), when(eta, "Arrival date")),
+    )
+
+
+def parse_invoice_line(label: str, po_line_id: int, qty: str, price: str) -> InvoiceLineInput | None:
+    """A row counts only when its quantity is filled. The form pre-fills the price, so a price alone is nothing."""
+    if _blank(qty):
+        return None
+    return _labelled(
+        label,
+        lambda: InvoiceLineInput(
+            po_line_id, number(qty, "Quantity", Quantity, positive=True), number(price, "Price", Money, positive=False)
+        ),
+    )
+
+
+def _check_lines(db: Session, order: PurchaseOrder, line_ids: Sequence[int]) -> None:
+    if not line_ids:
+        raise LedgerError("Fill in at least one line.")
+    if len(set(line_ids)) != len(line_ids):
+        raise LedgerError("A line appears twice.")
+    own = set(db.scalars(select(POLine.id).where(POLine.po_id == order.id)))
+    if not set(line_ids) <= own:
+        raise LedgerError("A line does not belong to this purchase order.")
+
+
+def record_ack(
+    db: Session, order: PurchaseOrder, lines: Sequence[AckInput], *, without_details: bool = False,
+    source_ref: str | None = None, actor: AppUser | None = None, client_address: str | None = None,
+) -> Acknowledgement:  # fmt: skip
+    """The vendor acknowledged the order. `without_details` records every unlisted line as acknowledged, no figures."""
+    entries = list(lines)
+    if without_details:
+        listed = {entry.po_line_id for entry in entries}
+        everything = db.scalars(select(POLine.id).where(POLine.po_id == order.id).order_by(POLine.line_no))
+        entries += [AckInput(line_id) for line_id in everything if line_id not in listed]
+    _check_lines(db, order, [entry.po_line_id for entry in entries])
+    ack = Acknowledgement(
+        po_id=order.id, source_ref=text(source_ref, "Reference", longest=64), accepted_by=actor.id if actor else None,
+        accepted_at=utcnow(),
+    )  # fmt: skip
+    db.add(ack)
+    db.flush()
+    for entry in entries:
+        db.add(
+            AckLine(
+                ack_id=ack.id,
+                po_line_id=entry.po_line_id,
+                confirmed_qty=entry.confirmed_qty,
+                confirmed_price=entry.confirmed_price,
+                promised_date=entry.promised_date,
+            )  # fmt: skip
+        )
+        if entry.promised_date is not None:
+            db.add(PromisedDateHistory(po_line_id=entry.po_line_id, promised_date=entry.promised_date, ack_id=ack.id))
+    db.flush()
+    audit(db, "ack.record", actor, f"po:{order.id}", client_address, after={"entry": ack.id, "lines": len(entries)})
+    return ack
+
+
+def record_shipment(
+    db: Session, order: PurchaseOrder, lines: Sequence[ShipLineInput], *, carrier: str | None = None,
+    tracking_number: str | None = None, shipped_at: str | None = None, eta: str | None = None,
+    actor: AppUser | None = None, client_address: str | None = None,
+) -> Shipment:  # fmt: skip
+    """A shipping notice. Its arrival date applies to every line unless a line has its own (REQ-SHP-02)."""
+    header = {
+        "carrier": text(carrier, "Carrier", longest=100),
+        "tracking_number": text(tracking_number, "Tracking number", longest=100),
+        "shipped_at": when(shipped_at, "Shipped on"),
+        "eta": when(eta, "Expected arrival"),
+    }
+    _check_lines(db, order, [entry.po_line_id for entry in lines])
+    shipment = Shipment(po_id=order.id, accepted_by=actor.id if actor else None, accepted_at=utcnow(), **header)
+    db.add(shipment)
+    db.flush()
+    for entry in lines:
+        db.add(ShipmentLine(shipment_id=shipment.id, po_line_id=entry.po_line_id, qty=entry.qty, eta=entry.eta))
+    db.flush()
+    audit(
+        db,
+        "shipment.record",
+        actor,
+        f"po:{order.id}",
+        client_address,
+        after={"entry": shipment.id, "lines": len(lines)},
+    )
+    return shipment
+
+
+def record_invoice(
+    db: Session, order: PurchaseOrder, lines: Sequence[InvoiceLineInput], *, invoice_number: str | None,
+    invoice_date: str | None = None, total: str | None = None, actor: AppUser | None = None,
+    client_address: str | None = None,
+) -> Invoice:  # fmt: skip
+    """An invoice. The total is kept as written; there is no tax field until OPEN-11 is answered."""
+    number_ = text(invoice_number, "Invoice number", longest=64, required=True) or ""
+    dated = when(invoice_date, "Invoice date")
+    written_total = number(total, "Total", Money, positive=False) if (total or "").strip() else None
+    _check_lines(db, order, [entry.po_line_id for entry in lines])
+    taken = db.scalars(select(Invoice.invoice_number).where(Invoice.po_id == order.id))
+    if number_.lower() in {existing.lower() for existing in taken}:
+        raise LedgerError(f"Invoice {number_} is already recorded for this purchase order.")
+    invoice = Invoice(
+        po_id=order.id, invoice_number=number_, invoice_date=dated, total=written_total,
+        accepted_by=actor.id if actor else None, accepted_at=utcnow(),
+    )  # fmt: skip
+    db.add(invoice)
+    db.flush()
+    for entry in lines:
+        db.add(InvoiceLine(invoice_id=invoice.id, po_line_id=entry.po_line_id, qty=entry.qty, price=entry.price))
+    db.flush()
+    audit(db, "invoice.record", actor, f"po:{order.id}", client_address,
+          after={"entry": invoice.id, "invoice_number": number_, "lines": len(lines)})  # fmt: skip
+    return invoice
+
+
+# ---- reading it back
+
+
+def _shown(value: Decimal) -> str:
+    return format(value.normalize(), "f")
+
+
+def line_warnings(db: Session, order: PurchaseOrder) -> dict[int, list[str]]:
+    """Figures that differ from the PO. Shown next to the line; nothing is blocked (REQ-ACK-06, REQ-INV-05)."""
+    notes: dict[int, list[str]] = {}
+    lines = {line.id: line for line in db.scalars(select(POLine).where(POLine.po_id == order.id))}
+
+    def note(line_id: int, message: str) -> None:
+        if message not in notes.setdefault(line_id, []):
+            notes[line_id].append(message)
+
+    latest_price: dict[int, Decimal] = {}
+    acks = (
+        select(AckLine.po_line_id, AckLine.confirmed_price)
+        .join(Acknowledgement)
+        .where(Acknowledgement.po_id == order.id)
+        .order_by(Acknowledgement.accepted_at, Acknowledgement.id)
+    )
+    for line_id, price in db.execute(acks):
+        if price is not None:
+            latest_price[line_id] = price
+    for line_id, price in latest_price.items():
+        if price != lines[line_id].unit_price:
+            note(
+                line_id,
+                f"The vendor's price {_shown(price)} differs from the PO price {_shown(lines[line_id].unit_price)}.",
+            )
+
+    shipped: dict[int, Decimal] = {}
+    for line_id, qty in db.execute(
+        select(ShipmentLine.po_line_id, ShipmentLine.qty).join(Shipment).where(Shipment.po_id == order.id)
+    ):
+        shipped[line_id] = shipped.get(line_id, Decimal(0)) + qty
+    invoiced: dict[int, Decimal] = {}
+    for line_id, qty, price in db.execute(
+        select(InvoiceLine.po_line_id, InvoiceLine.qty, InvoiceLine.price)
+        .join(Invoice)
+        .where(Invoice.po_id == order.id)
+    ):
+        invoiced[line_id] = invoiced.get(line_id, Decimal(0)) + qty
+        if price > lines[line_id].unit_price:
+            note(line_id, f"Invoiced at {_shown(price)}, above the PO price {_shown(lines[line_id].unit_price)}.")
+    for line_id, line in lines.items():
+        if shipped.get(line_id, Decimal(0)) > line.ordered_qty:
+            note(line_id, f"Shipped {_shown(shipped[line_id])}, more than the {_shown(line.ordered_qty)} ordered.")
+        if invoiced.get(line_id, Decimal(0)) > line.ordered_qty:
+            note(line_id, f"Invoiced {_shown(invoiced[line_id])}, more than the {_shown(line.ordered_qty)} ordered.")
+    return notes
+
+
+@dataclass(frozen=True)
+class PromisedStep:
+    promised: date
+    slipped: bool  # later than the date before it (REQ-ACK-04)
+
+
+def promised_history(db: Session, order: PurchaseOrder) -> dict[int, list[PromisedStep]]:
+    steps: dict[int, list[PromisedStep]] = {}
+    history = (
+        select(PromisedDateHistory.po_line_id, PromisedDateHistory.promised_date)
+        .join(POLine, POLine.id == PromisedDateHistory.po_line_id)
+        .where(POLine.po_id == order.id)
+        .order_by(PromisedDateHistory.recorded_at, PromisedDateHistory.id)
+    )
+    for line_id, promised in db.execute(history):
+        previous = steps.get(line_id, [])
+        steps.setdefault(line_id, []).append(
+            PromisedStep(promised, bool(previous) and promised > previous[-1].promised)
+        )
+    return steps
+
+
+@dataclass
+class EntryView:
+    kind: Kind
+    id: int
+    at: datetime
+    who: str | None
+    title: str
+    details: list[str] = field(default_factory=list)
+
+
+def entries(db: Session, order: PurchaseOrder) -> list[EntryView]:
+    """Everything recorded against the PO, oldest first, for the history list."""
+    people = {user.id: user.email for user in db.scalars(select(AppUser))}
+    numbers = {line.id: line.line_no for line in db.scalars(select(POLine).where(POLine.po_id == order.id))}
+    found: list[EntryView] = []
+
+    for ack in db.scalars(select(Acknowledgement).where(Acknowledgement.po_id == order.id)):
+        view = EntryView("ack", ack.id, ack.accepted_at, people.get(ack.accepted_by or 0), "Acknowledgement")
+        for ack_row in db.scalars(select(AckLine).where(AckLine.ack_id == ack.id)):
+            parts = []
+            if ack_row.confirmed_qty is not None:
+                parts.append(f"confirmed {_shown(ack_row.confirmed_qty)}")
+            if ack_row.confirmed_price is not None:
+                parts.append(f"price {_shown(ack_row.confirmed_price)}")
+            if ack_row.promised_date is not None:
+                parts.append(f"promised {ack_row.promised_date.isoformat()}")
+            view.details.append(f"Line {numbers[ack_row.po_line_id]}: {', '.join(parts) or 'acknowledged'}")
+        found.append(view)
+
+    for ship in db.scalars(select(Shipment).where(Shipment.po_id == order.id)):
+        label = " ".join(part for part in (ship.carrier, ship.tracking_number) if part)
+        view = EntryView(
+            "shipment", ship.id, ship.accepted_at, people.get(ship.accepted_by or 0), f"Shipment {label}".strip()
+        )
+        if ship.eta:
+            view.details.append(f"Expected {ship.eta.isoformat()}")
+        for ship_row in db.scalars(select(ShipmentLine).where(ShipmentLine.shipment_id == ship.id)):
+            extra = f", expected {ship_row.eta.isoformat()}" if ship_row.eta else ""
+            view.details.append(f"Line {numbers[ship_row.po_line_id]}: {_shown(ship_row.qty)}{extra}")
+        found.append(view)
+
+    for bill in db.scalars(select(Invoice).where(Invoice.po_id == order.id)):
+        view = EntryView(
+            "invoice", bill.id, bill.accepted_at, people.get(bill.accepted_by or 0), f"Invoice {bill.invoice_number}"
+        )
+        if bill.total is not None:
+            view.details.append(f"Total {_shown(bill.total)} {order.currency}")
+        for bill_row in db.scalars(select(InvoiceLine).where(InvoiceLine.invoice_id == bill.id)):
+            line_no = numbers[bill_row.po_line_id]
+            view.details.append(f"Line {line_no}: {_shown(bill_row.qty)} at {_shown(bill_row.price)}")
+        found.append(view)
+
+    return sorted(found, key=lambda view: (view.at, view.kind, view.id))
+
+
+def remove_entry(
+    db: Session,
+    order: PurchaseOrder,
+    kind: str,
+    entry_id: int,
+    reason: str | None,
+    actor: AppUser | None = None,
+    client_address: str | None = None,
+) -> None:
+    """Take back an entry made by mistake. The reason is required and the audit trail keeps what the entry said."""
+    why = text(reason, "Reason", longest=500, required=True)
+    match = next((view for view in entries(db, order) if view.kind == kind and view.id == entry_id), None)
+    if match is None:
+        raise LedgerError("That entry was not found on this purchase order.")
+    if kind == "ack":
+        for history in db.scalars(select(PromisedDateHistory).where(PromisedDateHistory.ack_id == entry_id)):
+            db.delete(history)
+        db.flush()
+        db.delete(db.get(Acknowledgement, entry_id))
+    elif kind == "shipment":
+        db.delete(db.get(Shipment, entry_id))
+    else:
+        db.delete(db.get(Invoice, entry_id))
+    db.flush()
+    audit(db, f"{kind}.remove", actor, f"po:{order.id}", client_address,
+          before={"title": match.title, "details": match.details}, after={"reason": why})  # fmt: skip

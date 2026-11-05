@@ -289,6 +289,14 @@ Server-rendered pages; HTMX updates parts of a page (accept a document, snooze a
 | Sign-in, Users | sign-in with a second factor; admins add and disable people |
 | Settings and health | interval, thresholds, model name, scan status, backup status, audit trail |
 
+**Recording by hand (PD-1.4, DEC-38).** `ledger/events.py` holds the rules and `pages/entries.py` the pages: a form for each of an
+acknowledgement, a shipment and an invoice, one row per PO line, empty rows skipped. Entries are stored as accepted by the
+person who typed them. They are not edited; `remove_entry` deletes one with a required reason and writes what it said to the
+audit trail, and the status engine recomputes. Flags (a different price, shipping or invoicing more than ordered, a later
+promised date) are computed on read in `line_warnings` and `promised_history` and shown beside the line; nothing is blocked.
+Every form post redirects, so Reload repeats nothing; a posted form with uneven columns, odd line ids or another PO's lines
+is refused with a 400 and the page shows every line again.
+
 **File upload (PD-1.2).** A page policy with no inline script means a plain multipart form cannot carry the security token
 (the gate reads a form field only from a urlencoded form). So `static/app.js`, a small file from this site, sends a form
 marked `data-upload` with `fetch`, the token in the `X-CSRF-Token` header and the Origin the browser adds, then follows the
