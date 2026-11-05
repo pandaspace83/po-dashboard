@@ -1,29 +1,34 @@
+{% from "_icons.html" import icon %}
+{% from "_brand.html" import logo %}
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}PO Dashboard{% endblock %}</title>
+  <title>{% block title %}{{ app_name }}{% endblock %}</title>
+  {% if has_logo %}<link rel="icon" type="image/png" href="/static/brand/favicon.png">{% endif %}
   <link rel="stylesheet" href="/static/app.css">
 </head>
 <body>
-<main>
 {% block nav %}
 {% if me %}
+<header class="topbar">
 <nav aria-label="Main">
-  <strong>PO Dashboard</strong>
-  <a href="/">Home</a>
-  {% if me.role == 'admin' %}<a href="/admin/users">People</a>{% endif %}
+  <a class="brand" href="/">{{ logo() }}<span class="brand-sub">Internal Dashboard</span></a>
+  <a class="navlink" href="/" {% if request.url.path == '/' %}aria-current="page"{% endif %}>{{ icon("home") }}Home</a>
+  {% if me.role == 'admin' %}<a class="navlink" href="/admin/users" {% if request.url.path.startswith('/admin/users') %}aria-current="page"{% endif %}>{{ icon("users") }}People</a>{% endif %}
   <span class="spacer"></span>
-  <span>{{ me.email }}</span>
-  <a href="/change-password">Change password</a>
+  <span class="who">{{ icon("user") }}<span>{{ me.email }}</span></span>
+  <a class="navlink" href="/change-password" {% if request.url.path == '/change-password' %}aria-current="page"{% endif %}>{{ icon("key") }}Change password</a>
   <form method="post" action="/sign-out" class="inline">
     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-    <button type="submit">Sign out</button>
+    <button type="submit" class="quiet">{{ icon("logout") }}Sign out</button>
   </form>
 </nav>
+</header>
 {% endif %}
 {% endblock %}
+<main>
 {% block content %}{% endblock %}
 </main>
 </body>

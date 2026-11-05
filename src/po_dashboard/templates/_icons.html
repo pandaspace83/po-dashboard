@@ -1,0 +1,24 @@
+{# Inline icons, drawn here so nothing is fetched from outside (DEC-01) and the page policy needs no exceptions.
+   Style comes from the .icon class in app.css. Use: {% from "_icons.html" import icon %}{{ icon("home") }} #}
+{% macro icon(name) -%}
+<svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+{%- if name == "home" %}<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/>
+{%- elif name == "users" %}<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><circle cx="17" cy="9" r="2.5"/><path d="M17.5 14.2c2.5.3 4 2.1 4 5.3"/>
+{%- elif name == "key" %}<circle cx="8" cy="15" r="4"/><path d="m11 12 9-9"/><path d="m16 7 3 3"/><path d="m14 9 2 2"/>
+{%- elif name == "logout" %}<path d="M9 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h4"/><path d="m16 8 4 4-4 4"/><path d="M20 12H9"/>
+{%- elif name == "login" %}<path d="M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4"/><path d="m10 8-4 4 4 4"/><path d="M6 12h11"/>
+{%- elif name == "lock" %}<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>
+{%- elif name == "unlock" %}<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 7.5-2"/>
+{%- elif name == "user" %}<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/>
+{%- elif name == "user-plus" %}<circle cx="10" cy="8" r="4"/><path d="M2.5 21c0-4 3.3-6.5 7.5-6.5"/><path d="M19 8v6M16 11h6"/>
+{%- elif name == "refresh" %}<path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/>
+{%- elif name == "ban" %}<circle cx="12" cy="12" r="9"/><path d="m5.6 5.6 12.8 12.8"/>
+{%- elif name == "check" %}<path d="m5 12.5 4.5 4.5L19 7"/>
+{%- elif name == "check-circle" %}<circle cx="12" cy="12" r="9"/><path d="m8 12.5 3 3 5-6"/>
+{%- elif name == "alert" %}<circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5"/><path d="M12 16.5v.01"/>
+{%- elif name == "clock" %}<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>
+{%- elif name == "chip" %}<rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/>
+{%- elif name == "clipboard" %}<rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4.5h6V3H9z"/><path d="M9.5 11h5M9.5 15h5"/>
+{%- endif %}
+</svg>
+{%- endmacro %}

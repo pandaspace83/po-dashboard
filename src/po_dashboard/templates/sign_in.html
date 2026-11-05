@@ -1,19 +1,26 @@
 {% extends "base.html" %}
-{% block title %}Sign in - PO Dashboard{% endblock %}
+{% from "_icons.html" import icon %}{% from "_brand.html" import logo %}
+{% block title %}Sign in · {{ app_name }}{% endblock %}
 {% block content %}
+<div class="sign-in-page">
 <div class="card narrow">
-  <h1>PO Dashboard</h1>
+  <div class="login-brand">
+    {{ logo() }}
+    <p class="name">Internal Dashboard</p>
+    <p class="sub">Purchase orders and vendor follow-up</p>
+  </div>
   {% if no_accounts %}
   <p>No one has an account yet. At the office Mac, run <code>uv run po-dashboard user create-admin you@example.com</code>.</p>
   {% endif %}
-  {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+  {% if error %}<p class="error" role="alert">{{ icon("alert") }}<span>{{ error }}</span></p>{% endif %}
   <form method="post" action="/sign-in">
     <input type="hidden" name="csrf_token" value="{{ form_token }}">
     <label for="email">Email</label>
     <input id="email" name="email" type="email" autocomplete="username" required autofocus>
     <label for="password">Password</label>
     <input id="password" name="password" type="password" autocomplete="current-password" required>
-    <p><button class="primary" type="submit">Sign in</button></p>
+    <p class="form-actions"><button class="primary wide" type="submit">{{ icon("login") }}Sign in</button></p>
   </form>
+</div>
 </div>
 {% endblock %}

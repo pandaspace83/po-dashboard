@@ -1,12 +1,17 @@
 {% extends "base.html" %}
+{% from "_icons.html" import icon %}{% from "_brand.html" import logo %}
+{% block title %}Home · {{ app_name }}{% endblock %}
 {% block content %}
-<h1>PO Dashboard</h1>
-<div class="strip" role="status" aria-label="Health">
-  <span>App: <strong class="ok">ok</strong></span>
-  <span>Last scan: {{ health.last_scan }}</span>
-  <span>Model {{ health.model_name }}:
-    <strong class="{{ 'ok' if health.model == 'reachable' else 'bad' }}">{{ health.model }}</strong></span>
-  <span>v{{ version }}</span>
+<h1>Home</h1>
+<div class="tiles" role="status" aria-label="Health">
+  <div class="tile">{{ icon("check-circle") }}<div><span class="label">App</span><span class="value ok">ok</span></div></div>
+  <div class="tile">{{ icon("clock") }}<div><span class="label">Last scan</span><span class="value">{{ health.last_scan }}</span></div></div>
+  <div class="tile">{{ icon("chip") }}<div><span class="label">Model {{ health.model_name }}</span>
+    <span class="value {{ 'ok' if health.model == 'reachable' else 'bad' }}">{{ health.model }}</span></div></div>
 </div>
-<p>No purchase orders yet.</p>
+<div class="card empty">
+  {{ icon("clipboard") }}
+  <p><strong>No purchase orders yet.</strong></p>
+  <p class="version">Version {{ version }}</p>
+</div>
 {% endblock %}

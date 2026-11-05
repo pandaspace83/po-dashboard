@@ -47,8 +47,11 @@ The rest is following this plan, which suits Sonnet. I will say before each swit
   codes and the Keychain sealing key are paused (DEC-34)**; they are added when a second factor is settled.
 - [x] PD-1.9c Sign-in web: the default-deny gate, the sign-in and change-password pages (the code and enrol pages are paused), CSRF, Host and
   Origin checks, security headers, and the admin Users screen. `/health` shrinks to up or down. The allowed names and HTTPS are settings from the start (DEC-28).
-- [ ] PD-1.9d The security tests listed in ARCHITECTURE §10.1, and a run-through by hand in a real browser with a real
-  authenticator app.
+- [x] PD-1.9d The security tests listed in ARCHITECTURE §10.1 (124 tests pass; the items about the paused second
+  factor wait for it), and a run-through by hand in Safari and Chrome, [BROWSER_CHECK_SIGN_IN.md](../test-evidence/BROWSER_CHECK_SIGN_IN.md),
+  done 2026-11-04. **Step 15 (the 31 minute idle timeout) was skipped by the owner's choice**; the automated tests cover it,
+  and it is to be run by hand at a later stage. Small look-and-feel and behaviour tweaks the owner noticed are to be
+  listed and fixed in PD-1.8.
 
 **Step 2: tables.**
 
@@ -69,7 +72,8 @@ The rest is following this plan, which suits Sonnet. I will say before each swit
 
 - [ ] PD-1.6 Dashboard counts, open-items report, CSV export (REQ-DB-01, -03).
 - [ ] PD-1.7 Audit trail on every change (NFR-03) and its screen (admins). Sign-in events are written from PD-1.9b.
-- [ ] PD-1.8 The visual design pass: tokens, light and dark, status chips with text, phone width.
+- [x] PD-1.9e Name, look and feel (DEC-35): RaceSpec Internal Dashboard, light theme, inline icons, logo committed at the owner's say-so, the cursor ready in the first box of every form page. The sign-in and People pages are done.
+- [ ] PD-1.8 The visual design pass for the screens built after sign-in: tokens, status chips with text, phone width. The owner has more small tweaks to list.
 
 **Demo:** enter a PO, add a partial ack, a partial shipment and a partial invoice by hand; the line statuses, the
 dashboard and the open-items report follow.

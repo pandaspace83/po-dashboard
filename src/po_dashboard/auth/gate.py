@@ -6,6 +6,7 @@ paths in PUBLIC answer without a session. Pure ASGI, so it can read a form body 
 
 from __future__ import annotations
 
+import re
 import secrets
 from collections.abc import Awaitable, Callable, MutableMapping
 from http.cookies import SimpleCookie
@@ -25,8 +26,14 @@ Send = Callable[[MutableMapping[str, Any]], Awaitable[None]]
 
 SESSION_COOKIE = "po_session"
 SIGN_IN_COOKIE = "po_csrf"  # double-submit token for the sign-in form, where no session exists yet
-PUBLIC = frozenset({"/sign-in", "/health", "/static/app.css"})
-PENDING_ALLOWED = frozenset({"/change-password", "/sign-out", "/static/app.css"})
+# A host name or address, with an optional port, and nothing else (no user info, no path).
+HOST = re.compile(r"(?P<name>\[[0-9a-f:.]+\]|[a-z0-9]([a-z0-9.-]*[a-z0-9])?)(:[0-9]{1,5})?")
+PUBLIC = frozenset(
+    {"/sign-in", "/health", "/static/app.css", "/static/brand/logo.png", "/static/brand/favicon.png"}
+)
+PENDING_ALLOWED = frozenset(
+    {"/change-password", "/sign-out", "/static/app.css", "/static/brand/logo.png", "/static/brand/favicon.png"}
+)
 SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
 MAX_FORM = 64 * 1024
 CSP = (
@@ -35,7 +42,7 @@ CSP = (
 HEADERS = {
     b"content-security-policy": CSP.encode(),
     b"x-content-type-options": b"nosniff",
-    b"referrer-policy": b"no-referrer",
+    b"referrer-policy": b"same-origin",
 }
 
 
@@ -71,8 +78,8 @@ class Gate:
             await self._send_with_headers(send, path, status, out + (extra or []))
             await send({"type": "http.response.body", "body": body})
 
-        host = headers.get(b"host", b"").decode("latin-1").lower()
-        hostname = host.rsplit(":", 1)[0].strip("[]") if not host.startswith("[") else host.split("]")[0].strip("[")
+        match = HOST.fullmatch(headers.get(b"host", b"").decode("latin-1").lower())
+        hostname = match.group("name").strip("[]") if match else ""
         if hostname not in self.settings.accepted_hosts:
             await respond(400, b"Unknown host name.")
             return

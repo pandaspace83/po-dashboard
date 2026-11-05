@@ -1,14 +1,28 @@
 {% extends "base.html" %}
-{% block title %}People - PO Dashboard{% endblock %}
+{% from "_icons.html" import icon %}
+{% block title %}People · {{ app_name }}{% endblock %}
 {% block content %}
 <h1>People</h1>
-{% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+{% if error %}<p class="error" role="alert">{{ icon("alert") }}<span>{{ error }}</span></p>{% endif %}
 {% if shown %}
 <div class="card" role="status">
-  <p>Temporary password for <strong>{{ shown[0] }}</strong>. It is shown once, works for 72 hours, and must be changed at first sign-in.</p>
+  <p class="notice">{{ icon("key") }}<span>Temporary password for <strong>{{ shown[0] }}</strong>. It is shown once, works for 72 hours, and must be changed at first sign-in.</span></p>
   <p><code class="secret">{{ shown[1] }}</code></p>
 </div>
 {% endif %}
+<div class="card">
+  <div class="card-head">{{ icon("user-plus") }}<h2>Add a person</h2></div>
+  <form method="post" action="/admin/users/create">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="form-row">
+      <div><label for="email">Email</label><input id="email" name="email" type="email" required autofocus></div>
+      <div class="shrink"><label for="role">Role</label>
+        <select id="role" name="role">{% for r in roles %}<option value="{{ r }}">{{ r }}</option>{% endfor %}</select></div>
+      <div class="shrink"><button class="primary" type="submit">{{ icon("user-plus") }}Add and show temporary password</button></div>
+    </div>
+  </form>
+</div>
+<div class="table-wrap">
 <table>
   <thead><tr><th>Email</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
   <tbody>
@@ -21,31 +35,23 @@
         <select name="role" aria-label="Role for {{ p.email }}">
           {% for r in roles %}<option value="{{ r }}" {{ 'selected' if r == p.role }}>{{ r }}</option>{% endfor %}
         </select>
-        <button type="submit">Set</button>
+        <button type="submit" class="small">{{ icon("check") }}Save</button>
       </form>
     </td>
-    <td>{% if p.disabled_at %}<span class="bad">disabled</span>{% elif p.locked_until %}<span class="bad">locked</span>{% else %}<span class="ok">active</span>{% endif %}</td>
+    <td>{% if p.disabled_at %}<span class="pill bad">{{ icon("ban") }}disabled</span>{% elif p.locked_until %}<span class="pill bad">{{ icon("lock") }}locked</span>{% else %}<span class="pill ok">{{ icon("check-circle") }}active</span>{% endif %}</td>
     <td>
-      {% for action, label in (('reset', 'Reset password'), ('unlock', 'Unlock'), ('disable' if not p.disabled_at else 'enable', 'Disable' if not p.disabled_at else 'Enable')) %}
+      <div class="actions">
+      {% for action, label, glyph in (('reset', 'Reset password', 'refresh'), ('unlock', 'Unlock', 'unlock'), ('disable' if not p.disabled_at else 'enable', 'Disable' if not p.disabled_at else 'Enable', 'ban' if not p.disabled_at else 'check-circle')) %}
       <form method="post" action="/admin/users/{{ p.id }}/{{ action }}" class="inline">
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-        <button type="submit">{{ label }}</button>
+        <button type="submit" class="small">{{ icon(glyph) }}{{ label }}</button>
       </form>
       {% endfor %}
+      </div>
     </td>
   </tr>
   {% endfor %}
   </tbody>
 </table>
-<div class="card">
-  <h2>Add a person</h2>
-  <form method="post" action="/admin/users/create">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-    <label for="email">Email</label>
-    <input id="email" name="email" type="email" required>
-    <label for="role">Role</label>
-    <select id="role" name="role">{% for r in roles %}<option value="{{ r }}">{{ r }}</option>{% endfor %}</select>
-    <p><button class="primary" type="submit">Add and show temporary password</button></p>
-  </form>
 </div>
 {% endblock %}

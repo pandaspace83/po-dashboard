@@ -65,7 +65,7 @@ flowchart LR
 |---|---|---|---|
 | Language, tooling | Python 3.13, uv, Ruff, pytest | Assumed | DEC-02 |
 | Web | FastAPI, Uvicorn, Jinja2 templates, HTMX 2 (copied into `static/`) | Assumed | DEC-03: no build step, works offline |
-| Styling | Hand-written CSS with design tokens, light and dark | Assumed | DEC-03 |
+| Styling | Hand-written CSS with design tokens, light theme (DEC-35) | Assumed | DEC-03 |
 | Data | SQLite (WAL) through SQLAlchemy 2; Alembic migrations | Assumed | DEC-02, DEC-04 |
 | Scheduler | An asyncio task inside the app, one scan at a time, with a saved position per mail source | Assumed | Simple; no extra process |
 | Model runtime | Ollama on localhost, JSON-schema `format` parameter | Decided | DEC-05; structured output is Ollama's documented way to constrain an answer |
@@ -103,7 +103,7 @@ Tables, with the fields that matter. Every table has `id`, `created_at`; accepte
 | `alert` | po_line_id (or po_id), rule, state (open, snoozed, dismissed, cleared), snoozed_until, first_seen, last_changed |
 | `contact_log` | alert_id, user_id, note, contacted_at: "marked contacted" entries |
 | `app_user` | email (lower case, unique), password hash, role, sealed TOTP secret, totp_confirmed_at, last_totp_step, failed attempts, locked_until, must_change_password, temp_password_expires_at, disabled_at |
-| `session` | user_id, token hash, stage (pending, full), csrf_token, created_at, last_seen_at, expires_at |
+| `session` | user_id, token hash, stage (pending, full), csrf_token (stored in clear on purpose: useless without the session cookie), created_at, last_seen_at, expires_at |
 | `recovery_code` | user_id, code hash, used_at |
 | `audit_log` | at, user_id (empty for a command-line action or an unknown account), client_address, action, object, before, after |
 | `scan_state` | mailbox_id, folder, saved position (delta link or last uid), last_success, last_error |
@@ -274,7 +274,7 @@ Server-rendered pages; HTMX updates parts of a page (accept a document, snooze a
 | Sign-in, Users | sign-in with a second factor; admins add and disable people |
 | Settings and health | interval, thresholds, model name, scan status, backup status, audit trail |
 
-Design: one stylesheet with tokens, light and dark themes, a status colour and a text label on every status
+Design (DEC-35): one stylesheet with tokens, a light theme in RaceSpec red and charcoal, inline icons, the cursor ready in the first box of a form, a status colour and a text label on every status
 (colour is never the only signal), works from a phone width up, keyboard-reachable, checked with an automated
 accessibility test (NFR-12).
 
@@ -345,7 +345,7 @@ or sits beside them is decided then. The gate, sessions, roles, CSRF checks and 
 | Cookie | `HttpOnly`, `SameSite=Strict`, `Path=/`. `Secure` whenever HTTPS is on, so always on the office network. Off only on plain `http://127.0.0.1` during the build, because Safari drops `Secure` cookies there |
 | TOTP | RFC 6238: 6 digits, 30 seconds, one step of drift. **Each time step is accepted once** (`last_totp_step`), so an observed code cannot be replayed |
 | Recovery codes | 10 random codes, single use, stored as SHA-256 (they have enough randomness that a slow hash adds nothing) |
-| Temporary password | 20 random characters from an admin, shown once, expires in 72 hours, must be changed at first use |
+| Temporary password | 20 random characters from an admin, shown once (held in the server's memory for one page view or 60 seconds, after a redirect so that Reload repeats nothing), expires in 72 hours, must be changed at first use |
 | Sealing key | A Fernet key in the Keychain, entry "PO Dashboard sealing key". If it cannot be read, sign-in is refused with a clear message; the scanner carries on |
 
 **Enforcement.**
@@ -365,7 +365,7 @@ or sits beside them is decided then. The gate, sessions, roles, CSRF checks and 
 - **Headers.** A Content-Security-Policy of `default-src 'self'; frame-ancestors 'none'; base-uri 'none'; object-src
   'none'; form-action 'self'`, so no inline script or style (the Phase 0 page's inline style moves to `app.css`, and HTMX
   is set to `allowEval: false` and `includeIndicatorStyles: false`). `X-Content-Type-Options: nosniff`,
-  `Referrer-Policy: no-referrer`, and `Cache-Control: no-store` on signed-in pages.
+  `Referrer-Policy: same-origin` (not `no-referrer`: browsers then send `Origin: null` on form posts and the Origin check refuses a real sign-in), and `Cache-Control: no-store` on signed-in pages.
 - **`/health` says only up or down** to someone not signed in. Model and scan details are on signed-in pages, so the
   Phase 0 response shrinks. The API schema and docs routes are off.
 - **Nothing secret in logs or URLs.** Passwords, codes, tokens and seeds are never logged or put in a URL. Uvicorn's access

@@ -253,10 +253,13 @@ def test_a_disabled_person_is_cut_off_at_once(env, admin_client: TestClient) -> 
 
 def test_admin_adds_a_person_and_sees_the_temporary_password_once(admin_client: TestClient, env) -> None:  # noqa: ANN001
     response = post(admin_client, "/admin/users/create", {"email": "new@example.com", "role": "buyer"})
-    assert response.status_code == 200 and "Temporary password for" in response.text
-    secret = re.search(r'class="secret">([^<]+)<', response.text).group(1)  # type: ignore[union-attr]
+    assert response.status_code == 303 and response.headers["location"] == "/admin/users"
+    assert "Temporary password" not in response.text  # nothing secret in the answer to the form post
+    shown = admin_client.get("/admin/users")
+    assert "Temporary password for" in shown.text
+    secret = re.search(r'class="secret">([^<]+)<', shown.text).group(1)  # type: ignore[union-attr]
     assert len(secret) == 20
-    assert secret not in admin_client.get("/admin/users").text
+    assert secret not in admin_client.get("/admin/users").text  # Reload shows it no more
     assert sign_in(new_client(env[0]), "new@example.com", secret).headers["location"] == "/change-password"
 
 
@@ -286,7 +289,7 @@ def test_security_headers_are_on_public_responses(env, path: str) -> None:  # no
     assert "default-src 'self'" in response.headers["content-security-policy"]
     assert "frame-ancestors 'none'" in response.headers["content-security-policy"]
     assert response.headers["x-content-type-options"] == "nosniff"
-    assert response.headers["referrer-policy"] == "no-referrer"
+    assert response.headers["referrer-policy"] == "same-origin"
 
 
 def test_signed_in_pages_are_not_cached_and_refusals_carry_headers(admin_client: TestClient, env) -> None:  # noqa: ANN001
@@ -299,3 +302,166 @@ def test_no_page_has_inline_script_or_style(admin_client: TestClient) -> None:
     for path in ("/", "/admin/users", "/change-password", "/sign-in"):
         html = admin_client.get(path).text
         assert "<script" not in html and "<style" not in html and ' style="' not in html, path
+
+
+# ---- PD-1.9d: the remaining security tests from ARCHITECTURE §10.1
+
+
+@pytest.mark.parametrize(
+    ("host", "expected"),
+    [
+        ("127.0.0.1", 200), ("127.0.0.1:8000", 200), ("localhost:8000", 200), ("LOCALHOST", 200),
+        ("[::1]:8000", 200), ("[::1]", 200),
+        ("evil.example", 400), ("127.0.0.1.evil.example", 400), ("localhost.evil.example:8000", 400),
+        ("", 400), ("127.0.0.1:8000@evil.example", 400),
+    ],
+)  # fmt: skip
+def test_the_host_check_handles_ports_ipv6_and_lookalikes(env, host: str, expected: int) -> None:  # noqa: ANN001
+    client = TestClient(env[0], base_url="http://127.0.0.1", follow_redirects=False)
+    assert client.get("/health", headers={"Host": host}).status_code == expected
+
+
+def test_a_forged_or_malformed_session_cookie_is_just_no_session(env) -> None:  # noqa: ANN001
+    client = new_client(env[0])
+    for cookie in ("po_session=forged", "po_session=", "po_session=a; po_session=b", "\x00\x01garbage", "po_session"):
+        assert client.get("/", headers={"Cookie": cookie}).status_code == 401, cookie
+
+
+def test_an_oversized_form_is_refused_not_buffered_forever(env) -> None:  # noqa: ANN001
+    client = new_client(env[0])
+    form = client.get("/sign-in")
+    big = {"email": "a@example.com", "password": "x" * 100_000, "csrf_token": token_in(form.text)}
+    assert client.post("/sign-in", data=big, headers=ORIGIN).status_code == 403
+
+
+def test_the_session_token_changes_at_each_stage(env) -> None:  # noqa: ANN001
+    app, engine, _ = env
+    with Session(engine) as db:
+        _, temporary = service.create_user(db, "new@example.com", "buyer")
+    client = new_client(app)
+    first = sign_in(client, "new@example.com", temporary or "").cookies.get("po_session")
+    page = client.get("/change-password")
+    done = client.post(
+        "/change-password",
+        data={"csrf_token": token_in(page.text), "current": temporary or "", "new": "a brand new passphrase",
+              "again": "a brand new passphrase"},
+        headers=ORIGIN,
+    )  # fmt: skip
+    second = done.cookies.get("po_session")
+    assert first and second and first != second
+    stale = new_client(app)
+    assert stale.get("/", headers={"Cookie": f"po_session={first}"}).status_code == 401
+
+
+def test_a_new_sign_in_never_reuses_a_token(env) -> None:  # noqa: ANN001
+    tokens = {sign_in(new_client(env[0]), "boss@example.com").cookies.get("po_session") for _ in range(3)}
+    assert len(tokens) == 3 and None not in tokens
+
+
+def test_no_secret_is_in_the_database_file_or_the_logs(env, caplog: pytest.LogCaptureFixture, capsys) -> None:  # noqa: ANN001
+    app, engine, settings = env
+    caplog.set_level("DEBUG")
+    client = new_client(app)
+    resp = sign_in(client, "boss@example.com")
+    session_token = resp.cookies.get("po_session") or ""
+    post(client, "/admin/users/create", {"email": "new@example.com", "role": "buyer"})
+    temporary = re.search(r'class="secret">([^<]+)<', client.get("/admin/users").text).group(1)  # type: ignore[union-attr]
+    wrong = "a wrong guess that must not leak"
+    sign_in(new_client(app), "boss@example.com", wrong)
+    csrf = token_in(client.get("/").text)
+    engine.dispose()
+    data = b"".join(
+        p.read_bytes() for p in settings.data_dir.iterdir() if p.name.startswith("po-dashboard.db")
+    )
+    seen = caplog.text + capsys.readouterr().out + capsys.readouterr().err
+    for secret in (PW, wrong, temporary, session_token):
+        assert secret.encode() not in data, "found in the database files"
+    # The CSRF token is stored on purpose: it is useless without the session cookie, which only the browser holds.
+    for secret in (PW, wrong, temporary, session_token, csrf):
+        assert secret not in seen, "found in a log or the console"
+    assert b"$argon2id$" in data  # hashes are there, secrets are not
+
+
+def test_the_data_folder_and_database_stay_owner_only_after_use(env) -> None:  # noqa: ANN001
+    import stat
+
+    app, engine, settings = env
+    sign_in(new_client(app), "boss@example.com")
+    assert stat.S_IMODE(settings.data_dir.stat().st_mode) == 0o700
+    for p in settings.data_dir.iterdir():
+        assert stat.S_IMODE(p.stat().st_mode) & 0o077 == 0, p.name
+
+
+def test_a_get_never_changes_anything(env, admin_client: TestClient) -> None:  # noqa: ANN001
+    _, engine, _ = env
+    from sqlalchemy import func, select
+
+    from po_dashboard.db.models import AppUser, AuditLog
+
+    def snapshot() -> tuple[int, int]:
+        with Session(engine) as db:
+            return db.scalar(select(func.count(AppUser.id))) or 0, db.scalar(select(func.count(AuditLog.id))) or 0
+
+    before = snapshot()
+    for path in ("/", "/admin/users", "/change-password", "/sign-in", "/health"):
+        admin_client.get(path)
+    for path in ("/sign-out", "/admin/users/1/disable", "/admin/users/create"):
+        assert admin_client.get(path).status_code in (404, 405)
+    assert snapshot() == before
+
+
+def test_a_reload_after_adding_a_person_repeats_nothing(admin_client: TestClient) -> None:
+    post(admin_client, "/admin/users/create", {"email": "once@example.com", "role": "buyer"})
+    assert "Temporary password for" in admin_client.get("/admin/users").text
+    again = admin_client.get("/admin/users")  # what Reload now does
+    assert again.status_code == 200 and "Temporary password for" not in again.text and "already has" not in again.text
+
+
+def test_the_shown_password_expires_and_belongs_to_one_admin(admin_client: TestClient, monkeypatch) -> None:  # noqa: ANN001
+    from po_dashboard.pages import admin as admin_page
+
+    post(admin_client, "/admin/users/create", {"email": "slow@example.com", "role": "buyer"})
+    later = admin_page.time.monotonic() + admin_page.SHOWN_FOR_SECONDS + 1
+    monkeypatch.setattr(admin_page.time, "monotonic", lambda: later)
+    assert "Temporary password for" not in admin_client.get("/admin/users").text
+
+
+# ---- look and feel rules (PD-1.9e)
+
+
+def test_every_page_carries_the_product_name(env, admin_client: TestClient) -> None:  # noqa: ANN001
+    sign_in_page = new_client(env[0]).get("/sign-in", headers={"Accept": "text/html"})
+    assert "<title>Sign in · RaceSpec Internal Dashboard</title>" in sign_in_page.text
+    for path in ("/", "/admin/users", "/change-password"):
+        assert "RaceSpec Internal Dashboard</title>" in admin_client.get(path).text
+
+
+def test_the_cursor_is_ready_in_the_first_box_of_every_form_page(env, admin_client: TestClient) -> None:  # noqa: ANN001
+    pages = {
+        "/sign-in": new_client(env[0]).get("/sign-in").text,
+        "/change-password": admin_client.get("/change-password").text,
+        "/admin/users": admin_client.get("/admin/users").text,
+    }
+    for path, html in pages.items():
+        assert html.count(" autofocus") == 1, f"{path} must focus exactly one field"
+    first_input = re.search(r'<input id="(\w+)"[^>]*autofocus', pages["/change-password"])
+    assert first_input and first_input.group(1) == "current"
+
+
+def test_pages_use_no_inline_style_or_script(env, admin_client: TestClient) -> None:  # noqa: ANN001
+    """The Content-Security-Policy forbids both, so a page that used one would silently break."""
+    for path in ("/", "/admin/users", "/change-password"):
+        html = admin_client.get(path).text
+        assert " style=" not in html and "<script" not in html and " onclick=" not in html, path
+    assert " style=" not in new_client(env[0]).get("/sign-in").text
+
+
+def test_logo_files_are_public_and_the_page_works_without_them(env) -> None:  # noqa: ANN001
+    app = env[0]
+    client = new_client(app)
+    brand = app.state.templates.env.globals
+    if brand["has_logo"]:
+        assert client.get("/static/brand/logo.png").status_code == 200
+    brand["has_logo"] = False
+    page = client.get("/sign-in").text
+    assert "<img" not in page and "RaceSpec" in page

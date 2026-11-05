@@ -1,0 +1,8 @@
+{# The RaceSpec logo, if the owner has put one in static/brand/ (it is not kept in Git); otherwise a plain mark. #}
+{% macro logo() -%}
+{%- if has_logo -%}
+<img class="logo" src="/static/brand/logo.png" alt="RaceSpec">
+{%- else -%}
+<svg class="icon mark" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><ellipse cx="24" cy="24" rx="21" ry="8"/><circle cx="24" cy="24" r="3.5"/></svg><span class="brand-name">RaceSpec</span>
+{%- endif -%}
+{%- endmacro %}

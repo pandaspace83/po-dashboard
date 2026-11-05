@@ -17,6 +17,7 @@ from po_dashboard.db.migrate import upgrade
 from po_dashboard.pages import account, admin
 
 HERE = Path(__file__).parent
+APP_NAME = "RaceSpec Internal Dashboard"
 
 
 def create_app(settings: Settings | None = None, engine: Engine | None = None) -> FastAPI:
@@ -28,6 +29,9 @@ def create_app(settings: Settings | None = None, engine: Engine | None = None) -
     app.state.settings = settings
     app.state.engine = engine
     app.state.templates = Jinja2Templates(directory=HERE / "templates")
+    app.state.templates.env.globals.update(
+        app_name=APP_NAME, has_logo=(HERE / "static" / "brand" / "logo.png").is_file()
+    )
 
     @app.get("/health")
     def health() -> JSONResponse:

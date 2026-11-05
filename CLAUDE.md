@@ -45,3 +45,6 @@ and status: [docs/PLAN.md](docs/PLAN.md). Audit: [docs/AUDIT.md](docs/AUDIT.md).
 - `read -p` prints its prompt only on a terminal. Anything that must be stated goes through `echo`.
 - `ollama list | grep -q` can fail under `set -o pipefail`, because grep stops reading early. Read the list first.
 - Run a script before ticking its task. Three Phase 0 bugs were found only by running the real thing.
+- A test client that always sends a proper `Origin` cannot find browser behaviour. `Referrer-Policy: no-referrer` made
+  real browsers send `Origin: null` and the Origin check refused a real sign-in. Answer a form post with a redirect, so
+  Reload never repeats an action. Restart the server after every change; check its start time against the file.
