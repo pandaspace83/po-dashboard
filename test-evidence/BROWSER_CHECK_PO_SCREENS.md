@@ -65,4 +65,4 @@ unset PO_DASHBOARD_DATA
 
 ## Result
 
-Date: ______  Who: ______  Safari: pass / fail  Chrome: pass / fail  Notes (no real names or figures):
+Date: 2026-11-05  Who: owner  Safari: pass  Chrome: pass  Notes (no real names or figures): all steps done by the owner; two small fixes came out of it (domain already added, Saved note), committed in 0311dde.
