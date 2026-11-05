@@ -55,7 +55,7 @@ The rest is following this plan, which suits Sonnet. I will say before each swit
 
 **Step 2: tables.**
 
-- [ ] PD-1.1b The ledger tables and migrations for ARCHITECTURE §4, with exact decimals and a currency on each PO (DEC-24).
+- [x] PD-1.1b The ledger tables and migrations for ARCHITECTURE §4, with exact decimals and a currency on each PO (DEC-24). Built: vendors and their domains, POs and lines, acknowledgements, promised-date history, shipments and invoices (migration 0002, 43 tests). The mail, document, extraction and alert tables come with their own phases.
 
 **Step 3: status engine.**
 

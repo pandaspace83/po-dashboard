@@ -89,8 +89,8 @@ Tables, with the fields that matter. Every table has `id`, `created_at`; accepte
 | Table | Holds |
 |---|---|
 | `vendor` | name, contact name and email, `vendor_domain` (many), notes |
-| `purchase_order` | po_number (unique), vendor_id, date_sent, currency, buyer, status (derived), source (manual, csv, document) |
-| `po_line` | po_id, line_no, item, description, ordered_qty, unit, unit_price, requested_date, closed_reason (none, received, short, cancelled) |
+| `purchase_order` | po_number (unique), vendor_id, date_sent, currency, buyer, source (manual, csv, document), created_by. No status column: status is computed (§5) |
+| `po_line` | po_id, line_no, item, description, ordered_qty, unit, unit_price, requested_date; closed_reason (received, short, cancelled), closed_at, closed_by and close_note, all empty while the line is open and all required together once it is closed by hand |
 | `mailbox` | address, provider, connected_by, connected_at, state (connected, needs reconnect, disconnected). Its token or secret is in the Keychain, never here |
 | `source_message` | mailbox_id, folder, provider message id, sender, subject, received_at, raw_path, content_hash |
 | `source_document` | message_id, filename, kind, stored_path, content_hash, text_path, pages |
@@ -108,6 +108,16 @@ Tables, with the fields that matter. Every table has `id`, `created_at`; accepte
 | `audit_log` | at, user_id (empty for a command-line action or an unknown account), client_address, action, object, before, after |
 | `scan_state` | mailbox_id, folder, saved position (delta link or last uid), last_success, last_error |
 | `setting` | key, value (interval, thresholds, model name, allowed names) |
+
+**Built in PD-1.1b** (`db/ledger.py`, migration 0002): `vendor`, `vendor_domain`, `purchase_order`, `po_line`, `acknowledgement`,
+`ack_line`, `promised_date_history`, `shipment`, `shipment_line`, `invoice`, `invoice_line`. The rest of the table
+arrives with its phase (mail, Phase 3; documents and extraction, Phase 4; alerts, Phase 5). Until Phase 4,
+`source_document_id` on an acknowledgement, shipment or invoice is an empty number with no link, because entries are
+made by hand. Rules the database enforces itself: a unique PO number, a unique line number within a PO, a three-letter
+upper-case currency, a positive ordered, shipped and invoiced quantity, a price not below zero, a lower-case and unique
+vendor domain, and one invoice number per PO. **Deletes:** a PO's lines go with it, but a PO with an acknowledgement,
+shipment or invoice, a vendor with POs, and a line that anything refers to refuse to be deleted (a PO is cancelled, not
+deleted). Removing a person keeps what they recorded and empties the name.
 
 ### Quantities, money and tax (DEC-24, OPEN-11)
 
