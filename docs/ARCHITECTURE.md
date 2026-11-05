@@ -147,26 +147,30 @@ writing to a mailbox rarely send EDI. The fields above follow them so a real fee
 
 Status is computed from accepted facts. It is never stored as typed text, so it cannot drift from the evidence.
 
-For each line: `ordered`, `confirmed` (latest accepted ack, else none), `shipped` (sum of accepted shipment lines),
-`invoiced` (sum of accepted invoice lines).
+For each line: `ordered`, `confirmed` (the latest quantity stated in an accepted ack, else none; a later ack with no
+quantity keeps the earlier one), `shipped` (sum of accepted shipment lines), `invoiced` (sum of accepted invoice lines).
 
-`target` is `confirmed` if present, else `ordered`. The rows are checked from the top and the first match wins:
+`moved` is the larger of `shipped` and `invoiced`, because an invoice comes after the goods. `target` is the smaller of
+`confirmed` and `ordered`, or `ordered` if nothing is confirmed. The rows are checked from the top and the first match
+wins (`ledger/status.py`, DEC-36):
 
 | Status | Rule |
 |---|---|
 | Closed | `invoiced` ≥ `ordered`, or closed by hand: received, short, cancelled (reason and person recorded) |
-| Shipped | `shipped` > 0 and `shipped` ≥ target |
-| Partially shipped | 0 < `shipped` < target |
-| Acknowledged | an accepted ack and `shipped` = 0 |
+| Shipped | `moved` > 0 and `moved` ≥ target |
+| Partially shipped | 0 < `moved` < target |
+| Acknowledged | an accepted ack and `moved` = 0 |
 | Sent | anything else |
 
-**Assumed, for the owner to correct:** a shipment or invoice with no acknowledgement still moves the
-line, because the evidence wins over the missing step. A line confirmed at 0 stays Acknowledged, not Shipped, and raises
+**Confirmed by the owner (DEC-36):** a shipment or invoice with no acknowledgement still moves the line, because the
+evidence wins over the missing step. A line confirmed at 0 stays Acknowledged, not Shipped, and raises
 `unconfirmed_balance`. The first version of this table was unordered and contradicted itself on both cases.
 
 `open_qty` = `ordered` − `invoiced` for an open line. A PO is **Closed** when all its lines are closed, **Open** when
 any line is open, and shows "partially invoiced" when some but not all quantity is invoiced. A line confirmed short
-(100 ordered, 60 confirmed) stays open for the unconfirmed 40 and raises the `unconfirmed_balance` rule.
+(100 ordered, 60 confirmed) stays open for the unconfirmed 40 and raises the `unconfirmed_balance` rule, even after 60
+is shipped and invoiced: it shows Shipped with 40 open until a person closes it short. Nothing closes it automatically,
+so someone always decides about the missing quantity. A PO with no lines is Open.
 
 ## 6. Intake and extraction pipeline
 
@@ -256,7 +260,7 @@ condition never creates two. It clears itself when the condition clears. Default
 | `no_ack` | PO sent more than N days ago and no accepted acknowledgement | 2 business days |
 | `overdue` | line open, promised date (else requested date) passed, not fully shipped | 1 day grace |
 | `date_slip` | an accepted ack moved a promised date later | any slip |
-| `unconfirmed_balance` | an ack confirmed less than ordered, or gave no date | immediately |
+| `unconfirmed_balance` | an ack confirmed a different quantity from the PO (including 0), or gave no date. A different quantity tells the purchaser the original PO needs updating, outside this app (DEC-36) | immediately |
 | `shipment_late` | shipped, ETA passed, not invoiced | 2 days grace |
 | `due_soon` | promised date within N days and nothing shipped (a nudge before it is late) | 3 days |
 | `mismatch` | accepted ack or invoice differs from the PO in price, or bills more than ordered | immediately; a review flag, not a vendor follow-up |
@@ -483,7 +487,7 @@ po-dashboard/
     intake/      store, dedupe, text extraction
     extraction/  prompts.py (versioned), schema.py, extractor.py
     validation/  validator.py
-    ledger/      models, status.py, accept.py
+    ledger/      status.py, accept.py (the tables are in db/ledger.py)
     rules/       alerts.py, drafts.py
     models/      llm.py (the only module that calls Ollama)
     scheduler/   scanner loop

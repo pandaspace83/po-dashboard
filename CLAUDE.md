@@ -48,3 +48,5 @@ and status: [docs/PLAN.md](docs/PLAN.md). Audit: [docs/AUDIT.md](docs/AUDIT.md).
 - A test client that always sends a proper `Origin` cannot find browser behaviour. `Referrer-Policy: no-referrer` made
   real browsers send `Origin: null` and the Origin check refused a real sign-in. Answer a form post with a redirect, so
   Reload never repeats an action. Restart the server after every change; check its start time against the file.
+- Read new warnings in test output; don't just count passes. SQLAlchemy reads `cache_ok` from each `TypeDecorator` class
+  itself, so a subclass without it silently skips the query cache.

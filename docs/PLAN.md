@@ -1,8 +1,8 @@
 # PO Dashboard: Plan and To-Do
 
 > **Status, 2026-11-04:** Plan approved. **Phase 0 is built** except CI (PD-0.5), which needs a GitHub remote. **Phase 1
-> has started:** the documentation pass and the sign-in design are done; no Phase 1 code is written yet. The deployment
-> changed the same day (DEC-28 to DEC-32); this plan includes it, pending the owner's go-ahead.
+> is in progress:** sign-in, the ledger tables and the status engine are built; the PO screens are next. The deployment
+> changed the same day (DEC-28 to DEC-32), and this plan includes it.
 > **Sources:** [REQUIREMENTS.md](REQUIREMENTS.md), [ARCHITECTURE.md](ARCHITECTURE.md), [DECISIONS.md](DECISIONS.md).
 
 **How this file works.** Each task has an ID (`PD-3.2`) and a checkbox. Phases run in order and each ends with a demo
@@ -59,8 +59,8 @@ The rest is following this plan, which suits Sonnet. I will say before each swit
 
 **Step 3: status engine.**
 
-- [ ] PD-1.3 The status engine (§5) with unit tests for every row of the table, including short confirmation and
-  partial invoice.
+- [x] PD-1.3 The status engine (§5, DEC-36) with unit tests for every row of the table, including short confirmation and
+  partial invoice. Built: `ledger/status.py`, 43 tests; each rule was broken on purpose to confirm a test catches it.
 
 **Step 4: PO screens.**
 

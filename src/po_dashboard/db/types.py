@@ -47,10 +47,12 @@ class ScaledDecimal(TypeDecorator[Decimal]):
 class Quantity(ScaledDecimal):
     """Four decimal places."""
 
+    cache_ok = True  # not inherited: SQLAlchemy reads it from each class itself
     places = 4
 
 
 class Money(ScaledDecimal):
     """Six decimal places, for unit prices and amounts. The currency is on the purchase order."""
 
+    cache_ok = True
     places = 6

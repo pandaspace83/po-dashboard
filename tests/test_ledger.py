@@ -133,6 +133,12 @@ def test_a_float_in_a_row_stops_the_save(db: Session) -> None:
     db.rollback()
 
 
+@pytest.mark.parametrize("kind", [Quantity, Money])
+def test_queries_on_these_columns_can_be_cached(kind: type) -> None:
+    """SQLAlchemy reads cache_ok from the class itself; a subclass without it silently slows every query."""
+    assert kind.__dict__.get("cache_ok") is True
+
+
 def test_none_stays_none() -> None:
     assert Quantity().process_bind_param(None, None) is None and Quantity().process_result_value(None, None) is None
 

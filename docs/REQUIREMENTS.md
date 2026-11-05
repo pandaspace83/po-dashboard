@@ -73,7 +73,7 @@ appear in the open-items report.
 | ID | Requirement | Priority |
 |---|---|---|
 | REQ-INV-01 | From an invoice: invoice number, date, per PO line quantity and price. | Must |
-| REQ-INV-02 | A line closes when invoiced quantity reaches ordered quantity. A partial invoice leaves the other lines, and the unmet part of a line, open. | Must |
+| REQ-INV-02 | A line closes when invoiced quantity reaches ordered quantity. A partial invoice leaves the other lines, and the unmet part of a line, open. A line confirmed short or at zero never closes by itself: the purchaser is alerted that the original PO needs updating, and a person closes the line by hand (DEC-36). | Must |
 | REQ-INV-03 | A PO closes when all its lines are closed. | Must |
 | REQ-INV-04 | Manual actions on a line, each with a reason: mark received, close short, cancel. | Must |
 | REQ-INV-05 | Flag an invoice that bills more quantity or a higher price than the PO. | Should |
