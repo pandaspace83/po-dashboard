@@ -11,25 +11,41 @@
 </div>
 {% if error %}<p class="error" role="alert">{{ icon("alert") }}<span>{{ error }}</span></p>{% endif %}
 {% if imported is not none %}<p class="notice" role="status">{{ icon("check-circle") }}<span>Imported {{ imported }} purchase order{{ "" if imported == 1 else "s" }}.</span></p>{% endif %}
-<form method="get" action="/orders" class="search" role="search">
-  <label for="q" class="visually-hidden">Search by PO number or vendor</label>
-  <input id="q" name="q" type="search" placeholder="Search by PO number or vendor" value="{{ q }}" maxlength="100" autofocus>
-  <button type="submit">{{ icon("search") }}Search</button>
+{% if problems %}<div class="error" role="alert">{{ icon("alert") }}<div>{% for p in problems %}<div>{{ p }}</div>{% endfor %}</div></div>{% endif %}
+<form method="get" action="/orders" class="filters card" role="search">
+  <div class="form-row">
+    <div class="wide"><label for="q">Search</label><input id="q" name="q" type="search" placeholder="PO number or vendor" value="{{ f.q }}" maxlength="100" autofocus></div>
+    <div><label for="status">Status</label>
+      <select id="status" name="status"><option value="">Any</option>
+      {% for key, label in statuses.items() %}<option value="{{ key }}" {{ "selected" if f.status == key }}>{{ label }}</option>{% endfor %}</select></div>
+    <div><label for="vendor">Vendor</label>
+      <select id="vendor" name="vendor"><option value="">Any</option>
+      {% for v in vendors %}<option value="{{ v.id }}" {{ "selected" if f.vendor_id == v.id }}>{{ v.name }}</option>{% endfor %}</select></div>
+  </div>
+  <div class="form-row">
+    <div><label for="sent_from">Sent from</label><input id="sent_from" name="sent_from" type="date" value="{{ f.sent_from or '' }}"></div>
+    <div><label for="sent_to">Sent to</label><input id="sent_to" name="sent_to" type="date" value="{{ f.sent_to or '' }}"></div>
+    <div><label for="expected_from">Expected from</label><input id="expected_from" name="expected_from" type="date" value="{{ f.expected_from or '' }}"></div>
+    <div><label for="expected_to">Expected to</label><input id="expected_to" name="expected_to" type="date" value="{{ f.expected_to or '' }}"></div>
+    <div class="shrink"><label class="check"><input type="checkbox" name="late" value="1" {{ "checked" if f.late }}> Late only</label></div>
+  </div>
+  <p class="form-actions"><button class="primary" type="submit">{{ icon("search") }}Show</button> <a class="button" href="/orders">Clear</a></p>
 </form>
 {% if orders %}
 <div class="table-wrap">
 <table>
-  <thead><tr><th>PO</th><th>Vendor</th><th>Date sent</th><th>Currency</th><th>Lines</th><th>Status</th></tr></thead>
+  <thead><tr><th>PO</th><th>Vendor</th><th>Date sent</th><th>Currency</th><th>Lines</th><th>Next expected</th><th>Status</th></tr></thead>
   <tbody>
-  {% for o, vendor_name in orders %}
-  {% set st = states.get(o.id) %}
+  {% for row in orders %}
+  {% set o = row.order %}
   <tr>
     <td><a href="/orders/{{ o.id }}">{{ o.po_number }}</a></td>
-    <td>{{ vendor_name }}</td>
+    <td>{{ row.vendor_name }}</td>
     <td>{{ o.date_sent or "" }}</td>
     <td>{{ o.currency }}</td>
-    <td>{{ line_counts.get(o.id, 0) }}</td>
-    <td>{% if st and st.status.value == "Closed" %}<span class="pill ok">{{ icon("check-circle") }}Closed</span>{% else %}<span class="pill">{{ icon("clock") }}Open{% if st and st.partially_invoiced %}, partly invoiced{% endif %}</span>{% endif %}</td>
+    <td>{{ row.line_count }}</td>
+    <td>{{ row.next_expected or "" }}{% if row.late_lines %} <span class="pill bad">{{ icon("alert") }}{{ row.late_lines }} late, up to {{ row.days_late }} day{{ "" if row.days_late == 1 else "s" }}</span>{% endif %}</td>
+    <td>{% if row.state.status.value == "Closed" %}<span class="pill ok">{{ icon("check-circle") }}Closed</span>{% else %}<span class="pill">{{ icon("clock") }}Open{% if row.state.partially_invoiced %}, partly invoiced{% endif %}</span>{% endif %}</td>
   </tr>
   {% endfor %}
   </tbody>
@@ -37,7 +53,7 @@
 </div>
 {% else %}
 <div class="card empty">{{ icon("clipboard") }}
-  {% if q %}<p><strong>No purchase orders match "{{ q }}".</strong></p>
+  {% if raw and raw|length %}<p><strong>No purchase orders match these filters.</strong></p>
   {% else %}<p><strong>No purchase orders yet.</strong></p><p>Enter one by hand, or import a CSV file.</p>{% endif %}
 </div>
 {% endif %}

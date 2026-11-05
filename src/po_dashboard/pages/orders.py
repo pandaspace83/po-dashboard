@@ -2,19 +2,21 @@
 
 from __future__ import annotations
 
+from datetime import date
 from typing import Annotated
 
 from fastapi import APIRouter, Form, Query, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
-from sqlalchemy import func, or_, select
+from sqlalchemy import func, select
 from starlette.concurrency import run_in_threadpool
 from starlette.datastructures import UploadFile
 
 from po_dashboard.db.ledger import POLine, PurchaseOrder, Vendor
-from po_dashboard.ledger import events
+from po_dashboard.ledger import events, listing
 from po_dashboard.ledger import orders as rules
 from po_dashboard.ledger.errors import LedgerError
-from po_dashboard.ledger.status import LineState, line_states, po_state, po_states
+from po_dashboard.ledger.expected import line_expectations
+from po_dashboard.ledger.status import LineState, line_states, po_state
 from po_dashboard.pages.common import CurrentUser, Db, client_address, render
 
 router = APIRouter(prefix="/orders")
@@ -43,17 +45,12 @@ def _blank_rows(count: int = FORM_ROWS) -> list[dict[str, str]]:
 
 
 @router.get("", response_class=HTMLResponse)
-def order_list(request: Request, db: Db, user: CurrentUser, q: str = Query("", max_length=100),
+def order_list(request: Request, db: Db, user: CurrentUser,
                imported: int | None = Query(None, ge=0, le=100000)) -> HTMLResponse:  # fmt: skip
-    query = select(PurchaseOrder, Vendor.name).join(Vendor, Vendor.id == PurchaseOrder.vendor_id)
-    if q.strip():
-        query = query.where(or_(PurchaseOrder.po_number.icontains(q.strip(), autoescape=True),
-                                Vendor.name.icontains(q.strip(), autoescape=True)))  # fmt: skip
-    found = db.execute(query.order_by(PurchaseOrder.id.desc()).limit(500)).all()
-    line_counts = {row[0]: row[1] for row in db.execute(select(POLine.po_id, func.count()).group_by(POLine.po_id))}
-    states = po_states(db)
-    return render(request, "orders.html", user, orders=found, line_counts=line_counts, states=states, q=q.strip(),
-                  imported=imported)  # fmt: skip
+    found, problems = listing.parse_filters({key: value for key, value in request.query_params.items()})
+    return render(request, "orders.html", user, orders=listing.list_orders(db, found, date.today()), f=found,
+                  problems=problems, vendors=listing.vendor_choices(db), statuses=listing.STATUS_CHOICES,
+                  raw=request.query_params, imported=imported)  # fmt: skip
 
 
 @router.get("/new", response_class=HTMLResponse)
@@ -153,7 +150,8 @@ async def import_file(request: Request, db: Db, user: CurrentUser) -> Response:
 
 
 def missing_order(request: Request, user: CurrentUser) -> HTMLResponse:
-    return render(request, "orders.html", user, 404, orders=[], line_counts={}, states={}, q="", imported=None,
+    return render(request, "orders.html", user, 404, orders=[], f=listing.Filters(), problems=[], vendors=[],
+                  statuses=listing.STATUS_CHOICES, raw={}, imported=None,
                   error="That purchase order was not found.")  # fmt: skip
 
 
@@ -163,10 +161,11 @@ def order_view(request: Request, db: Db, user: CurrentUser, order: PurchaseOrder
     lines = db.scalars(select(POLine).where(POLine.po_id == order.id).order_by(POLine.line_no)).all()
     states: dict[int, LineState] = line_states(db, order.id)
     summary = po_state(states[line.id] for line in lines)
+    expected = line_expectations(db, date.today(), order.id, states)
     return render(
         request, "order_detail.html", user, status, order=order, vendor=vendor, lines=lines, states=states,
-        summary=summary, notes=events.line_warnings(db, order), promised=events.promised_history(db, order),
-        history=events.entries(db, order), error=error,
+        summary=summary, expected=expected, notes=events.line_warnings(db, order),
+        promised=events.promised_history(db, order), history=events.entries(db, order), error=error,
     )  # fmt: skip
 
 

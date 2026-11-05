@@ -182,3 +182,7 @@ label.check input { width: auto; margin-top: 4px; }
 
 .fades { transition: opacity .6s ease; }
 .fades.gone { opacity: 0; }
+.filters { margin: 0 0 16px; }
+.filters select { width: 100%; }
+.filters .form-row + .form-row { margin-top: 10px; }
+.form-row > div.wide { flex: 2 1 18rem; }

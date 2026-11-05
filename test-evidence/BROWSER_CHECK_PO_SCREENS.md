@@ -47,6 +47,10 @@ Open http://127.0.0.1:8000 and sign in. If you restart the server, run the `cd` 
 | 25 | In **History**, remove `INV-2`: first press Remove with the reason empty, then with a reason. | Without a reason the browser asks for one. With one, the entry goes, the notes clear and the line returns to **Shipped**. | | |
 | 26 | Press **Reload** after recording or removing anything. | Nothing is recorded or removed a second time. | | |
 | 27 | Make a mistake on purpose in a form (a negative quantity, a date typed as `soon`). | The message names the line and the field, and every box keeps what you typed. | | |
+| 28 | Open **Purchase orders**. | A filter box above the list: Search, Status, Vendor, Sent from/to, Expected from/to, Late only. **The cursor is in Search.** | | |
+| 29 | Click an **Expected from** box. | The browser shows a **calendar** to pick from. Pick a date range and press **Show**: only matching POs stay. **Clear** resets it. | | |
+| 30 | On a PO, record an acknowledgement promising a date **in the past**. | The PO page shows the line as **N days late** in red; the list shows "1 late, up to N days". Tick **Late only**: the PO is found. | | |
+| 31 | Record a shipment with carrier `UPS`, a tracking number like `1Z999AA10123456784` and an arrival date in the future. | The line's Expected date becomes "from the shipment" and the late flag goes. The History entry has **Track with the carrier**; it opens UPS's own page in a new tab. | | |
 
 ## Things to look at while you do it
 

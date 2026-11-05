@@ -32,6 +32,7 @@ from po_dashboard.db.ledger import (
 from po_dashboard.db.models import AppUser
 from po_dashboard.db.types import Money, Quantity
 from po_dashboard.ledger.errors import LedgerError, number, text, when
+from po_dashboard.ledger.tracking import tracking_url
 
 Kind = Literal["ack", "shipment", "invoice"]
 KINDS: tuple[Kind, ...] = ("ack", "shipment", "invoice")
@@ -292,6 +293,7 @@ class EntryView:
     who: str | None
     title: str
     details: list[str] = field(default_factory=list)
+    link: str | None = None  # a carrier tracking page, for a shipment
 
 
 def entries(db: Session, order: PurchaseOrder) -> list[EntryView]:
@@ -318,6 +320,7 @@ def entries(db: Session, order: PurchaseOrder) -> list[EntryView]:
         view = EntryView(
             "shipment", ship.id, ship.accepted_at, people.get(ship.accepted_by or 0), f"Shipment {label}".strip()
         )
+        view.link = tracking_url(ship.carrier, ship.tracking_number)
         if ship.eta:
             view.details.append(f"Expected {ship.eta.isoformat()}")
         for ship_row in db.scalars(select(ShipmentLine).where(ShipmentLine.shipment_id == ship.id)):

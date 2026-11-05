@@ -22,7 +22,7 @@
 </div>
 <div class="table-wrap">
 <table>
-  <thead><tr><th>#</th><th>Item</th><th class="num">Ordered</th><th class="num">Unit price</th><th>Requested</th><th>Promised</th><th class="num">Confirmed</th><th class="num">Shipped</th><th class="num">Invoiced</th><th class="num">Open</th><th>Status</th></tr></thead>
+  <thead><tr><th>#</th><th>Item</th><th class="num">Ordered</th><th class="num">Unit price</th><th>Requested</th><th>Promised</th><th>Expected</th><th class="num">Confirmed</th><th class="num">Shipped</th><th class="num">Invoiced</th><th class="num">Open</th><th>Status</th></tr></thead>
   <tbody>
   {% for line in lines %}
   {% set st = states[line.id] %}
@@ -33,6 +33,9 @@
     <td class="num">{{ line.unit_price|money(order.currency) }}</td>
     <td>{{ line.requested_date or "" }}</td>
     <td>{% for step in promised.get(line.id, []) %}{% if not loop.first %} &rarr; {% endif %}<span class="{{ 'bad' if step.slipped }}">{{ step.promised }}</span>{% if step.slipped %} <span class="pill bad">slipped</span>{% endif %}{% endfor %}</td>
+    {% set ex = expected[line.id] %}
+    <td>{% if ex.expected %}{{ ex.expected }}<br><span class="muted">{{ "from the shipment" if ex.source == "shipment" else "as promised" }}</span>{% elif st.status.value != "Closed" %}<span class="muted">no date yet</span>{% endif %}
+      {% if ex.late %}<br><span class="pill bad">{{ icon("alert") }}{{ ex.days_late }} day{{ "" if ex.days_late == 1 else "s" }} late</span>{% endif %}</td>
     <td class="num">{{ st.facts.confirmed|quantity if st.facts.confirmed is not none else "" }}</td>
     <td class="num">{{ st.facts.shipped|quantity }}</td>
     <td class="num">{{ st.facts.invoiced|quantity }}</td>
@@ -57,7 +60,7 @@
   {% for h in history %}
   <tr>
     <td>{{ h.at.strftime("%Y-%m-%d %H:%M") }} UTC</td>
-    <td><strong>{{ h.title }}</strong></td>
+    <td><strong>{{ h.title }}</strong>{% if h.link %}<br><a href="{{ h.link }}" target="_blank" rel="noopener noreferrer">Track with the carrier</a>{% endif %}</td>
     <td>{% for d in h.details %}{{ d }}{% if not loop.last %}<br>{% endif %}{% endfor %}</td>
     <td>{{ h.who or "" }}</td>
     <td>
