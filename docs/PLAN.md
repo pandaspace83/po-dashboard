@@ -64,9 +64,9 @@ The rest is following this plan, which suits Sonnet. I will say before each swit
 
 **Step 4: PO screens.**
 
-- [ ] PD-1.2 Vendors screen; PO entry by hand; CSV import (REQ-PO-01, -02, -04).
+- [ ] PD-1.2 Vendors screen; PO entry by hand; CSV import (REQ-PO-01, -02, -04). **Built and tested** (DEC-37; vendors, the entry form, the all-or-nothing CSV import, the PO list and a first PO page that already shows status from the engine; 97 new tests). **Waiting for the owner's by-hand check:** [BROWSER_CHECK_PO_SCREENS.md](../test-evidence/BROWSER_CHECK_PO_SCREENS.md), because the upload script runs in the browser. Tick when it has been run.
 - [ ] PD-1.4 Manual acknowledgement, shipment and invoice entry, so the whole life cycle works before any AI.
-- [ ] PD-1.5 PO list, PO detail with the line timeline, close-by-hand actions with reasons (REQ-INV-04).
+- [ ] PD-1.5 PO list, PO detail with the line timeline, close-by-hand actions with reasons (REQ-INV-04). *Started in PD-1.2:* a simple list with search, and a PO page with the lines and their computed status. Still to do: filters by status and date, the timeline, the actions.
 
 **Step 5: dashboard, audit, design.**
 

@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block title %}{{ vendor.name }} · {{ app_name }}{% endblock %}
+{% block content %}
+<p class="muted"><a href="/vendors">Vendors</a> /</p>
+<h1>{{ vendor.name }}</h1>
+{% if error %}<p class="error" role="alert">{{ icon("alert") }}<span>{{ error }}</span></p>{% endif %}
+<div class="card">
+  <div class="card-head">{{ icon("truck") }}<h2>Email domains</h2></div>
+  {% if domains %}
+  <div class="actions">
+    {% for d in domains %}
+    <form method="post" action="/vendors/{{ vendor.id }}/domains/{{ d.id }}/remove" class="inline">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button type="submit" class="small" aria-label="Remove {{ d.domain }}">{{ d.domain }} {{ icon("x") }}</button>
+    </form>
+    {% endfor %}
+  </div>
+  {% else %}<p class="muted">None yet. Add the domains this vendor writes from.</p>{% endif %}
+  <form method="post" action="/vendors/{{ vendor.id }}/domains/add">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="form-row">
+      <div><label for="domains">Add a domain</label><input id="domains" name="domains" placeholder="acme.com" required value="{{ form.domains }}" autofocus></div>
+      <div class="shrink"><button class="primary" type="submit">{{ icon("plus") }}Add</button></div>
+    </div>
+  </form>
+</div>
+<div class="card">
+  <h2>Details</h2>
+  <form method="post" action="/vendors/{{ vendor.id }}/update">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="form-row">
+      <div><label for="name">Name</label><input id="name" name="name" required maxlength="200" value="{{ form.name if 'name' in form else vendor.name }}"></div>
+    </div>
+    <div class="form-row">
+      <div><label for="contact_name">Contact name</label><input id="contact_name" name="contact_name" maxlength="200" value="{{ form.contact_name if 'contact_name' in form else (vendor.contact_name or '') }}"></div>
+      <div><label for="contact_email">Contact email</label><input id="contact_email" name="contact_email" type="email" maxlength="254" value="{{ form.contact_email if 'contact_email' in form else (vendor.contact_email or '') }}"></div>
+    </div>
+    <label for="notes">Notes</label>
+    <textarea id="notes" name="notes" rows="3" maxlength="4000">{{ form.notes if 'notes' in form else (vendor.notes or '') }}</textarea>
+    <p class="form-actions"><button class="primary" type="submit">{{ icon("check") }}Save</button></p>
+  </form>
+</div>
+<h2>Purchase orders</h2>
+{% if orders %}
+<div class="table-wrap"><table>
+  <thead><tr><th>PO</th><th>Date sent</th><th>Currency</th></tr></thead>
+  <tbody>{% for o in orders %}<tr><td><a href="/orders/{{ o.id }}">{{ o.po_number }}</a></td><td>{{ o.date_sent or "" }}</td><td>{{ o.currency }}</td></tr>{% endfor %}</tbody>
+</table></div>
+{% else %}<p class="muted">No purchase orders for this vendor yet.</p>{% endif %}
+{% endblock %}

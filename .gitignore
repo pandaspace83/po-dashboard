@@ -13,6 +13,7 @@ htmlcov/
 # Local state: the database, stored originals, logs and backups live outside the repo,
 # but a developer may point them inside it
 data/
+!tests/data/
 backups/
 *.db
 *.db-wal

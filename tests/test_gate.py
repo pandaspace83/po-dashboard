@@ -14,6 +14,8 @@ from po_dashboard.web import create_app
 
 PW = "correct horse battery"
 ORIGIN = {"Origin": "http://127.0.0.1"}
+# A script tag is fine only when it loads a file from this site: the page policy forbids inline script.
+INLINE_SCRIPT = re.compile(r"<script(?![^>]*\bsrc=\"/static/)", re.I)
 
 
 @pytest.fixture
@@ -268,14 +270,14 @@ def test_admin_screens_show_errors_not_crashes(admin_client: TestClient) -> None
     assert dup.status_code == 400 and "already has an account" in dup.text
     assert post(admin_client, "/admin/users/999/reset").status_code == 404
     page = admin_client.get("/admin/users")
-    boss_id = re.search(r'/admin/users/(\d+)/disable', page.text).group(1)  # type: ignore[union-attr]
+    boss_id = re.search(r"/admin/users/(\d+)/disable", page.text).group(1)  # type: ignore[union-attr]
     own = post(admin_client, f"/admin/users/{boss_id}/disable")
     assert own.status_code == 400
 
 
 def test_the_last_admin_cannot_be_demoted_from_the_screen(admin_client: TestClient) -> None:
     page = admin_client.get("/admin/users")
-    boss_id = re.search(r'/admin/users/(\d+)/role', page.text).group(1)  # type: ignore[union-attr]
+    boss_id = re.search(r"/admin/users/(\d+)/role", page.text).group(1)  # type: ignore[union-attr]
     response = post(admin_client, f"/admin/users/{boss_id}/role", {"role": "buyer"})
     assert response.status_code == 400 and "last admin" in response.text
 
@@ -301,7 +303,7 @@ def test_signed_in_pages_are_not_cached_and_refusals_carry_headers(admin_client:
 def test_no_page_has_inline_script_or_style(admin_client: TestClient) -> None:
     for path in ("/", "/admin/users", "/change-password", "/sign-in"):
         html = admin_client.get(path).text
-        assert "<script" not in html and "<style" not in html and ' style="' not in html, path
+        assert not INLINE_SCRIPT.search(html) and "<style" not in html and ' style="' not in html, path
 
 
 # ---- PD-1.9d: the remaining security tests from ARCHITECTURE §10.1
@@ -370,9 +372,7 @@ def test_no_secret_is_in_the_database_file_or_the_logs(env, caplog: pytest.LogCa
     sign_in(new_client(app), "boss@example.com", wrong)
     csrf = token_in(client.get("/").text)
     engine.dispose()
-    data = b"".join(
-        p.read_bytes() for p in settings.data_dir.iterdir() if p.name.startswith("po-dashboard.db")
-    )
+    data = b"".join(p.read_bytes() for p in settings.data_dir.iterdir() if p.name.startswith("po-dashboard.db"))
     seen = caplog.text + capsys.readouterr().out + capsys.readouterr().err
     for secret in (PW, wrong, temporary, session_token):
         assert secret.encode() not in data, "found in the database files"
@@ -452,7 +452,7 @@ def test_pages_use_no_inline_style_or_script(env, admin_client: TestClient) -> N
     """The Content-Security-Policy forbids both, so a page that used one would silently break."""
     for path in ("/", "/admin/users", "/change-password"):
         html = admin_client.get(path).text
-        assert " style=" not in html and "<script" not in html and " onclick=" not in html, path
+        assert " style=" not in html and not INLINE_SCRIPT.search(html) and " onclick=" not in html, path
     assert " style=" not in new_client(env[0]).get("/sign-in").text
 
 

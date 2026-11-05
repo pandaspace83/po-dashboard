@@ -1,0 +1,4 @@
+po_number,vendor,currency,line_no,item,quantity,unit,unit_price,date_sent,buyer,description,requested_date
+PO-2001,Acme Fasteners,USD,1,Hex bolt M8,100,EA,0.25,2026-11-02,buyer@example.com,Zinc plated,2026-11-30
+PO-2001,Acme Fasteners,USD,2,Washer M8,250.5,EA,0.04,2026-11-02,buyer@example.com,,2026-11-30
+PO-2002,Northwind Metals,EUR,1,Steel plate 5mm,12.5,KG,3.141593,2026-11-03,buyer@example.com,,

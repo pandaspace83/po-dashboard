@@ -109,3 +109,12 @@ certificate, and the sign-in itself does not change.
 3. Sign in. An admin hands you a temporary password the first time.
 
 The steps and the real address go here once they have been tested on the real office network.
+
+## 12. Importing purchase orders from a spreadsheet (PD-1.2)
+
+**Purchase orders**, then **Import CSV**, then **Download a template** shows the columns. One row per PO line; rows sharing a
+PO number make one PO. Required: `po_number, vendor, currency, line_no, item, quantity, unit, unit_price`. Optional:
+`date_sent, buyer, description, requested_date`. Dates are `2026-12-31`; numbers use digits and a dot (no thousands
+separator); save from your spreadsheet as **CSV UTF-8**. The vendor must already be on the **Vendors** page, spelled the same
+way. The file goes in whole or not at all, and a PO number that exists is never overwritten. If the page lists problems,
+fix those rows and import again: nothing from the failed attempt was kept.

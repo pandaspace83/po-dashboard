@@ -25,8 +25,10 @@ class ScaledDecimal(TypeDecorator[Decimal]):
     places = 0
 
     def process_bind_param(self, value: Any, dialect: Dialect) -> int | None:
-        if value is None:
-            return None
+        return None if value is None else self.to_stored(value)
+
+    def to_stored(self, value: Any) -> int:
+        """The scaled integer for a value, or an error saying why it is refused. Also used to check typed input."""
         if isinstance(value, bool) or not isinstance(value, Decimal | int):
             raise TypeError(f"use Decimal or int, not {type(value).__name__}: a float is not exact")
         number = Decimal(value)

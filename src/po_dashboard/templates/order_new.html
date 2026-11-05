@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block title %}New purchase order · {{ app_name }}{% endblock %}
+{% block content %}
+<p class="muted"><a href="/orders">Purchase orders</a> /</p>
+<h1>New purchase order</h1>
+{% if errors %}
+<div class="error" role="alert">{{ icon("alert") }}<div>
+  {% if errors|length == 1 %}{{ errors[0] }}{% else %}Please fix these:<ul>{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+</div></div>
+{% endif %}
+<form method="post" action="/orders/create">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <div class="card">
+    <div class="form-row">
+      <div><label for="po_number">PO number</label><input id="po_number" name="po_number" required maxlength="64" value="{{ header.po_number }}" autofocus></div>
+      <div><label for="vendor_id">Vendor</label>
+        <select id="vendor_id" name="vendor_id" required class="full">
+          <option value="">Choose a vendor</option>
+          {% for v in vendors %}<option value="{{ v.id }}" {{ 'selected' if header.vendor_id == v.id|string }}>{{ v.name }}</option>{% endfor %}
+        </select></div>
+    </div>
+    <div class="form-row">
+      <div><label for="currency">Currency</label>
+        <input id="currency" name="currency" required maxlength="3" minlength="3" list="currencies" placeholder="USD" value="{{ header.currency }}" autocomplete="off">
+        <datalist id="currencies">{% for c in currencies %}<option value="{{ c }}">{% endfor %}</datalist></div>
+      <div><label for="date_sent">Date sent</label><input id="date_sent" name="date_sent" type="date" value="{{ header.date_sent }}"></div>
+      <div><label for="buyer">Buyer</label><input id="buyer" name="buyer" maxlength="254" value="{{ header.buyer }}"></div>
+    </div>
+    <p class="muted">Each purchase order has one currency. Amounts are never converted.</p>
+  </div>
+  <div class="table-wrap">
+  <table class="entry">
+    <thead><tr><th>#</th><th>Item</th><th>Description</th><th>Quantity</th><th>Unit</th><th>Unit price</th><th>Requested by</th></tr></thead>
+    <tbody>
+    {% for r in rows %}
+    <tr>
+      <td class="muted">{{ loop.index }}</td>
+      <td><input name="line_item" maxlength="200" aria-label="Item, line {{ loop.index }}" value="{{ r.item }}"></td>
+      <td><input name="line_description" maxlength="2000" aria-label="Description, line {{ loop.index }}" value="{{ r.description }}"></td>
+      <td><input name="line_quantity" inputmode="decimal" aria-label="Quantity, line {{ loop.index }}" value="{{ r.quantity }}"></td>
+      <td><input name="line_unit" maxlength="16" aria-label="Unit, line {{ loop.index }}" placeholder="EA" value="{{ r.unit }}"></td>
+      <td><input name="line_unit_price" inputmode="decimal" aria-label="Unit price, line {{ loop.index }}" value="{{ r.unit_price }}"></td>
+      <td><input name="line_requested_date" type="date" aria-label="Requested date, line {{ loop.index }}" value="{{ r.requested_date }}"></td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  <p class="muted">Leave unused rows empty. Quantities can have up to four decimal places and prices up to six.</p>
+  <p class="form-actions"><button class="primary" type="submit">{{ icon("check") }}Create purchase order</button>
+    <a class="button" href="/orders">Cancel</a></p>
+</form>
+{% endblock %}

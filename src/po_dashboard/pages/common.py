@@ -6,7 +6,8 @@ from collections.abc import Iterator
 from typing import Annotated, Any
 
 from fastapi import Depends, HTTPException, Request
-from fastapi.responses import Response
+from fastapi.responses import HTMLResponse, Response
+from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
 from po_dashboard.auth.gate import SESSION_COOKIE
@@ -46,6 +47,12 @@ Admin = Annotated[AppUser, Depends(require_admin)]
 def context(request: Request, **extra: Any) -> dict[str, Any]:
     state = request.scope.get("state", {})
     return {"csrf_token": state.get("csrf_token"), "user": getattr(request.state, "user", None), **extra}
+
+
+def render(request: Request, name: str, user: AppUser, status: int = 200, **extra: Any) -> HTMLResponse:
+    """Render a signed-in page: the person is always passed as `me`, which the top bar needs."""
+    templates: Jinja2Templates = request.app.state.templates
+    return templates.TemplateResponse(request, name, context(request, me=user, **extra), status_code=status)
 
 
 def client_address(request: Request) -> str | None:

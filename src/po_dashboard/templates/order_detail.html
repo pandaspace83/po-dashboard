@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block title %}PO {{ order.po_number }} · {{ app_name }}{% endblock %}
+{% block content %}
+<p class="muted"><a href="/orders">Purchase orders</a> /</p>
+<div class="page-head">
+  <h1>PO {{ order.po_number }}</h1>
+  {% if summary.status.value == "Closed" %}<span class="pill ok">{{ icon("check-circle") }}Closed</span>
+  {% else %}<span class="pill">{{ icon("clock") }}Open{% if summary.partially_invoiced %}, partly invoiced{% endif %}</span>{% endif %}
+</div>
+<div class="tiles">
+  <div class="tile">{{ icon("truck") }}<div><span class="label">Vendor</span><span class="value"><a href="/vendors/{{ vendor.id }}">{{ vendor.name }}</a></span></div></div>
+  <div class="tile">{{ icon("clock") }}<div><span class="label">Date sent</span><span class="value">{{ order.date_sent or "not set" }}</span></div></div>
+  <div class="tile">{{ icon("user") }}<div><span class="label">Buyer</span><span class="value">{{ order.buyer or "not set" }}</span></div></div>
+  <div class="tile">{{ icon("clipboard") }}<div><span class="label">Currency</span><span class="value">{{ order.currency }}</span></div></div>
+</div>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>#</th><th>Item</th><th class="num">Ordered</th><th class="num">Unit price</th><th>Requested</th><th class="num">Confirmed</th><th class="num">Shipped</th><th class="num">Invoiced</th><th class="num">Open</th><th>Status</th></tr></thead>
+  <tbody>
+  {% for line in lines %}
+  {% set st = states[line.id] %}
+  <tr>
+    <td>{{ line.line_no }}</td>
+    <td>{{ line.item }}{% if line.description %}<br><span class="muted">{{ line.description }}</span>{% endif %}</td>
+    <td class="num">{{ line.ordered_qty|quantity }} {{ line.unit }}</td>
+    <td class="num">{{ line.unit_price|money(order.currency) }}</td>
+    <td>{{ line.requested_date or "" }}</td>
+    <td class="num">{{ st.facts.confirmed|quantity if st.facts.confirmed is not none else "" }}</td>
+    <td class="num">{{ st.facts.shipped|quantity }}</td>
+    <td class="num">{{ st.facts.invoiced|quantity }}</td>
+    <td class="num">{{ st.open_qty|quantity }}</td>
+    <td>
+      {% if st.status.value == "Closed" %}<span class="pill ok">{{ icon("check-circle") }}Closed</span>
+      {% else %}<span class="pill">{{ st.status.value }}</span>{% endif %}
+      {% if st.po_needs_update %}<p class="flag">{{ icon("alert") }}The vendor confirmed {{ st.facts.confirmed|quantity }}, not {{ line.ordered_qty|quantity }}. Update the original purchase order.</p>{% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+<p class="muted">Acknowledgements, shipments and invoices are entered next (PD-1.4); status follows them automatically.</p>
+{% endblock %}

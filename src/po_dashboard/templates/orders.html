@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block title %}Purchase orders · {{ app_name }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Purchase orders</h1>
+  <div class="actions">
+    <a class="button" href="/orders/import">{{ icon("upload") }}Import CSV</a>
+    <a class="button primary" href="/orders/new">{{ icon("plus") }}New purchase order</a>
+  </div>
+</div>
+{% if error %}<p class="error" role="alert">{{ icon("alert") }}<span>{{ error }}</span></p>{% endif %}
+{% if imported is not none %}<p class="notice" role="status">{{ icon("check-circle") }}<span>Imported {{ imported }} purchase order{{ "" if imported == 1 else "s" }}.</span></p>{% endif %}
+<form method="get" action="/orders" class="search" role="search">
+  <label for="q" class="visually-hidden">Search by PO number or vendor</label>
+  <input id="q" name="q" type="search" placeholder="Search by PO number or vendor" value="{{ q }}" maxlength="100" autofocus>
+  <button type="submit">{{ icon("search") }}Search</button>
+</form>
+{% if orders %}
+<div class="table-wrap">
+<table>
+  <thead><tr><th>PO</th><th>Vendor</th><th>Date sent</th><th>Currency</th><th>Lines</th><th>Status</th></tr></thead>
+  <tbody>
+  {% for o, vendor_name in orders %}
+  {% set st = states.get(o.id) %}
+  <tr>
+    <td><a href="/orders/{{ o.id }}">{{ o.po_number }}</a></td>
+    <td>{{ vendor_name }}</td>
+    <td>{{ o.date_sent or "" }}</td>
+    <td>{{ o.currency }}</td>
+    <td>{{ line_counts.get(o.id, 0) }}</td>
+    <td>{% if st and st.status.value == "Closed" %}<span class="pill ok">{{ icon("check-circle") }}Closed</span>{% else %}<span class="pill">{{ icon("clock") }}Open{% if st and st.partially_invoiced %}, partly invoiced{% endif %}</span>{% endif %}</td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<div class="card empty">{{ icon("clipboard") }}
+  {% if q %}<p><strong>No purchase orders match "{{ q }}".</strong></p>
+  {% else %}<p><strong>No purchase orders yet.</strong></p><p>Enter one by hand, or import a CSV file.</p>{% endif %}
+</div>
+{% endif %}
+{% endblock %}

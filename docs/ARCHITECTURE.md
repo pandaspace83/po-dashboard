@@ -285,8 +285,19 @@ Server-rendered pages; HTMX updates parts of a page (accept a document, snooze a
 | Follow-ups | the alert queue with Contacted, Snooze, Dismiss and the drafted message |
 | Vendors | vendors, their domains and contacts |
 | Mailboxes | connect, reconnect and disconnect, with each mailbox's last scan |
+| Vendors | add, edit and list vendors and their email domains (PD-1.2) |
 | Sign-in, Users | sign-in with a second factor; admins add and disable people |
 | Settings and health | interval, thresholds, model name, scan status, backup status, audit trail |
+
+**File upload (PD-1.2).** A page policy with no inline script means a plain multipart form cannot carry the security token
+(the gate reads a form field only from a urlencoded form). So `static/app.js`, a small file from this site, sends a form
+marked `data-upload` with `fetch`, the token in the `X-CSRF-Token` header and the Origin the browser adds, then follows the
+redirect or shows the page's own list of problems in place. The server refuses an upload that does not state its size, or is
+over 2 MB, before reading it. Without JavaScript the upload is refused (403) rather than sent unprotected.
+
+**CSV import (DEC-37).** `ledger/orders.py` reads the whole file, validates every row, and only then writes, inside one
+transaction: any problem rejects the lot. A value starting with `=`, `+`, `-` or `@` is stored as plain text; when a report is
+exported to CSV (PD-1.6) such a cell must be neutralised, because a spreadsheet would run it as a formula.
 
 Design (DEC-35): one stylesheet with tokens, a light theme in RaceSpec red and charcoal, inline icons, the cursor ready in the first box of a form, a status colour and a text label on every status
 (colour is never the only signal), works from a phone width up, keyboard-reachable, checked with an automated

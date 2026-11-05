@@ -149,3 +149,26 @@ tbody tr:hover { background: #fcfcfb; }
   button, .navlink, input, select { transition: background-color 120ms ease-out, border-color 120ms ease-out; }
 }
 .form-actions { margin-top: 18px; }
+
+/* Lists, entry tables and page headers (PD-1.2) */
+.page-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 16px; }
+.page-head h1 { margin: 0; }
+.button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.button.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); color: #fff; }
+.button:hover { background: var(--hover); color: var(--fg); }
+.search { display: flex; gap: 8px; margin: 0 0 16px; }
+.search input { max-width: 26rem; }
+textarea { width: 100%; padding: 9px 11px; font: inherit; color: var(--fg); background: var(--surface);
+  border: 1px solid var(--line-strong); border-radius: var(--radius); resize: vertical; }
+textarea:focus { outline: 2px solid var(--focus); outline-offset: 0; border-color: var(--focus); }
+select.full { width: 100%; }
+.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+table.entry td { padding: 6px 8px; }
+table.entry input { padding: 6px 8px; min-width: 5rem; }
+table.entry td:nth-child(2) input, table.entry td:nth-child(3) input { min-width: 10rem; }
+.pill { background: var(--hover); color: var(--fg); }
+.flag { display: flex; gap: 6px; align-items: flex-start; margin: 6px 0 0; color: var(--warn); background: var(--warn-tint);
+  padding: 6px 8px; border-radius: var(--radius); font-size: 0.88rem; }
+.flag .icon { width: 16px; height: 16px; margin-top: 2px; }
+.error ul { margin: 6px 0 0; padding-left: 18px; }
+.card-head + p, .card p + form { margin-top: 0; }

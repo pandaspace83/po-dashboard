@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block title %}Import purchase orders · {{ app_name }}{% endblock %}
+{% block content %}
+<p class="muted"><a href="/orders">Purchase orders</a> /</p>
+<h1>Import purchase orders</h1>
+<div class="card">
+  <div class="card-head">{{ icon("upload") }}<h2>Choose a CSV file</h2></div>
+  <p>One row per PO line. Rows with the same PO number make one PO. The file is imported whole or not at all, and nothing existing is changed.</p>
+  <form method="post" action="/orders/import" enctype="multipart/form-data" data-upload>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <label for="file">CSV file</label>
+    <input id="file" name="file" type="file" accept=".csv,text/csv" required autofocus>
+    <p class="form-actions"><button class="primary" type="submit">{{ icon("upload") }}Import</button>
+      <a class="button" href="/orders/import/template">{{ icon("download") }}Download a template</a></p>
+  </form>
+  <div id="import-result" aria-live="polite">
+  {% if errors %}
+    <div class="error" role="alert">{{ icon("alert") }}<div>
+      {% if errors|length == 1 and errors[0].row is none %}{{ errors[0].message }}
+      {% else %}Nothing was imported. Fix these and try again:
+      <ul>{% for e in errors %}<li>{% if e.row is not none %}Row {{ e.row }}: {% endif %}{{ e.message }}</li>{% endfor %}</ul>
+      {% if truncated %}<p>Only the first {{ errors|length }} problems are shown.</p>{% endif %}{% endif %}
+    </div></div>
+  {% endif %}
+  </div>
+</div>
+<div class="card">
+  <h2>Columns</h2>
+  <p>The first row names the columns, in any order. Required: <strong>{{ required|join(", ") }}</strong>. Optional: {{ columns|reject("in", required)|join(", ") }}.</p>
+  <ul class="muted">
+    <li>Dates are year-month-day, like 2026-12-31. Quantities and prices use digits and a dot, with no thousands separator.</li>
+    <li>The vendor must already be in the <a href="/vendors">vendor list</a>, spelled the same way. A vendor is never guessed or created.</li>
+    <li>Save from your spreadsheet as <strong>CSV UTF-8</strong>. Every row of a PO must repeat the same vendor, currency, date sent and buyer.</li>
+  </ul>
+</div>
+{% endblock %}

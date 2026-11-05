@@ -8,6 +8,7 @@
   <title>{% block title %}{{ app_name }}{% endblock %}</title>
   {% if has_logo %}<link rel="icon" type="image/png" href="/static/brand/favicon.png">{% endif %}
   <link rel="stylesheet" href="/static/app.css">
+  <script src="/static/app.js" defer></script>
 </head>
 <body>
 {% block nav %}
@@ -16,6 +17,8 @@
 <nav aria-label="Main">
   <a class="brand" href="/">{{ logo() }}<span class="brand-sub">Internal Dashboard</span></a>
   <a class="navlink" href="/" {% if request.url.path == '/' %}aria-current="page"{% endif %}>{{ icon("home") }}Home</a>
+  <a class="navlink" href="/orders" {% if request.url.path.startswith('/orders') %}aria-current="page"{% endif %}>{{ icon("clipboard") }}Purchase orders</a>
+  <a class="navlink" href="/vendors" {% if request.url.path.startswith('/vendors') %}aria-current="page"{% endif %}>{{ icon("truck") }}Vendors</a>
   {% if me.role == 'admin' %}<a class="navlink" href="/admin/users" {% if request.url.path.startswith('/admin/users') %}aria-current="page"{% endif %}>{{ icon("users") }}People</a>{% endif %}
   <span class="spacer"></span>
   <span class="who">{{ icon("user") }}<span>{{ me.email }}</span></span>
