@@ -30,14 +30,14 @@ def _list(request: Request, db: Db, user: CurrentUser, error: str | None = None,
 
 
 def _detail(request: Request, db: Db, user: CurrentUser, vendor: Vendor, error: str | None = None,
-            form: dict[str, str] | None = None, status: int = 200) -> HTMLResponse:  # fmt: skip
+            form: dict[str, str] | None = None, status: int = 200, saved: bool = False) -> HTMLResponse:  # fmt: skip
     domains = db.scalars(select(VendorDomain).where(VendorDomain.vendor_id == vendor.id).order_by(VendorDomain.domain))
     orders = db.scalars(
         select(PurchaseOrder).where(PurchaseOrder.vendor_id == vendor.id).order_by(PurchaseOrder.id.desc())
     )
     return render(
         request, "vendor_detail.html", user, status, vendor=vendor, domains=domains.all(), orders=orders.all(),
-        error=error, form=form or {},
+        error=error, form=form or {}, saved=saved,
     )  # fmt: skip
 
 
@@ -68,9 +68,11 @@ def create(
 
 
 @router.get("/{vendor_id}", response_class=HTMLResponse)
-def vendor_page(request: Request, db: Db, user: CurrentUser, vendor_id: int) -> HTMLResponse:
+def vendor_page(request: Request, db: Db, user: CurrentUser, vendor_id: int, saved: str = "") -> HTMLResponse:
     vendor = db.get(Vendor, vendor_id)
-    return _missing(request, db, user) if vendor is None else _detail(request, db, user, vendor)
+    if vendor is None:
+        return _missing(request, db, user)
+    return _detail(request, db, user, vendor, saved=saved == "1")  # a fixed word, never text taken from the address
 
 
 @router.post("/{vendor_id}/update", response_class=HTMLResponse, response_model=None)
@@ -87,7 +89,7 @@ def update(request: Request, db: Db, user: CurrentUser, vendor_id: int, name: Fi
         db.rollback()
         entered = {"name": name, "contact_name": contact_name, "contact_email": contact_email, "notes": notes}
         return _detail(request, db, user, vendor, error=str(problem), form=entered, status=400)
-    return RedirectResponse(f"/vendors/{vendor_id}", status_code=303)
+    return RedirectResponse(f"/vendors/{vendor_id}?saved=1", status_code=303)
 
 
 @router.post("/{vendor_id}/domains/add", response_class=HTMLResponse, response_model=None)
@@ -103,7 +105,7 @@ def add_domain(
     except LedgerError as problem:
         db.rollback()
         return _detail(request, db, user, vendor, error=str(problem), form={"domains": domains}, status=400)
-    return RedirectResponse(f"/vendors/{vendor_id}", status_code=303)
+    return RedirectResponse(f"/vendors/{vendor_id}?saved=1", status_code=303)
 
 
 @router.post("/{vendor_id}/domains/{domain_id}/remove", response_class=HTMLResponse, response_model=None)
@@ -119,4 +121,4 @@ def remove_domain(
     except LedgerError as problem:
         db.rollback()
         return _detail(request, db, user, vendor, error=str(problem), status=400)
-    return RedirectResponse(f"/vendors/{vendor_id}", status_code=303)
+    return RedirectResponse(f"/vendors/{vendor_id}?saved=1", status_code=303)

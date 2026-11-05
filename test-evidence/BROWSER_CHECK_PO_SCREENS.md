@@ -23,6 +23,7 @@ Open http://127.0.0.1:8000 and sign in. If you restart the server, run the `cd` 
 | 2 | Add `Acme Fasteners` with domains `acme.com, mail.acme.com`. | You land on the vendor's page showing both domains. | | |
 | 3 | Add `acme fasteners` (other case) as a vendor again. | "A vendor with that name already exists", and the boxes keep what you typed. | | |
 | 4 | On the vendor page, add the domain `not a domain`. | Refused with a clear reason. Then add `acme.co.uk`: it appears. Click it to remove it. | | |
+| 4b | On the vendor page, add `ACME.com` again (other case). Then change a detail and press **Save**. | "acme.com is already added to this vendor". After Save the page reloads with a green **Saved** note that fades after about 3 seconds. | | |
 | 5 | Add a second vendor, `Northwind Metals`, with no domains. | It appears in the list. | | |
 | 6 | Click **Purchase orders**, then **New purchase order**. | A form with PO number, vendor, currency, date, buyer and 10 line rows. **The cursor is already in PO number.** Buyer is your email. | | |
 | 7 | Fill PO number `PO-1001`, vendor Acme, currency `usd`, and line 1: item `Bolt`, quantity `0`, unit `EA`, price `2.5`. Create. | Refused: "Line 1: Quantity must be more than zero", and **every box keeps what you typed**. | | |

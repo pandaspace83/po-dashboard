@@ -128,6 +128,22 @@ def test_domains_are_added_and_removed_from_the_vendor_page(client: TestClient, 
     assert bad.status_code == 400 and "not an email domain" in bad.text
 
 
+def test_adding_a_domain_already_held_in_any_case_says_so(client: TestClient) -> None:
+    vendor_id = make_vendor(client)  # holds acme.com
+    again = post(client, f"/vendors/{vendor_id}/domains/add", {"domains": "ACME.com"})
+    assert again.status_code == 400 and "acme.com is already added to this vendor" in again.text
+
+
+def test_a_save_shows_a_fixed_saved_note_that_cannot_be_forged(client: TestClient) -> None:
+    vendor_id = make_vendor(client)
+    response = post(client, f"/vendors/{vendor_id}/update", {"name": "Acme Fasteners"})
+    assert response.headers["location"].endswith("?saved=1")
+    assert "Saved" in client.get(f"/vendors/{vendor_id}?saved=1").text
+    assert 'role="status"' not in client.get(f"/vendors/{vendor_id}").text
+    forged = client.get(f"/vendors/{vendor_id}?saved=%3Cb%3Ehi")
+    assert forged.status_code == 200 and 'role="status"' not in forged.text
+
+
 def test_a_vendor_can_be_edited_and_the_change_is_audited_with_who_and_where(client: TestClient, env) -> None:  # noqa: ANN001
     vendor_id = make_vendor(client)
     response = post(

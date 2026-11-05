@@ -113,6 +113,9 @@ def add_domains(
     if not wanted:
         raise LedgerError("Write at least one domain, like acme.com.")
     have = set(db.scalars(select(VendorDomain.domain).where(VendorDomain.vendor_id == vendor.id)))
+    held = [d for d in wanted if d in have]
+    if len(held) == len(wanted):
+        raise LedgerError(f"{', '.join(held)} {'is' if len(held) == 1 else 'are'} already added to this vendor.")
     added = []
     for domain in wanted:
         if domain in have:

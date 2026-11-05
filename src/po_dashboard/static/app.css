@@ -179,3 +179,6 @@ label.check { display: flex; gap: 10px; align-items: flex-start; font-weight: 50
 label.check input { width: auto; margin-top: 4px; }
 .inline-form { display: flex; gap: 6px; align-items: center; }
 .inline-form input { min-width: 9rem; padding: 4px 8px; }
+
+.fades { transition: opacity .6s ease; }
+.fades.gone { opacity: 0; }

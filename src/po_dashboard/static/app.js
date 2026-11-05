@@ -33,3 +33,11 @@ document.addEventListener("submit", async (event) => {
     if (button) button.disabled = false;
   }
 });
+
+// A "Saved" note fades away after a few seconds; it only tells the person the save went through.
+document.querySelectorAll(".fades").forEach((note) => {
+  setTimeout(() => {
+    note.classList.add("gone");
+    setTimeout(() => note.remove(), 700);
+  }, 3000);
+});
