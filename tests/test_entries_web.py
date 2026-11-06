@@ -245,7 +245,9 @@ def test_an_entry_is_removed_with_a_reason_and_its_effect_goes(client: TestClien
     assert needs_reason.status_code == 400 and "Reason is needed" in needs_reason.text
     removed = post(client, f"/orders/{po_id}/entries/invoice/{entry}/remove", {"reason": "Wrong PO"})
     assert removed.status_code == 303
-    assert "INV-1" not in page(client, po_id) and statuses(client, po_id)[0] == "Sent"
+    live = page(client, po_id).split("Timeline by line")[0]  # the table of lines: the entry no longer counts
+    assert "INV-1" not in live and statuses(client, po_id)[0] == "Sent"
+    assert "Entry taken back: Invoice INV-1" in page(client, po_id)  # the timeline keeps the story
     with Session(env[1]) as db:
         audit = db.scalars(select(AuditLog).where(AuditLog.action == "invoice.remove")).one()
         assert "INV-1" in (audit.before or "") and "Wrong PO" in (audit.after or "") and audit.user_id is not None

@@ -46,11 +46,12 @@ def _blank_rows(count: int = FORM_ROWS) -> list[dict[str, str]]:
 
 @router.get("", response_class=HTMLResponse)
 def order_list(request: Request, db: Db, user: CurrentUser,
-               imported: int | None = Query(None, ge=0, le=100000)) -> HTMLResponse:  # fmt: skip
+               imported: int | None = Query(None, ge=0, le=100000),
+               ignored: int = Query(0, ge=0, le=1000)) -> HTMLResponse:  # fmt: skip
     found, problems = listing.parse_filters({key: value for key, value in request.query_params.items()})
     return render(request, "orders.html", user, orders=listing.list_orders(db, found, date.today()), f=found,
                   problems=problems, vendors=listing.vendor_choices(db), statuses=listing.STATUS_CHOICES,
-                  raw=request.query_params, imported=imported)  # fmt: skip
+                  raw=request.query_params, imported=imported, ignored=ignored)  # fmt: skip
 
 
 @router.get("/new", response_class=HTMLResponse)
@@ -133,25 +134,26 @@ async def import_file(request: Request, db: Db, user: CurrentUser) -> Response:
         return page(None, "Choose a CSV file first.", 400)
     raw = await upload.read(rules.MAX_CSV_BYTES + 1)
 
-    def work() -> int:
+    def work() -> tuple[int, int]:
         try:
             result = rules.import_csv(db, raw, actor=user, client_address=client_address(request))
             db.commit()
-            return len(result.po_numbers)
+            return len(result.po_numbers), len(result.ignored_columns)
         except Exception:
             db.rollback()
             raise
 
     try:
-        count = await run_in_threadpool(work)
+        count, skipped = await run_in_threadpool(work)
     except rules.ImportRejected as problem:
         return page(problem, None, 400)
-    return RedirectResponse(f"/orders?imported={count}", status_code=303)
+    extra = f"&ignored={skipped}" if skipped else ""
+    return RedirectResponse(f"/orders?imported={count}{extra}", status_code=303)
 
 
 def missing_order(request: Request, user: CurrentUser) -> HTMLResponse:
     return render(request, "orders.html", user, 404, orders=[], f=listing.Filters(), problems=[], vendors=[],
-                  statuses=listing.STATUS_CHOICES, raw={}, imported=None,
+                  statuses=listing.STATUS_CHOICES, raw={}, imported=None, ignored=0,
                   error="That purchase order was not found.")  # fmt: skip
 
 

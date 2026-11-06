@@ -115,6 +115,6 @@ The steps and the real address go here once they have been tested on the real of
 **Purchase orders**, then **Import CSV**, then **Download a template** shows the columns. One row per PO line; rows sharing a
 PO number make one PO. Required: `po_number, vendor, currency, line_no, item, quantity, unit, unit_price`. Optional:
 `date_sent, buyer, description, requested_date`. Dates are `2026-12-31`; numbers use digits and a dot (no thousands
-separator); save from your spreadsheet as **CSV UTF-8**. The vendor must already be on the **Vendors** page, spelled the same
+separator); the file can be **UTF-8 or Windows-1252** (what QuickBooks and older Excel write); columns are found by name in any order, and columns the import does not use are skipped and counted. The vendor must already be on the **Vendors** page, spelled the same
 way. The file goes in whole or not at all, and a PO number that exists is never overwritten. If the page lists problems,
 fix those rows and import again: nothing from the failed attempt was kept.

@@ -7,6 +7,8 @@ automatically (ledger/status.py). Odd figures are flagged, not refused: a vendor
 
 from __future__ import annotations
 
+import json
+import re
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from datetime import date, datetime
@@ -29,7 +31,7 @@ from po_dashboard.db.ledger import (
     Shipment,
     ShipmentLine,
 )
-from po_dashboard.db.models import AppUser
+from po_dashboard.db.models import AppUser, AuditLog
 from po_dashboard.db.types import Money, Quantity
 from po_dashboard.ledger.errors import LedgerError, number, text, when
 from po_dashboard.ledger.tracking import tracking_url
@@ -382,10 +384,6 @@ def line_timeline(db: Session, order: PurchaseOrder) -> dict[int, list[TimelineS
     steps: dict[int, list[TimelineStep]] = {line.id: [] for line in lines}
     for line in lines:
         steps[line.id].append(TimelineStep(line.created_at, f"Ordered {_shown(line.ordered_qty)} {line.unit}"))
-        if line.closed_reason and line.closed_at:
-            steps[line.id].append(
-                TimelineStep(line.closed_at, f"Settled by hand ({line.closed_reason}): {line.close_note}")
-            )
     for ack_at, ack_row in db.execute(
         select(Acknowledgement.accepted_at, AckLine).join(Acknowledgement).where(Acknowledgement.po_id == order.id)
     ):
@@ -418,4 +416,48 @@ def line_timeline(db: Session, order: PurchaseOrder) -> dict[int, list[TimelineS
         steps[bill_row.po_line_id].append(
             TimelineStep(bill.accepted_at, f"Invoiced {_shown(bill_row.qty)} on {bill.invoice_number}")
         )
+    _add_history_from_audit(db, order, lines, steps)
     return {line_id: sorted(found, key=lambda step: step.at) for line_id, found in steps.items()}
+
+
+def _add_history_from_audit(
+    db: Session, order: PurchaseOrder, lines: list[POLine], steps: dict[int, list[TimelineStep]]
+) -> None:
+    """Hand-closes, reopens and entries taken back leave the live tables, so the timeline reads them from the audit
+    trail, which keeps them for good. A line never loses a step because someone later undid it."""
+    people = {user.id: user.email for user in db.scalars(select(AppUser))}
+    by_object = {f"po_line:{line.id}": line.id for line in lines}
+    number_to_id = {line.line_no: line.id for line in lines}
+
+    def parsed(raw: str | None) -> dict[str, object]:
+        try:
+            value = json.loads(raw) if raw else {}
+        except ValueError:
+            return {}
+        return value if isinstance(value, dict) else {}
+
+    wanted = select(AuditLog).where(
+        (AuditLog.object.in_(list(by_object)) & AuditLog.action.in_(("line.close", "line.reopen")))
+        | (
+            (AuditLog.object == f"po:{order.id}")
+            & AuditLog.action.in_(("ack.remove", "shipment.remove", "invoice.remove"))
+        )
+    )
+    for row in db.scalars(wanted.order_by(AuditLog.created_at, AuditLog.id)):
+        who = f" ({people[row.user_id]})" if row.user_id in people else ""
+        before, after = parsed(row.before), parsed(row.after)
+        if row.action == "line.close" and row.object in by_object:
+            message = f"Settled by hand ({after.get('closed')}): {after.get('reason')}{who}"
+            steps[by_object[row.object]].append(TimelineStep(row.created_at, message))
+        elif row.action == "line.reopen" and row.object in by_object:
+            message = f"Reopened: {after.get('reason')}{who}"
+            steps[by_object[row.object]].append(TimelineStep(row.created_at, message))
+        elif row.action.endswith(".remove"):
+            details = before.get("details")
+            title = before.get("title")
+            for detail in details if isinstance(details, list) else []:
+                match = re.match(r"Line (\d+):", str(detail))
+                if match and int(match.group(1)) in number_to_id:
+                    what = str(detail)[match.end() :].strip()
+                    message = f"Entry taken back: {title} ({what}). Reason: {after.get('reason')}{who}"
+                    steps[number_to_id[int(match.group(1))]].append(TimelineStep(row.created_at, message))

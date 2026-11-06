@@ -69,6 +69,7 @@ class ImportRejected(ValueError):
 @dataclass
 class ImportResult:
     po_numbers: list[str] = field(default_factory=list)
+    ignored_columns: list[str] = field(default_factory=list)  # columns in the file that the import does not use
 
 
 def clean_currency(value: str | None) -> str:
@@ -172,37 +173,49 @@ def create_po(
 # ---- CSV import
 
 
-def _read(raw: bytes) -> tuple[list[tuple[int, dict[str, str]]], list[RowError]]:
+def _decode(raw: bytes) -> str | None:
+    """Text from a file saved as UTF-8 or as Windows-1252, which is how QuickBooks and older Excel save CSV."""
+    if b"\x00" in raw:
+        return None  # a picture, a spreadsheet or another binary file
+    for encoding in ("utf-8-sig", "cp1252"):
+        try:
+            return raw.decode(encoding)
+        except UnicodeDecodeError:
+            continue
+    return None
+
+
+def _read(raw: bytes) -> tuple[list[tuple[int, dict[str, str]]], list[RowError], list[str]]:
     if len(raw) > MAX_CSV_BYTES:
-        return [], [RowError(None, f"The file is larger than {MAX_CSV_BYTES // (1024 * 1024)} MB.")]
-    try:
-        content = raw.decode("utf-8-sig")
-    except UnicodeDecodeError:
-        return [], [RowError(None, "The file is not UTF-8 text. In your spreadsheet, save it as CSV UTF-8.")]
+        return [], [RowError(None, f"The file is larger than {MAX_CSV_BYTES // (1024 * 1024)} MB.")], []
+    content = _decode(raw)
+    if content is None:
+        return [], [RowError(None, "The file does not look like a CSV text file, so it was not read.")], []
     reader = csv.reader(io.StringIO(content))
     try:
         header = [cell.strip().lower() for cell in next(reader, [])]
     except csv.Error as problem:
-        return [], [RowError(None, f"The file could not be read as CSV: {problem}")]
+        return [], [RowError(None, f"The file could not be read as CSV: {problem}")], []
     if not any(header):
-        return [], [RowError(None, "The file is empty. The first row must name the columns.")]
+        return [], [RowError(None, "The file is empty. The first row must name the columns.")], []
     errors: list[RowError] = []
-    repeated = sorted({name for name in header if name and header.count(name) > 1})
-    unknown = [name for name in header if name and name not in COLUMNS]
+    repeated = sorted({name for name in header if name in COLUMNS and header.count(name) > 1})
+    # Columns are read by name, so any the import does not use are skipped, not refused.
+    ignored = list(dict.fromkeys(name for name in header if name and name not in COLUMNS))
     missing = [name for name in REQUIRED if name not in header]
     if repeated:
         errors.append(RowError(1, f"A column appears twice: {', '.join(repeated)}."))
-    if unknown:
-        errors.append(RowError(1, f"Unknown column: {', '.join(unknown)}. The columns are: {', '.join(COLUMNS)}."))
     if missing:
-        errors.append(RowError(1, f"Missing column: {', '.join(missing)}."))
+        found = f" The file has: {', '.join(name for name in header if name)}." if ignored else ""
+        reads = ", ".join(COLUMNS)
+        errors.append(RowError(1, f"Missing column: {', '.join(missing)}. The columns it reads are: {reads}.{found}"))
     if errors:
-        return [], errors
+        return [], errors, []
     rows: list[tuple[int, dict[str, str]]] = []
     try:
         for index, cells in enumerate(reader, start=2):
             if index > MAX_CSV_ROWS + 1:
-                return [], [RowError(None, f"More than {MAX_CSV_ROWS} rows. Split the file.")]
+                return [], [RowError(None, f"More than {MAX_CSV_ROWS} rows. Split the file.")], []
             if not any(cell.strip() for cell in cells):
                 continue
             if len(cells) > len(header):
@@ -212,17 +225,17 @@ def _read(raw: bytes) -> tuple[list[tuple[int, dict[str, str]]], list[RowError]]
             record.update(zip(header, cells, strict=False))
             rows.append((index, record))
     except csv.Error as problem:
-        return [], [RowError(None, f"The file could not be read as CSV: {problem}")]
+        return [], [RowError(None, f"The file could not be read as CSV: {problem}")], []
     if not rows and not errors:
         errors.append(RowError(None, "The file has a header but no rows."))
-    return rows, errors
+    return rows, errors, ignored
 
 
 def import_csv(
     db: Session, raw: bytes, *, actor: AppUser | None = None, client_address: str | None = None
 ) -> ImportResult:
     """Import every PO in the file, or none. Raises ImportRejected listing what is wrong, by row. The caller commits."""
-    rows, errors = _read(raw)
+    rows, errors, ignored = _read(raw)
     if errors:
         raise ImportRejected(errors)
 
@@ -294,7 +307,7 @@ def import_csv(
         errors.sort(key=lambda e: (e.row is None, e.row or 0))
         raise ImportRejected(errors[:MAX_ERRORS], truncated=len(errors) > MAX_ERRORS)
 
-    result = ImportResult()
+    result = ImportResult(ignored_columns=ignored)
     for number_, vendor_id, currency, sent, buyer, lines in plans:
         create_po(
             db, po_number=number_, vendor_id=vendor_id, currency=currency, date_sent=sent, buyer=buyer, lines=lines,
@@ -307,6 +320,6 @@ def import_csv(
         actor,
         None,
         client_address,
-        after={"purchase_orders": len(result.po_numbers), "lines": len(rows)},
+        after={"purchase_orders": len(result.po_numbers), "lines": len(rows), "ignored_columns": len(ignored)},
     )
     return result

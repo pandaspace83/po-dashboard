@@ -1,5 +1,6 @@
 """Settling lines by hand, with a reason, and taking it back (PD-1.5b, REQ-INV-04, DEC-39)."""
 
+import re
 from datetime import date, timedelta
 
 from fastapi.testclient import TestClient
@@ -106,3 +107,27 @@ def test_the_timeline_lists_what_happened_to_a_line_in_order(client: TestClient,
     section = page.split("Timeline by line")[1].split("<h2>History")[0]
     order = [section.index(word) for word in ("Ordered 10", "confirmed 6", "Shipped 4", "Settled by hand (short)")]
     assert order == sorted(order) and "Line 2: Nut" in section
+
+
+def timeline_of(client: TestClient, po) -> str:  # noqa: ANN001
+    return client.get(f"/orders/{po[0]}").text.split("Timeline by line")[1].split("<h2>History")[0]
+
+
+def test_the_timeline_keeps_a_hand_close_and_its_reopen_after_the_line_is_reopened(client: TestClient, po) -> None:  # noqa: ANN001
+    settle(client, po, ("cancelled", ""), reason="Vendor dropped it")
+    post(client, f"/orders/{po[0]}/lines/{po[1]}/reopen", {"reason": "Closed the wrong line"})
+    section = timeline_of(client, po)
+    first = section.split("Line 2")[0]  # line 1's own steps
+    assert "Settled by hand (cancelled): Vendor dropped it" in first
+    assert "Reopened: Closed the wrong line" in first and "buyer@example.com" in first
+    assert first.index("Settled by hand") < first.index("Reopened")
+
+
+def test_the_timeline_keeps_an_entry_that_was_taken_back(client: TestClient, po) -> None:  # noqa: ANN001
+    post(client, f"/orders/{po[0]}/ack", ack(po, [("6", "", "2026-12-01"), NONE]))
+    entry = re.search(r"/entries/ack/\d+/remove", client.get(f"/orders/{po[0]}").text)
+    assert entry is not None
+    post(client, f"/orders/{po[0]}{entry.group(0)}", {"reason": "Typed on the wrong PO"})
+    section = timeline_of(client, po)
+    assert "Vendor acknowledged" not in section  # it is no longer a live entry...
+    assert "Entry taken back: Acknowledgement" in section and "Typed on the wrong PO" in section  # ...but not lost

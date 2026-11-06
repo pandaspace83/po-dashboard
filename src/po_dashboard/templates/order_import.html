@@ -31,7 +31,7 @@
   <ul class="muted">
     <li>Dates are year-month-day, like 2026-12-31. Quantities and prices use digits and a dot, with no thousands separator.</li>
     <li>The vendor must already be in the <a href="/vendors">vendor list</a>, spelled the same way. A vendor is never guessed or created.</li>
-    <li>Save from your spreadsheet as <strong>CSV UTF-8</strong>. Every row of a PO must repeat the same vendor, currency, date sent and buyer.</li>
+    <li>Columns are found by name, in any order; columns this page does not use are skipped. The file can be UTF-8 or Windows-1252 (what QuickBooks and older Excel write). Every row of a PO must repeat the same vendor, currency, date sent and buyer.</li>
   </ul>
 </div>
 {% endblock %}

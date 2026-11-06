@@ -350,7 +350,7 @@ def test_an_upload_with_no_file_or_the_wrong_kind_of_file(client: TestClient) ->
     nothing = client.post("/orders/import", data={"note": "hello"}, files={"x": ("x", b"")}, headers=headers)
     assert nothing.status_code == 400 and "Choose a CSV file" in nothing.text
     binary = upload(client, bytes(range(256)) * 20, name="photo.jpg")
-    assert binary.status_code == 400 and "not UTF-8" in binary.text
+    assert binary.status_code == 400 and "does not look like a CSV text file" in binary.text
 
 
 def test_an_oversized_upload_is_refused_before_it_is_read(client: TestClient, env) -> None:  # noqa: ANN001

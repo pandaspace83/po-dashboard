@@ -293,8 +293,6 @@ def test_a_line_number_must_be_a_whole_number(db: Session, acme: L.Vendor, value
 
 
 def test_header_problems_are_reported_once_each(db: Session) -> None:
-    unknown = rejected(db, csv_of(row() + ",x", header=HEADER + ",qty"))
-    assert "Unknown column: qty" in said(unknown)
     missing = rejected(db, b"po_number,vendor\nPO-1,Acme\n")
     assert "Missing column: currency" in said(missing)
     twice = rejected(db, csv_of(header=HEADER + ",item"))
@@ -307,7 +305,7 @@ def test_header_problems_are_reported_once_each(db: Session) -> None:
         (b"", "is empty"),
         (b"\n\n", "is empty"),
         (HEADER.encode() + b"\n", "no rows"),
-        (b"\xff\xfe\x00bad", "not UTF-8"),
+        (b"\xff\xfe\x00bad", "does not look like a CSV text file"),
         (b"x" * (orders.MAX_CSV_BYTES + 1), "larger than"),
     ],
 )
@@ -359,3 +357,30 @@ def test_a_file_that_fails_midway_leaves_nothing_behind(
         import_csv(db, csv_of(*[row(po_number=f"PO-{n}") for n in range(3)]))
     db.rollback()
     assert db.scalar(select(func.count()).select_from(L.PurchaseOrder)) == 0
+
+
+def test_a_file_saved_by_quickbooks_or_old_excel_in_windows_1252_is_read_as_it_is(db: Session, acme: L.Vendor) -> None:
+    text = csv_of(row(description="Pr\u00e9cis\u00ae seal")).decode("utf-8")
+    raw = text.encode("cp1252")  # in this encoding the accent and the symbol are single bytes that UTF-8 refuses
+    assert import_csv(db, raw).po_numbers == ["PO-1"]
+    kept = db.scalars(select(L.POLine.description)).one()
+    assert kept == "Pr\u00e9cis\u00ae seal"  # the accents and the symbol survive
+
+
+def test_a_utf8_file_with_a_byte_order_mark_still_reads(db: Session, acme: L.Vendor) -> None:
+    assert import_csv(db, b"\xef\xbb\xbf" + csv_of(row())).po_numbers == ["PO-1"]
+
+
+def test_a_file_that_is_neither_utf8_nor_windows_1252_is_refused_not_guessed(db: Session) -> None:
+    assert "does not look like a CSV text file" in said(rejected(db, HEADER.encode() + b"\n\x81\x8d\x8f\x90\x9d\n"))
+
+
+def test_a_report_with_other_column_names_is_refused_naming_what_is_missing(db: Session) -> None:
+    quickbooks = b'"Date","Num","Name","Source Name","Qty"\n"11/05/2026","8088","Someone","Vendor",3\n'
+    message = said(rejected(db, quickbooks))
+    assert "Missing column: po_number, vendor, currency" in message and "The file has: date, num" in message
+
+
+def test_columns_the_import_does_not_use_are_skipped_and_counted(db: Session, acme: L.Vendor) -> None:
+    result = import_csv(db, csv_of(row() + ",x", header=HEADER + ",qty"))
+    assert result.po_numbers == ["PO-1"] and result.ignored_columns == ["qty"]

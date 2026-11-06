@@ -10,7 +10,7 @@
   </div>
 </div>
 {% if error %}<p class="error" role="alert">{{ icon("alert") }}<span>{{ error }}</span></p>{% endif %}
-{% if imported is not none %}<p class="notice" role="status">{{ icon("check-circle") }}<span>Imported {{ imported }} purchase order{{ "" if imported == 1 else "s" }}.</span></p>{% endif %}
+{% if imported is not none %}<p class="notice" role="status">{{ icon("check-circle") }}<span>Imported {{ imported }} purchase order{{ "" if imported == 1 else "s" }}.{% if ignored %} {{ ignored }} column{{ "" if ignored == 1 else "s" }} in the file {{ "is" if ignored == 1 else "are" }} not used here and {{ "was" if ignored == 1 else "were" }} skipped.{% endif %}</span></p>{% endif %}
 {% if problems %}<div class="error" role="alert">{{ icon("alert") }}<div>{% for p in problems %}<div>{{ p }}</div>{% endfor %}</div></div>{% endif %}
 <form method="get" action="/orders" class="filters card" role="search">
   <div class="form-row">
