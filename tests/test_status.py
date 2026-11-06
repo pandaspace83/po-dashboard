@@ -55,7 +55,7 @@ def state(ordered="100", confirmed=None, acknowledged=None, shipped="0", invoice
         pytest.param({"invoiced": "120"}, CLOSED, id="closed: invoiced passes ordered"),
         pytest.param({"closed": "received"}, CLOSED, id="closed by hand: received"),
         pytest.param({"closed": "short"}, CLOSED, id="closed by hand: short"),
-        pytest.param({"closed": "cancelled"}, CLOSED, id="closed by hand: cancelled"),
+        pytest.param({"closed": "cancelled"}, LineStatus.CANCELLED, id="cancelled by hand (DEC-39)"),
     ],
 )
 def test_each_row_of_the_table(line: dict[str, str], expected: LineStatus) -> None:
@@ -106,7 +106,7 @@ def test_closing_a_short_line_by_hand_settles_it() -> None:
 
 def test_a_cancelled_zero_confirmation_settles_it() -> None:
     line = state(confirmed="0", closed="cancelled")
-    assert line.status is CLOSED and not line.po_needs_update
+    assert line.status is LineStatus.CANCELLED and not line.po_needs_update
 
 
 def test_the_purchaser_is_only_told_when_the_quantity_differs() -> None:

@@ -186,3 +186,9 @@ label.check input { width: auto; margin-top: 4px; }
 .filters select { width: 100%; }
 .filters .form-row + .form-row { margin-top: 10px; }
 .form-row > div.wide { flex: 2 1 18rem; }
+.settle summary { cursor: pointer; font-weight: 600; }
+.settle[open] summary { margin-bottom: 12px; }
+.timeline { margin: 6px 0; }
+.timeline summary { cursor: pointer; font-weight: 600; }
+.timeline ol { margin: 8px 0 12px; padding-left: 20px; }
+.timeline li { margin: 3px 0; }

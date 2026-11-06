@@ -368,3 +368,54 @@ def remove_entry(
     db.flush()
     audit(db, f"{kind}.remove", actor, f"po:{order.id}", client_address,
           before={"title": match.title, "details": match.details}, after={"reason": why})  # fmt: skip
+
+
+@dataclass(frozen=True)
+class TimelineStep:
+    at: datetime
+    text: str
+
+
+def line_timeline(db: Session, order: PurchaseOrder) -> dict[int, list[TimelineStep]]:
+    """What happened to each line, oldest first: the order, acknowledgements, shipments, invoices, a hand-close."""
+    lines = list(db.scalars(select(POLine).where(POLine.po_id == order.id)))
+    steps: dict[int, list[TimelineStep]] = {line.id: [] for line in lines}
+    for line in lines:
+        steps[line.id].append(TimelineStep(line.created_at, f"Ordered {_shown(line.ordered_qty)} {line.unit}"))
+        if line.closed_reason and line.closed_at:
+            steps[line.id].append(
+                TimelineStep(line.closed_at, f"Settled by hand ({line.closed_reason}): {line.close_note}")
+            )
+    for ack_at, ack_row in db.execute(
+        select(Acknowledgement.accepted_at, AckLine).join(Acknowledgement).where(Acknowledgement.po_id == order.id)
+    ):
+        parts = []
+        if ack_row.confirmed_qty is not None:
+            parts.append(f"confirmed {_shown(ack_row.confirmed_qty)}")
+        if ack_row.confirmed_price is not None:
+            parts.append(f"price {_shown(ack_row.confirmed_price)}")
+        if ack_row.promised_date is not None:
+            parts.append(f"promised {ack_row.promised_date.isoformat()}")
+        steps[ack_row.po_line_id].append(
+            TimelineStep(ack_at, "Vendor acknowledged: " + (", ".join(parts) or "no figures"))
+        )
+    for ship, ship_row in db.execute(
+        select(Shipment, ShipmentLine)
+        .join(ShipmentLine, ShipmentLine.shipment_id == Shipment.id)
+        .where(Shipment.po_id == order.id)
+    ):
+        arrival = ship_row.eta or ship.eta
+        label = " ".join(part for part in (ship.carrier, ship.tracking_number) if part)
+        text_ = f"Shipped {_shown(ship_row.qty)}" + (f" ({label})" if label else "")
+        steps[ship_row.po_line_id].append(
+            TimelineStep(ship.accepted_at, text_ + (f", expected {arrival.isoformat()}" if arrival else ""))
+        )
+    for bill, bill_row in db.execute(
+        select(Invoice, InvoiceLine)
+        .join(InvoiceLine, InvoiceLine.invoice_id == Invoice.id)
+        .where(Invoice.po_id == order.id)
+    ):
+        steps[bill_row.po_line_id].append(
+            TimelineStep(bill.accepted_at, f"Invoiced {_shown(bill_row.qty)} on {bill.invoice_number}")
+        )
+    return {line_id: sorted(found, key=lambda step: step.at) for line_id, found in steps.items()}

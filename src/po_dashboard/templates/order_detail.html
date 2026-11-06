@@ -42,7 +42,14 @@
     <td class="num">{{ st.open_qty|quantity }}</td>
     <td>
       {% if st.status.value == "Closed" %}<span class="pill ok">{{ icon("check-circle") }}Closed</span>
+      {% elif st.status.value == "Cancelled" %}<span class="pill">{{ icon("ban") }}Cancelled</span>
       {% else %}<span class="pill">{{ st.status.value }}</span>{% endif %}
+      {% if line.closed_reason %}<p class="muted">Settled by hand: {{ actions[line.closed_reason]|lower }}. {{ line.close_note }}</p>
+      <form method="post" action="/orders/{{ order.id }}/lines/{{ line.id }}/reopen" class="inline-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <input name="reason" required maxlength="500" placeholder="Why reopen?" aria-label="Reason for reopening line {{ line.line_no }}">
+        <button type="submit" class="small">{{ icon("refresh") }}Reopen</button>
+      </form>{% endif %}
       {% for note in notes.get(line.id, []) %}<p class="flag">{{ icon("alert") }}{{ note }}</p>{% endfor %}
       {% if st.po_needs_update %}<p class="flag">{{ icon("alert") }}The vendor confirmed {{ st.facts.confirmed|quantity }}, not {{ line.ordered_qty|quantity }}. Update the original purchase order.</p>{% endif %}
     </td>
@@ -51,6 +58,35 @@
   </tbody>
 </table>
 </div>
+{% if summary.open_lines %}
+<details class="card settle">
+  <summary>Settle lines by hand <span class="muted">(last resort: the emails and the QuickBooks export normally do this)</span></summary>
+  <form method="post" action="/orders/{{ order.id }}/close">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="table-wrap"><table>
+      <thead><tr><th>#</th><th>Item</th><th class="num">Open</th><th>What happened</th></tr></thead>
+      <tbody>
+      {% for line in lines if not states[line.id].status.done %}
+      <tr><td>{{ line.line_no }}<input type="hidden" name="line_id" value="{{ line.id }}"></td><td>{{ line.item }}</td>
+        <td class="num">{{ states[line.id].open_qty|quantity }}</td>
+        <td><select name="line_action" aria-label="What happened to line {{ line.line_no }}"><option value="">Leave as it is</option>
+          {% for key, label in actions.items() %}<option value="{{ key }}">{{ label }}</option>{% endfor %}</select></td></tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+    <label for="settle_reason">Reason (one for all the lines you changed)</label>
+    <input id="settle_reason" name="reason" required maxlength="500">
+    <p class="form-actions"><button class="primary" type="submit">{{ icon("check") }}Settle</button></p>
+  </form>
+</details>
+{% endif %}
+<h2>Timeline by line</h2>
+{% for line in lines %}
+<details class="timeline">
+  <summary>Line {{ line.line_no }}: {{ line.item }}</summary>
+  <ol>{% for step in timeline[line.id] %}<li><span class="muted">{{ step.at.strftime("%Y-%m-%d %H:%M") }} UTC</span> {{ step.text }}</li>{% endfor %}</ol>
+</details>
+{% endfor %}
 <h2>History</h2>
 {% if history %}
 <div class="table-wrap">

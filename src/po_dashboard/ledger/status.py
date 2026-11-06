@@ -25,6 +25,12 @@ class LineStatus(StrEnum):
     PARTIALLY_SHIPPED = "Partially shipped"
     SHIPPED = "Shipped"
     CLOSED = "Closed"
+    CANCELLED = "Cancelled"  # closed by hand because the line will not be supplied (DEC-39)
+
+    @property
+    def done(self) -> bool:
+        """Nothing more is expected on the line: it is closed or cancelled."""
+        return self in (LineStatus.CLOSED, LineStatus.CANCELLED)
 
 
 class POStatus(StrEnum):
@@ -67,7 +73,9 @@ def line_state(facts: LineFacts) -> LineState:
     # A line closes against what was ordered, so a vendor confirming more does not raise the bar.
     target = facts.ordered if facts.confirmed is None else min(facts.confirmed, facts.ordered)
 
-    if closed:
+    if facts.closed_reason == "cancelled":
+        status = LineStatus.CANCELLED
+    elif closed:
         status = LineStatus.CLOSED
     elif moved > 0 and moved >= target:
         status = LineStatus.SHIPPED
@@ -89,7 +97,7 @@ def line_state(facts: LineFacts) -> LineState:
 def po_state(lines: Iterable[LineState]) -> POState:
     """A PO closes when every line has. A PO with no lines has nothing closed, so it is Open."""
     states = list(lines)
-    open_lines = sum(1 for state in states if state.status is not LineStatus.CLOSED)
+    open_lines = sum(1 for state in states if not state.status.done)
     closed = bool(states) and open_lines == 0
     return POState(
         status=POStatus.CLOSED if closed else POStatus.OPEN,

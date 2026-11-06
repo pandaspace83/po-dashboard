@@ -12,7 +12,7 @@ from starlette.concurrency import run_in_threadpool
 from starlette.datastructures import UploadFile
 
 from po_dashboard.db.ledger import POLine, PurchaseOrder, Vendor
-from po_dashboard.ledger import events, listing
+from po_dashboard.ledger import closing, events, listing
 from po_dashboard.ledger import orders as rules
 from po_dashboard.ledger.errors import LedgerError
 from po_dashboard.ledger.expected import line_expectations
@@ -164,8 +164,9 @@ def order_view(request: Request, db: Db, user: CurrentUser, order: PurchaseOrder
     expected = line_expectations(db, date.today(), order.id, states)
     return render(
         request, "order_detail.html", user, status, order=order, vendor=vendor, lines=lines, states=states,
-        summary=summary, expected=expected, notes=events.line_warnings(db, order),
-        promised=events.promised_history(db, order), history=events.entries(db, order), error=error,
+        summary=summary, expected=expected, actions=closing.ACTIONS, notes=events.line_warnings(db, order),
+        promised=events.promised_history(db, order), history=events.entries(db, order),
+        timeline=events.line_timeline(db, order), error=error,
     )  # fmt: skip
 
 

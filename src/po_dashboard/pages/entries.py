@@ -10,7 +10,7 @@ from sqlalchemy import select
 from starlette.datastructures import FormData
 
 from po_dashboard.db.ledger import POLine, PurchaseOrder
-from po_dashboard.ledger import events
+from po_dashboard.ledger import closing, events
 from po_dashboard.ledger.errors import LedgerError
 from po_dashboard.ledger.status import line_states
 from po_dashboard.pages.common import CurrentUser, Db, client_address, render
@@ -169,6 +169,45 @@ async def remove_entry(request: Request, db: Db, user: CurrentUser, po_id: int, 
     form = await request.form(max_fields=20)
     try:
         events.remove_entry(db, order, kind, entry_id, str(form.get("reason", "")), actor=user,
+                            client_address=client_address(request))  # fmt: skip
+        db.commit()
+    except LedgerError as problem:
+        db.rollback()
+        return order_view(request, db, user, order, error=str(problem), status=400)
+    return RedirectResponse(f"/orders/{po_id}", status_code=303)
+
+
+@router.post("/close", response_class=HTMLResponse, response_model=None)
+async def close_lines(request: Request, db: Db, user: CurrentUser, po_id: int) -> Response:
+    """One form, one reason, any number of lines: the last-resort way to settle lines by hand."""
+    order = _open(db, po_id)
+    if order is None:
+        return missing_order(request, user)
+    form = await request.form(max_fields=1000)
+    ids = [str(v) for v in form.getlist("line_id")]
+    actions = [str(v) for v in form.getlist("line_action")]
+    if len(ids) != len(actions) or not all(i.isascii() and i.isdigit() for i in ids):
+        return order_view(request, db, user, order, error="The form was incomplete. Reload it and try again.",
+                          status=400)  # fmt: skip
+    try:
+        picks = {int(i): a for i, a in zip(ids, actions, strict=True)}
+        closing.close_lines(db, order, picks, str(form.get("reason", "")), actor=user,
+                            client_address=client_address(request))  # fmt: skip
+        db.commit()
+    except LedgerError as problem:
+        db.rollback()
+        return order_view(request, db, user, order, error=str(problem), status=400)
+    return RedirectResponse(f"/orders/{po_id}", status_code=303)
+
+
+@router.post("/lines/{line_id}/reopen", response_class=HTMLResponse, response_model=None)
+async def reopen_line(request: Request, db: Db, user: CurrentUser, po_id: int, line_id: int) -> Response:
+    order = _open(db, po_id)
+    if order is None:
+        return missing_order(request, user)
+    form = await request.form(max_fields=20)
+    try:
+        closing.reopen_line(db, order, line_id, str(form.get("reason", "")), actor=user,
                             client_address=client_address(request))  # fmt: skip
         db.commit()
     except LedgerError as problem:

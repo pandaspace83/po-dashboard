@@ -98,7 +98,7 @@ def parse_filters(raw: Mapping[str, str]) -> tuple[Filters, list[str]]:
 
 
 def _wanted(row: OrderRow, lines: list[tuple[LineState, Expectation]], found: Filters) -> bool:
-    open_lines = [(state, exp) for state, exp in lines if state.status is not LineStatus.CLOSED]
+    open_lines = [(state, exp) for state, exp in lines if not state.status.done]
     if found.status in ("open", "closed") and row.state.status.value.lower() != found.status:
         return False
     if found.status in _LINE_STATUS and not any(state.status is _LINE_STATUS[found.status] for state, _ in open_lines):
@@ -142,7 +142,7 @@ def list_orders(db: Session, found: Filters, today: date) -> list[OrderRow]:
     shown: list[OrderRow] = []
     for order, vendor_name in candidates:
         lines = by_po.get(order.id, [])
-        open_exp = [exp for state, exp in lines if state.status is not LineStatus.CLOSED]
+        open_exp = [exp for state, exp in lines if not state.status.done]
         dates = [exp.expected for exp in open_exp if exp.expected is not None]
         row = OrderRow(
             order=order,

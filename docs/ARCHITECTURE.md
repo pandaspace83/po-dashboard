@@ -156,7 +156,8 @@ wins (`ledger/status.py`, DEC-36):
 
 | Status | Rule |
 |---|---|
-| Closed | `invoiced` ≥ `ordered`, or closed by hand: received, short, cancelled (reason and person recorded) |
+| Cancelled | closed by hand as cancelled (DEC-39); counts as done, like Closed, and is its own status |
+| Closed | `invoiced` ≥ `ordered`, or closed by hand: received, short (reason and person recorded) |
 | Shipped | `moved` > 0 and `moved` ≥ target |
 | Partially shipped | 0 < `moved` < target |
 | Acknowledged | an accepted ack and `moved` = 0 |

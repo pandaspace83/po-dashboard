@@ -51,6 +51,10 @@ Open http://127.0.0.1:8000 and sign in. If you restart the server, run the `cd` 
 | 29 | Click an **Expected from** box. | The browser shows a **calendar** to pick from. Pick a date range and press **Show**: only matching POs stay. **Clear** resets it. | | |
 | 30 | On a PO, record an acknowledgement promising a date **in the past**. | The PO page shows the line as **N days late** in red; the list shows "1 late, up to N days". Tick **Late only**: the PO is found. | | |
 | 31 | Record a shipment with carrier `UPS`, a tracking number like `1Z999AA10123456784` and an arrival date in the future. | The line's Expected date becomes "from the shipment" and the late flag goes. The History entry has **Track with the carrier**; it opens UPS's own page in a new tab. | | |
+| 32 | On an open PO, open **Settle lines by hand**. | A collapsed box (it says it is the last resort). Opening it lists the open lines, each with "Leave as it is / Received / Closed short / Cancelled", and one Reason box. | | |
+| 33 | Choose **Cancelled** for one line, leave the reason empty, press Settle. | The browser asks for a reason. With a reason, the line shows **Cancelled** and a note "Settled by hand". The line is not offered again. | | |
+| 34 | On that line press **Reopen** with a reason. | The line returns to its earlier status. The page does not repeat the action on Reload. | | |
+| 35 | Open **Timeline by line** and a line's heading. | A list in time order: Ordered, Vendor acknowledged, Shipped, Invoiced, Settled by hand. | | |
 
 ## Things to look at while you do it
 

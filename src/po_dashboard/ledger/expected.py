@@ -15,7 +15,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from po_dashboard.db.ledger import POLine, PromisedDateHistory, Shipment, ShipmentLine
-from po_dashboard.ledger.status import LineState, LineStatus, line_states
+from po_dashboard.ledger.status import LineState, line_states
 
 Source = Literal["shipment", "promised"]
 
@@ -69,6 +69,6 @@ def line_expectations(
             etas[line_id] = chosen
     states = line_states(db, po_id) if states is None else states
     return {
-        line_id: expectation(promised.get(line_id), etas.get(line_id), today, state.status is LineStatus.CLOSED)
+        line_id: expectation(promised.get(line_id), etas.get(line_id), today, state.status.done)
         for line_id, state in states.items()
     }
