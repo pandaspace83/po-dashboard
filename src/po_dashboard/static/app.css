@@ -283,3 +283,7 @@ table.todo td:first-child a:hover { text-decoration: underline; }
 @media (max-width: 640px) {
   .account .menu { position: fixed; right: 8px; top: 56px; }
 }
+
+/* QuickBooks load preview (DEC-46) */
+ul.plan { padding-left: 20px; margin: 0 0 16px; }
+ul.plan li { margin: 6px 0; }

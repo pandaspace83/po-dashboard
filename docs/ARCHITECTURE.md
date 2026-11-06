@@ -64,6 +64,7 @@ flowchart LR
 | Layer | Choice | Status | Why |
 |---|---|---|---|
 | Language, tooling | Python 3.13, uv, Ruff, pytest | Assumed | DEC-02 |
+| Uploads | `openpyxl` (read-only, saved values) and `defusedxml` for .xlsx; the standard `csv` module for CSV | Decided | DEC-47 |
 | Web | FastAPI, Uvicorn, Jinja2 templates, HTMX 2.0.11 (0BSD licence; copied into `static/` as `htmx-2.0.11.min.js`, checksum tested) | Decided | DEC-03, DEC-45: no build step, works offline |
 | Styling | Hand-written CSS with design tokens, light theme (DEC-35) | Assumed | DEC-03 |
 | Data | SQLite (WAL) through SQLAlchemy 2; Alembic migrations | Assumed | DEC-02, DEC-04 |
@@ -89,8 +90,8 @@ Tables, with the fields that matter. Every table has `id`, `created_at`; accepte
 | Table | Holds |
 |---|---|
 | `vendor` | name, contact name and email, `vendor_domain` (many), notes |
-| `purchase_order` | po_number (unique), vendor_id, date_sent, currency, buyer, source (manual, csv, document), created_by. No status column: status is computed (§5) |
-| `po_line` | po_id, line_no, item, description, ordered_qty, unit, unit_price, requested_date; closed_reason (received, short, cancelled), closed_at, closed_by and close_note, all empty while the line is open and all required together once it is closed by hand |
+| `purchase_order` | po_number (unique), vendor_id, date_sent, currency, buyer, source (manual, csv, document, quickbooks), created_by; po_date, the PO's own date in QuickBooks from the starting load (DEC-46, migration 0003), never used as the date sent. No status column: status is computed (§5) |
+| `po_line` | po_id, line_no, item, description, ordered_qty, unit, unit_price, requested_date; customer, the customer a line is for when QuickBooks names one (DEC-46); closed_reason (received, short, cancelled), closed_at, closed_by and close_note, all empty while the line is open and all required together once it is closed by hand |
 | `mailbox` | address, provider, connected_by, connected_at, state (connected, needs reconnect, disconnected). Its token or secret is in the Keychain, never here |
 | `source_message` | mailbox_id, folder, provider message id, sender, subject, received_at, raw_path, content_hash |
 | `source_document` | message_id, filename, kind, stored_path, content_hash, text_path, pages |
@@ -142,6 +143,24 @@ writing to a mailbox rarely send EDI. The fields above follow them so a real fee
 | Order acknowledgement | 855 | ORDRSP | PO number, per line confirmed qty, price, promised date |
 | Shipment notice | 856 | DESADV | carrier, tracking, lines and quantities, ETA |
 | Invoice | 810 | INVOIC | invoice number, PO number, per line qty and price |
+
+### Uploads: CSV and Excel (DEC-47, DEC-46)
+
+All three uploads (Import CSV or Excel, Import vendors, Load from QuickBooks) go through one reader,
+`ledger/sheets.py`, which returns rows of text whatever the file was. CSV is read as UTF-8 or Windows-1252. An .xlsx
+workbook is read with `openpyxl` in read-only mode, saved values only (`data_only`: a formula is never run), first sheet
+only, with `defusedxml` parsing every XML part; the reader refuses to open Excel files at all if defusedxml is missing.
+Before parsing it refuses a file over 2 MB, a zip that is more than 20 MB unzipped or has over 1,000 parts, macros
+(`vbaProject.bin`, `.xlsm`, `.xlsb`) and the old `.xls` format; while reading it stops at 5,000 rows and 60 columns, so a
+sheet that claims to be a million rows is never padded out. A damaged or hostile workbook gets one plain message, with no
+detail from the file.
+
+The QuickBooks starting load (`ledger/quickbooks.py`, `pages/quickbooks.py`) reads the "Open POs" report: rows with a
+`Num` are lines; headings and totals are skipped. `plan_load` changes nothing and feeds the preview; `apply_load` creates
+the POs all or nothing, records a part received as a shipment whose `source_ref` is `quickbooks:<export date>` (shown as
+"Received per QuickBooks export of 11/05/2026"), and writes `line.price_rounded` to the audit trail for a price that had
+to be rounded, which the line timeline reads. Between preview and create the file is held in the server's memory for the
+person who uploaded it, for 15 minutes, and read again at create time.
 
 ## 5. Line status
 

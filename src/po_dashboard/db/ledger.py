@@ -48,7 +48,7 @@ class PurchaseOrder(Base):
     __tablename__ = "purchase_order"
     __table_args__ = (
         CheckConstraint("length(currency) = 3 and currency = upper(currency)", name="currency_iso_code"),
-        CheckConstraint("source in ('manual', 'csv', 'document')", name="source_known"),
+        CheckConstraint("source in ('manual', 'csv', 'document', 'quickbooks')", name="source_known"),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -59,6 +59,8 @@ class PurchaseOrder(Base):
     currency: Mapped[str] = mapped_column(String(3))  # ISO 4217; one per PO, never converted (DEC-24)
     buyer: Mapped[str | None] = mapped_column(String(254), default=None)
     source: Mapped[str] = mapped_column(String(16), default="manual")
+    # The PO's own date in QuickBooks, from the starting load (DEC-46). Not the date sent: that comes from email.
+    po_date: Mapped[date | None] = mapped_column(Date, default=None)
     created_by: Mapped[int | None] = mapped_column(ForeignKey("app_user.id", ondelete="SET NULL"), default=None)
 
 
@@ -86,6 +88,7 @@ class POLine(Base):
     unit: Mapped[str] = mapped_column(String(16))  # never converted: a confirmation in another unit is flagged
     unit_price: Mapped[Decimal] = mapped_column(Money)
     requested_date: Mapped[date | None] = mapped_column(Date, default=None)
+    customer: Mapped[str | None] = mapped_column(String(200), default=None)  # who the line is for, when it is a job
     closed_reason: Mapped[str | None] = mapped_column(String(16), default=None)  # empty while the line is open
     closed_at: Mapped[datetime | None] = mapped_column(UTCDateTime, default=None)
     closed_by: Mapped[int | None] = mapped_column(ForeignKey("app_user.id", ondelete="SET NULL"), default=None)

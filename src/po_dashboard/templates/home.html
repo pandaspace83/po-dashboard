@@ -31,7 +31,7 @@
     <td><a href="/orders/{{ i.po_id }}"><strong>{{ i.next_step }}</strong></a></td>
     <td class="nowrap">{{ i.po_number }}</td>
     <td>{{ i.vendor }}</td>
-    <td>{{ i.line_no }}: {{ i.item }}</td>
+    <td>{{ i.line_no }}: {{ i.item }}{% if i.customer %} <span class="muted">· for {{ i.customer }}</span>{% endif %}</td>
     <td>{% for flag in i.flags %}<span class="pill bad">{{ icon("alert") }}{{ flag }}</span> {% endfor %}</td>
   </tr>
   {% endfor %}

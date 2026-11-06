@@ -56,7 +56,8 @@ def _blank_rows(count: int = FORM_ROWS) -> list[dict[str, str]]:
 @router.get("", response_class=HTMLResponse)
 def order_list(request: Request, db: Db, user: CurrentUser,
                imported: int | None = Query(None, ge=0, le=100000),
-               ignored: int = Query(0, ge=0, le=1000)) -> HTMLResponse:  # fmt: skip
+               ignored: int = Query(0, ge=0, le=1000), waiting: int = Query(0, ge=0, le=100000),
+               source: str = Query("", max_length=20)) -> HTMLResponse:  # fmt: skip
     found, problems = listing.parse_filters({key: value for key, value in request.query_params.items()})
     rows, sorting = tables.sort_rows(listing.list_orders(db, found, date.today()), request.query_params.get("sort"),
                                      ORDER_SORTS, "-sent")  # fmt: skip
@@ -64,7 +65,8 @@ def order_list(request: Request, db: Db, user: CurrentUser,
     return render(request, "orders.html", user, orders=shown.rows, page=shown, sorting=sorting, f=found,
                   filtered=found != listing.Filters(), problems=problems,
                   vendor_name=vendor_rules.vendor_name_of(db, found.vendor_id), statuses=listing.STATUS_CHOICES,
-                  raw=request.query_params, imported=imported, ignored=ignored)  # fmt: skip
+                  raw=request.query_params, imported=imported, ignored=ignored, waiting=waiting,
+                  source="quickbooks" if source == "quickbooks" else "")  # fmt: skip
 
 
 @router.get("/new", response_class=HTMLResponse)
@@ -149,7 +151,8 @@ async def import_file(request: Request, db: Db, user: CurrentUser) -> Response:
 
     def work() -> tuple[int, int]:
         try:
-            result = rules.import_csv(db, raw, actor=user, client_address=client_address(request))
+            result = rules.import_csv(db, raw, filename=upload.filename, actor=user,
+                                      client_address=client_address(request))  # fmt: skip
             db.commit()
             return len(result.po_numbers), len(result.ignored_columns)
         except Exception:
@@ -167,7 +170,7 @@ async def import_file(request: Request, db: Db, user: CurrentUser) -> Response:
 def missing_order(request: Request, user: CurrentUser) -> HTMLResponse:
     return render(request, "orders.html", user, 404, orders=[], f=listing.Filters(), problems=[], vendor_name="",
                   page=tables.page_of([], None), sorting=tables.Sorting("sent", True), statuses=listing.STATUS_CHOICES,
-                  raw={}, imported=None, ignored=0,
+                  raw={}, imported=None, ignored=0, waiting=0, source="",
                   error="That purchase order was not found.")  # fmt: skip
 
 

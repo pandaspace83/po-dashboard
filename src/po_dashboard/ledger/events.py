@@ -157,7 +157,7 @@ def record_ack(
 def record_shipment(
     db: Session, order: PurchaseOrder, lines: Sequence[ShipLineInput], *, carrier: str | None = None,
     tracking_number: str | None = None, shipped_at: str | None = None, eta: str | None = None,
-    actor: AppUser | None = None, client_address: str | None = None,
+    actor: AppUser | None = None, client_address: str | None = None, source_ref: str | None = None,
 ) -> Shipment:  # fmt: skip
     """A shipping notice. Its arrival date applies to every line unless a line has its own (REQ-SHP-02)."""
     header = {
@@ -167,7 +167,9 @@ def record_shipment(
         "eta": when(eta, "Expected arrival"),
     }
     _check_lines(db, order, [entry.po_line_id for entry in lines])
-    shipment = Shipment(po_id=order.id, accepted_by=actor.id if actor else None, accepted_at=utcnow(), **header)
+    shipment = Shipment(
+        po_id=order.id, accepted_by=actor.id if actor else None, accepted_at=utcnow(), source_ref=source_ref, **header
+    )
     db.add(shipment)
     db.flush()
     for entry in lines:
@@ -179,9 +181,24 @@ def record_shipment(
         actor,
         f"po:{order.id}",
         client_address,
-        after={"entry": shipment.id, "lines": len(lines)},
+        after={"entry": shipment.id, "lines": len(lines), **({"source": source_ref} if source_ref else {})},
     )
     return shipment
+
+
+QUICKBOOKS_REF = "quickbooks:"  # a shipment's source_ref for "received per QuickBooks export of <date>" (DEC-46)
+
+
+def _shipment_title(ship: Shipment, verb: str = "Shipment") -> str:
+    """How a shipment is named: by its carrier and tracking number, or as received per a QuickBooks export."""
+    if ship.source_ref and ship.source_ref.startswith(QUICKBOOKS_REF):
+        try:
+            exported = date.fromisoformat(ship.source_ref.removeprefix(QUICKBOOKS_REF))
+        except ValueError:
+            return "Received per QuickBooks"
+        return f"Received per QuickBooks export of {day(exported)}"
+    label = " ".join(part for part in (ship.carrier, ship.tracking_number) if part)
+    return f"{verb} {label}".strip()
 
 
 def record_invoice(
@@ -319,10 +336,8 @@ def entries(db: Session, order: PurchaseOrder) -> list[EntryView]:
         found.append(view)
 
     for ship in db.scalars(select(Shipment).where(Shipment.po_id == order.id)):
-        label = " ".join(part for part in (ship.carrier, ship.tracking_number) if part)
-        view = EntryView(
-            "shipment", ship.id, ship.accepted_at, people.get(ship.accepted_by or 0), f"Shipment {label}".strip()
-        )
+        who = people.get(ship.accepted_by or 0)
+        view = EntryView("shipment", ship.id, ship.accepted_at, who, _shipment_title(ship))
         view.link = tracking_url(ship.carrier, ship.tracking_number)
         if ship.eta:
             view.details.append(f"Expected {day(ship.eta)}")
@@ -406,6 +421,8 @@ def line_timeline(db: Session, order: PurchaseOrder) -> dict[int, list[TimelineS
         arrival = ship_row.eta or ship.eta
         label = " ".join(part for part in (ship.carrier, ship.tracking_number) if part)
         text_ = f"Shipped {_shown(ship_row.qty)}" + (f" ({label})" if label else "")
+        if ship.source_ref and ship.source_ref.startswith(QUICKBOOKS_REF):
+            text_ = f"{_shipment_title(ship)}: {_shown(ship_row.qty)}"
         steps[ship_row.po_line_id].append(
             TimelineStep(ship.accepted_at, text_ + (f", expected {day(arrival)}" if arrival else ""))
         )
@@ -438,7 +455,10 @@ def _add_history_from_audit(
         return value if isinstance(value, dict) else {}
 
     wanted = select(AuditLog).where(
-        (AuditLog.object.in_(list(by_object)) & AuditLog.action.in_(("line.close", "line.reopen")))
+        (
+            AuditLog.object.in_(list(by_object))
+            & AuditLog.action.in_(("line.close", "line.reopen", "line.price_rounded"))
+        )
         | (
             (AuditLog.object == f"po:{order.id}")
             & AuditLog.action.in_(("ack.remove", "shipment.remove", "invoice.remove"))
@@ -453,6 +473,8 @@ def _add_history_from_audit(
         elif row.action == "line.reopen" and row.object in by_object:
             message = f"Reopened: {after.get('reason')}{who}"
             steps[by_object[row.object]].append(TimelineStep(row.created_at, message))
+        elif row.action == "line.price_rounded" and row.object in by_object:
+            steps[by_object[row.object]].append(TimelineStep(row.created_at, str(after.get("note"))))
         elif row.action.endswith(".remove"):
             details = before.get("details")
             title = before.get("title")

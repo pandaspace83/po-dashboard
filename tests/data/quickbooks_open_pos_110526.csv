@@ -1,0 +1,21 @@
+,Date,Num,P. O. #,Name,Source Name,Memo,Deliv Date,Qty,Rcv'd,S. O. #,Backordered,Amount,Due Date,Item,Print,Open Balance,Other 1,Other 2,Preferred Delivery Method
+Bolts:M8,,,,,,,,,,,,,,,,,,,
+,10/20/2026,5001,,Acme Fasteners,Acme Fasteners,"M8 bolts, zinc",11/20/2026,100,0,,100,25.00,11/20/2026,Bolts:M8,,25.00,3-5 weeks ARO,,Mail
+Total Bolts:M8,,,,,,,,100,0,,100,25.00,,,,25.00,,,
+Nuts:M8,,,,,,,,,,,,,,,,,,,
+,10/20/2026,5001,,Acme Fasteners,Acme Fasteners,M8 nuts,11/20/2026,3,0,,3,10.00,11/20/2026,Nuts:M8,,10.00,,,Mail
+Total Nuts:M8,,,,,,,,3,0,,3,10.00,,,,10.00,,,
+Sheet:Alu 2mm,,,,,,,,,,,,,,,,,,,
+,10/22/2026,5002,,Café Racing,Northwind Metals,"2 mm sheet, cut to size",11/20/2026,10,4,,6,500.00,11/20/2026,Sheet:Alu 2mm,,300.00,,,Mail
+Total Sheet:Alu 2mm,,,,,,,,10,4,,6,500.00,,,,300.00,,,
+Special Order Wire,,,,,,,,,,,,,,,,,,,
+,10/25/2026,5004,,Acme Fasteners,Acme Fasteners,"Red, 10 ft",11/20/2026,2,0,,2,40.00,11/20/2026,Special Order Wire,,40.00,,,Mail
+,10/25/2026,5004,,Acme Fasteners,Acme Fasteners,"Blue, 10 ft",11/20/2026,1,0,,1,20.00,11/20/2026,Special Order Wire,,20.00,,,Mail
+Total Special Order Wire,,,,,,,,3,0,,3,60.00,,,,60.00,,,
+Washers:M8,,,,,,,,,,,,,,,,,,,
+,10/20/2026,5001,,Acme Fasteners,Acme Fasteners,M8 washers,11/20/2026,1000,0,,1000,"1,000.00",11/20/2026,Washers:M8,,"1,000.00",,,Mail
+Total Washers:M8,,,,,,,,1000,0,,1000,"1,000.00",,,,"1,000.00",,,
+Wire:Steel,,,,,,,,,,,,,,,,,,,
+,10/23/2026,5003,,Globex Wire,Globex Wire,Steel wire,11/20/2026,5,0,,5,50.00,11/20/2026,Wire:Steel,,50.00,,,Mail
+Total Wire:Steel,,,,,,,,5,0,,5,50.00,,,,50.00,,,
+TOTAL,,,,,,,,1121,4,,1117,"1,625.00",,,,"1,425.00",,,

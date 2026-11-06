@@ -7,12 +7,13 @@
 <div class="page-head">
   <h1>Purchase orders</h1>
   <div class="actions">
-    <a class="button" href="/orders/import">{{ icon("upload") }}Import CSV</a>
+    <a class="button" href="/orders/quickbooks">{{ icon("upload") }}Load from QuickBooks</a>
+    <a class="button" href="/orders/import">{{ icon("upload") }}Import CSV or Excel</a>
     <a class="button primary" href="/orders/new">{{ icon("plus") }}New purchase order</a>
   </div>
 </div>
 {% if error %}<p class="error" role="alert">{{ icon("alert") }}<span>{{ error }}</span></p>{% endif %}
-{% if imported is not none %}<p class="notice" role="status">{{ icon("check-circle") }}<span>Imported {{ imported }} purchase order{{ "" if imported == 1 else "s" }}.{% if ignored %} {{ ignored }} column{{ "" if ignored == 1 else "s" }} in the file {{ "is" if ignored == 1 else "are" }} not used here and {{ "was" if ignored == 1 else "were" }} skipped.{% endif %}</span></p>{% endif %}
+{% if imported is not none %}<p class="notice" role="status">{{ icon("check-circle") }}<span>{{ "Loaded" if source == "quickbooks" else "Imported" }} {{ imported }} purchase order{{ "" if imported == 1 else "s" }}{{ " from QuickBooks" if source == "quickbooks" }}.{% if waiting %} {{ waiting }} {{ "is" if waiting == 1 else "are" }} waiting for {{ "its" if waiting == 1 else "their" }} vendor: add the vendor, then load the file again.{% endif %}{% if ignored %} {{ ignored }} column{{ "" if ignored == 1 else "s" }} in the file {{ "is" if ignored == 1 else "are" }} not used here and {{ "was" if ignored == 1 else "were" }} skipped.{% endif %}</span></p>{% endif %}
 <form method="get" action="/orders" id="filters" class="filters card" role="search" {{ live_filters("/orders") }}>
   <div class="form-row">
     <div class="wide"><label for="q">Search</label><input id="q" name="q" type="search" placeholder="PO number or vendor" value="{{ f.q }}" maxlength="100" autofocus data-search aria-keyshortcuts="/"></div>

@@ -42,7 +42,8 @@ SHOWS = {
     "needs_update": "Original PO needs updating",
 }
 CSV_COLUMNS = (
-    "PO", "Vendor", "Line", "Item", "Description", "Unit", "Ordered", "Open quantity", "Status", "Expected date",
+    "PO", "Vendor", "Line", "Item", "Description", "Customer", "Unit", "Ordered", "Open quantity", "Status",
+    "Expected date",
     "Expected from", "Days late", "Promised date slipped", "Last vendor activity", "Flags",
 )  # fmt: skip
 
@@ -67,6 +68,7 @@ class OpenItem:
     line_no: int
     item: str
     description: str
+    customer: str
     unit: str
     ordered: Decimal
     open_qty: Decimal
@@ -159,7 +161,8 @@ def open_items(db: Session, today: date, show: str = "all", vendor_id: int | Non
     # Plain columns, not whole objects: the report reads thousands of lines and needs only these (DEC-45 item 14).
     query = (
         select(
-            POLine.id, POLine.line_no, POLine.item, POLine.description, POLine.unit, POLine.ordered_qty,
+            POLine.id, POLine.line_no, POLine.item, POLine.description, POLine.customer, POLine.unit,
+            POLine.ordered_qty,
             PurchaseOrder.id, PurchaseOrder.po_number, PurchaseOrder.date_sent, Vendor.name,
         )
         .join(PurchaseOrder, PurchaseOrder.id == POLine.po_id)
@@ -169,9 +172,9 @@ def open_items(db: Session, today: date, show: str = "all", vendor_id: int | Non
     if vendor_id is not None:
         query = query.where(PurchaseOrder.vendor_id == vendor_id)
     found: list[OpenItem] = []
-    for line_id, line_no, item_text, description, unit, ordered, po_id, po_number, date_sent, vendor_name in db.execute(
-        query
-    ):
+    for row in db.execute(query):
+        line_id, line_no, item_text, description, customer, unit, ordered = row[:7]
+        po_id, po_number, date_sent, vendor_name = row[7:]
         state = states[line_id]
         if state.status.done:
             continue
@@ -187,6 +190,7 @@ def open_items(db: Session, today: date, show: str = "all", vendor_id: int | Non
             line_no=line_no,
             item=item_text,
             description=description or "",
+            customer=customer or "",
             unit=unit,
             ordered=ordered,
             open_qty=state.open_qty,
@@ -247,6 +251,7 @@ def to_csv(items: list[OpenItem]) -> bytes:
                 item.line_no,
                 item.item,
                 item.description,
+                item.customer,
                 item.unit,
                 format(item.ordered.normalize(), "f"),
                 format(item.open_qty.normalize(), "f"),

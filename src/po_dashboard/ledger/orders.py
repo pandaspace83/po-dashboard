@@ -6,8 +6,6 @@ the row and the field, and a CSV file is imported whole or not at all.
 
 from __future__ import annotations
 
-import csv
-import io
 import re
 from collections.abc import Sequence
 from dataclasses import dataclass, field
@@ -22,12 +20,14 @@ from po_dashboard.auth.service import audit
 from po_dashboard.db.ledger import POLine, PurchaseOrder, Vendor
 from po_dashboard.db.models import AppUser
 from po_dashboard.db.types import Money, Quantity
+from po_dashboard.ledger import sheets
 from po_dashboard.ledger.errors import LedgerError, number, text, when
+from po_dashboard.ledger.sheets import SheetRejected, read_table
 from po_dashboard.ledger.vendors import vendor_for_name
 
 CURRENCY = re.compile(r"[A-Z]{3}")
-MAX_CSV_BYTES = 2 * 1024 * 1024
-MAX_CSV_ROWS = 5000
+MAX_CSV_BYTES = sheets.MAX_BYTES  # the limits of every upload, CSV or Excel (DEC-47)
+MAX_CSV_ROWS = sheets.MAX_ROWS
 MAX_ERRORS = 40
 COMMON_CURRENCIES = ("USD", "EUR", "GBP", "CAD", "MXN", "JPY", "CNY", "AUD", "CHF", "INR")
 
@@ -51,6 +51,7 @@ class LineInput:
     description: str | None = None
     requested_date: date | None = None
     line_no: int | None = None  # filled in 1, 2, 3 ... when left out
+    customer: str | None = None  # the customer a line is for, from the QuickBooks load (DEC-46)
 
 
 @dataclass(frozen=True)
@@ -133,7 +134,7 @@ def check_header(
 def create_po(
     db: Session, *, po_number: str | None, vendor_id: int | None, currency: str | None, date_sent: str | None,
     buyer: str | None, lines: Sequence[LineInput], source: str = "manual", actor: AppUser | None = None,
-    client_address: str | None = None,
+    client_address: str | None = None, po_date: date | None = None,
 ) -> PurchaseOrder:  # fmt: skip
     """Add a PO and its lines. The caller commits."""
     header = check_header(
@@ -143,7 +144,7 @@ def create_po(
         raise LedgerError("A PO needs at least one line.")
     order = PurchaseOrder(
         po_number=header.po_number, vendor_id=header.vendor.id, currency=header.currency, date_sent=header.date_sent,
-        buyer=header.buyer, source=source, created_by=actor.id if actor else None,
+        buyer=header.buyer, source=source, created_by=actor.id if actor else None, po_date=po_date,
     )  # fmt: skip
     db.add(order)
     try:
@@ -156,7 +157,7 @@ def create_po(
             POLine(
                 po_id=order.id, line_no=entry.line_no or position, item=entry.item, description=entry.description,
                 ordered_qty=entry.quantity, unit=entry.unit, unit_price=entry.unit_price,
-                requested_date=entry.requested_date,
+                requested_date=entry.requested_date, customer=entry.customer,
             )  # fmt: skip
         )
     db.flush()
@@ -173,29 +174,15 @@ def create_po(
 # ---- CSV import
 
 
-def decode_csv(raw: bytes) -> str | None:
-    """Text from a file saved as UTF-8 or as Windows-1252, which is how QuickBooks and older Excel save CSV."""
-    if b"\x00" in raw:
-        return None  # a picture, a spreadsheet or another binary file
-    for encoding in ("utf-8-sig", "cp1252"):
-        try:
-            return raw.decode(encoding)
-        except UnicodeDecodeError:
-            continue
-    return None
-
-
-def _read(raw: bytes) -> tuple[list[tuple[int, dict[str, str]]], list[RowError], list[str]]:
-    if len(raw) > MAX_CSV_BYTES:
-        return [], [RowError(None, f"The file is larger than {MAX_CSV_BYTES // (1024 * 1024)} MB.")], []
-    content = decode_csv(raw)
-    if content is None:
-        return [], [RowError(None, "The file does not look like a CSV text file, so it was not read.")], []
-    reader = csv.reader(io.StringIO(content))
+def _read(
+    raw: bytes, filename: str | None = None
+) -> tuple[list[tuple[int, dict[str, str]]], list[RowError], list[str]]:
+    """The rows of a CSV or Excel file (DEC-47) as {column: text}, the problems, and the columns not used."""
     try:
-        header = [cell.strip().lower() for cell in next(reader, [])]
-    except csv.Error as problem:
-        return [], [RowError(None, f"The file could not be read as CSV: {problem}")], []
+        table = read_table(raw, filename)
+    except SheetRejected as problem:
+        return [], [RowError(None, str(problem))], []
+    header = [cell.strip().lower() for cell in (table[0] if table else [])]
     if not any(header):
         return [], [RowError(None, "The file is empty. The first row must name the columns.")], []
     errors: list[RowError] = []
@@ -212,30 +199,27 @@ def _read(raw: bytes) -> tuple[list[tuple[int, dict[str, str]]], list[RowError],
     if errors:
         return [], errors, []
     rows: list[tuple[int, dict[str, str]]] = []
-    try:
-        for index, cells in enumerate(reader, start=2):
-            if index > MAX_CSV_ROWS + 1:
-                return [], [RowError(None, f"More than {MAX_CSV_ROWS} rows. Split the file.")], []
-            if not any(cell.strip() for cell in cells):
-                continue
-            if len(cells) > len(header):
-                errors.append(RowError(index, "This row has more cells than the header has columns."))
-                continue
-            record = {column: "" for column in COLUMNS}  # a column left out of the file reads as blank
-            record.update(zip(header, cells, strict=False))
-            rows.append((index, record))
-    except csv.Error as problem:
-        return [], [RowError(None, f"The file could not be read as CSV: {problem}")], []
+    for index, cells in enumerate(table[1:], start=2):
+        if not any(cell.strip() for cell in cells):
+            continue
+        if len(cells) > len(header):
+            errors.append(RowError(index, "This row has more cells than the header has columns."))
+            continue
+        record = {column: "" for column in COLUMNS}  # a column left out of the file reads as blank
+        record.update(zip(header, cells, strict=False))
+        rows.append((index, record))
     if not rows and not errors:
         errors.append(RowError(None, "The file has a header but no rows."))
     return rows, errors, ignored
 
 
 def import_csv(
-    db: Session, raw: bytes, *, actor: AppUser | None = None, client_address: str | None = None
-) -> ImportResult:
-    """Import every PO in the file, or none. Raises ImportRejected listing what is wrong, by row. The caller commits."""
-    rows, errors, ignored = _read(raw)
+    db: Session, raw: bytes, *, filename: str | None = None, actor: AppUser | None = None,
+    client_address: str | None = None,
+) -> ImportResult:  # fmt: skip
+    """Import every PO in the file (CSV or Excel), or none. Raises ImportRejected listing what is wrong, by row.
+    The caller commits."""
+    rows, errors, ignored = _read(raw, filename)
     if errors:
         raise ImportRejected(errors)
 

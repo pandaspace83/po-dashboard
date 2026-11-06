@@ -113,9 +113,10 @@ The steps and the real address go here once they have been tested on the real of
 
 ## 12. Importing purchase orders from a spreadsheet (PD-1.2)
 
-**Purchase orders**, then **Import CSV**, then **Download a template** shows the columns. One row per PO line; rows sharing a
+**Purchase orders**, then **Import CSV or Excel**, then **Download a template** shows the columns. An Excel workbook
+(.xlsx) works as well as CSV: the first sheet is read, and only the values saved in it (DEC-47). One row per PO line; rows sharing a
 PO number make one PO. Required: `po_number, vendor, currency, line_no, item, quantity, unit, unit_price`. Optional:
-`date_sent, buyer, description, requested_date`. Dates are `2026-12-31`; numbers use digits and a dot (no thousands
+`date_sent, buyer, description, requested_date`. Dates are `12/31/2026` or `2026-12-31`; numbers use digits and a dot (no thousands
 separator); the file can be **UTF-8 or Windows-1252** (what QuickBooks and older Excel write); columns are found by name in any order, and columns the import does not use are skipped and counted. The vendor must already be on the **Vendors** page, spelled the same
 way. The file goes in whole or not at all, and a PO number that exists is never overwritten. If the page lists problems,
 fix those rows and import again: nothing from the failed attempt was kept.
@@ -134,4 +135,23 @@ fix those rows and import again: nothing from the failed attempt was kept.
 - **Keys:** `/` puts the cursor in the page's search box. In a vendor box, type, then the arrow keys and Enter; Esc
   closes the list. Esc also closes the account menu (your email, top right: Change password, Sign out).
 - **Dates** are shown as QuickBooks shows them, 11/06/2026, and times in the office's time zone.
+
+## 15. Going live: loading the open POs from QuickBooks (PD-1.10a, DEC-46)
+
+Once, at go-live; after that, POs come from the emails.
+
+1. **Vendors first.** Import the vendor file (§13) so every vendor on the open POs is in the app, with its email.
+2. **Export the report.** In QuickBooks run **Open Purchase Orders** (the detail report), all vendors and all dates, and
+   export it as CSV or Excel. Keep QuickBooks' name, such as `Open POs 110526 Project.CSV`: the six digits are the export
+   date (MMDDYY). Do not convert it.
+3. **Preview.** **Purchase orders → Load from QuickBooks**, choose the file, **Show what it would do**. Nothing changes
+   yet. The page lists the POs to create, any **waiting for a vendor** (add those vendors, then load the same file again),
+   any already in the app (left alone), partly received lines and any price it had to round.
+4. **Create.** Check the export date and press **Create N purchase orders**. All are created, or none.
+
+What it does: currency USD, unit EA; the QuickBooks date is kept as the **PO date (QuickBooks)** and the date sent is left
+empty, so the app does not flag a missing acknowledgement it never had the chance to see; a customer named on a line is
+shown as "· for <customer>"; a line partly received gets "received N per QuickBooks export of <date>". What it never
+does: create vendors, change a PO already in the app, read `Other 1`, `Print` or the delivery dates (those come from
+emails), or close anything. Closing from the weekly export waits for OPEN-20.
 

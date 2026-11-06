@@ -11,6 +11,7 @@
 <div class="tiles">
   <div class="tile">{{ icon("truck") }}<div><span class="label">Vendor</span><span class="value"><a href="/vendors/{{ vendor.id }}">{{ vendor.name }}</a></span></div></div>
   <div class="tile">{{ icon("clock") }}<div><span class="label">Date sent</span><span class="value">{{ order.date_sent|day or "not set" }}</span></div></div>
+  {% if order.po_date %}<div class="tile">{{ icon("clipboard") }}<div><span class="label">PO date (QuickBooks)</span><span class="value">{{ order.po_date|day }}</span></div></div>{% endif %}
   <div class="tile">{{ icon("user") }}<div><span class="label">Buyer</span><span class="value">{{ order.buyer or "not set" }}</span></div></div>
   <div class="tile">{{ icon("clipboard") }}<div><span class="label">Currency</span><span class="value">{{ order.currency }}</span></div></div>
 </div>
@@ -28,7 +29,7 @@
   {% set st = states[line.id] %}
   <tr>
     <td>{{ line.line_no }}</td>
-    <td>{{ line.item }}{% if line.description %}<br><span class="muted">{{ line.description }}</span>{% endif %}</td>
+    <td>{{ line.item }}{% if line.customer %} <span class="muted">· for {{ line.customer }}</span>{% endif %}{% if line.description %}<br><span class="muted">{{ line.description }}</span>{% endif %}</td>
     <td class="num">{{ line.ordered_qty|quantity }} {{ line.unit }}</td>
     <td class="num">{{ line.unit_price|money(order.currency) }}</td>
     <td>{{ line.requested_date|day }}</td>

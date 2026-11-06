@@ -134,7 +134,8 @@ async def import_file(request: Request, db: Db, user: CurrentUser) -> Response:
 
     def work() -> vendor_import.VendorImportResult:
         try:
-            result = vendor_import.import_vendors(db, raw, actor=user, client_address=client_address(request))
+            result = vendor_import.import_vendors(db, raw, filename=upload.filename, actor=user,
+                                                  client_address=client_address(request))  # fmt: skip
             db.commit()
             return result
         except Exception:

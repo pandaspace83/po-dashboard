@@ -7,8 +7,6 @@ skipped, and the other rows still go in, because uploading the same file again c
 
 from __future__ import annotations
 
-import csv
-import io
 from dataclasses import dataclass, field
 
 from sqlalchemy import func, select
@@ -18,7 +16,8 @@ from po_dashboard.auth.service import audit
 from po_dashboard.db.ledger import Vendor, VendorDomain
 from po_dashboard.db.models import AppUser
 from po_dashboard.ledger.errors import LedgerError, text
-from po_dashboard.ledger.orders import MAX_CSV_BYTES, MAX_CSV_ROWS, RowError, decode_csv
+from po_dashboard.ledger.orders import RowError
+from po_dashboard.ledger.sheets import SheetRejected, read_table
 from po_dashboard.ledger.vendors import (
     EMAIL,
     _domain_owner,
@@ -59,39 +58,33 @@ class VendorFileRejected(ValueError):
     """The file as a whole could not be read (not text, too big, or a required column missing)."""
 
 
-def _rows(raw: bytes) -> tuple[list[tuple[int, dict[str, str]]], list[str]]:
-    if len(raw) > MAX_CSV_BYTES:
-        raise VendorFileRejected(f"The file is larger than {MAX_CSV_BYTES // (1024 * 1024)} MB.")
-    content = decode_csv(raw)
-    if content is None:
-        raise VendorFileRejected("The file does not look like a CSV text file, so it was not read.")
-    reader = csv.reader(io.StringIO(content))
+def _rows(raw: bytes, filename: str | None) -> tuple[list[tuple[int, dict[str, str]]], list[str]]:
+    """The rows of a CSV or Excel file (DEC-47), each as {column: text}, and the columns that are not used."""
     try:
-        header = [cell.strip().lower() for cell in next(reader, [])]
-        if not any(header):
-            raise VendorFileRejected("The file is empty. The first row must name the columns.")
-        repeated = sorted({name for name in header if name in COLUMNS and header.count(name) > 1})
-        if repeated:
-            raise VendorFileRejected(f"A column appears twice: {', '.join(repeated)}.")
-        missing = [name for name in REQUIRED if name not in header]
-        if missing:
-            have = ", ".join(name for name in header if name)
-            raise VendorFileRejected(
-                f"Missing column: {', '.join(missing)}. The columns it reads are: {', '.join(COLUMNS)}. "
-                f"The file has: {have}."
-            )
-        ignored = list(dict.fromkeys(name for name in header if name and name not in COLUMNS))
-        rows: list[tuple[int, dict[str, str]]] = []
-        for index, cells in enumerate(reader, start=2):
-            if index > MAX_CSV_ROWS + 1:
-                raise VendorFileRejected(f"More than {MAX_CSV_ROWS} rows. Split the file.")
-            if not any(cell.strip() for cell in cells):
-                continue
-            record = {column: "" for column in COLUMNS}
-            record.update({name: value for name, value in zip(header, cells, strict=False) if name in COLUMNS})
-            rows.append((index, record))
-    except csv.Error as problem:
-        raise VendorFileRejected(f"The file could not be read as CSV: {problem}") from None
+        table = read_table(raw, filename)
+    except SheetRejected as problem:
+        raise VendorFileRejected(str(problem)) from None
+    header = [cell.strip().lower() for cell in (table[0] if table else [])]
+    if not any(header):
+        raise VendorFileRejected("The file is empty. The first row must name the columns.")
+    repeated = sorted({name for name in header if name in COLUMNS and header.count(name) > 1})
+    if repeated:
+        raise VendorFileRejected(f"A column appears twice: {', '.join(repeated)}.")
+    missing = [name for name in REQUIRED if name not in header]
+    if missing:
+        have = ", ".join(name for name in header if name)
+        raise VendorFileRejected(
+            f"Missing column: {', '.join(missing)}. The columns it reads are: {', '.join(COLUMNS)}. "
+            f"The file has: {have}."
+        )
+    ignored = list(dict.fromkeys(name for name in header if name and name not in COLUMNS))
+    rows: list[tuple[int, dict[str, str]]] = []
+    for index, cells in enumerate(table[1:], start=2):
+        if not any(cell.strip() for cell in cells):
+            continue
+        record = {column: "" for column in COLUMNS}
+        record.update({name: value for name, value in zip(header, cells, strict=False) if name in COLUMNS})
+        rows.append((index, record))
     if not rows:
         raise VendorFileRejected("The file has a header but no rows.")
     return rows, ignored
@@ -169,10 +162,11 @@ def _apply(
 
 
 def import_vendors(
-    db: Session, raw: bytes, *, actor: AppUser | None = None, client_address: str | None = None
-) -> VendorImportResult:
+    db: Session, raw: bytes, *, filename: str | None = None, actor: AppUser | None = None,
+    client_address: str | None = None,
+) -> VendorImportResult:  # fmt: skip
     """Apply every good row. Raises VendorFileRejected when the file cannot be read at all. The caller commits."""
-    rows, ignored = _rows(raw)
+    rows, ignored = _rows(raw, filename)
     result = VendorImportResult(ignored_columns=ignored)
     for index, record in rows:
         try:

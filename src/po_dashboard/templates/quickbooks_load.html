@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block title %}Load from QuickBooks · {{ app_name }}{% endblock %}
+{% block content %}
+<p class="muted"><a href="/orders">Purchase orders</a> /</p>
+<h1>Load open POs from QuickBooks</h1>
+{% if error %}<p class="error" role="alert">{{ icon("alert") }}<span>{{ error }}</span></p>{% endif %}
+
+{% if plan %}
+<div class="card">
+  <div class="card-head">{{ icon("clipboard") }}<h2>What this file would do</h2></div>
+  <p class="muted">From <strong>{{ filename }}</strong>{% if plan.export_date %}, exported {{ plan.export_date|day }}{% endif %}. Nothing has changed yet.</p>
+  {% if plan.problems %}
+  <div class="error" role="alert">{{ icon("alert") }}<div>Nothing can be created until these are fixed in QuickBooks or the file:
+    <ul>{% for e in plan.problems[:shown] %}<li>{% if e.row %}Row {{ e.row }}: {% endif %}{{ e.message }}</li>{% endfor %}</ul></div></div>
+  {% endif %}
+  <ul class="plan">
+    {% if plan.create %}<li><strong>{{ plan.create|length }}</strong> purchase order{{ "" if plan.create|length == 1 else "s" }} with {{ plan.lines_to_create }} line{{ "" if plan.lines_to_create == 1 else "s" }} to create. Currency USD, unit EA; the QuickBooks date is kept as the PO date, and the date sent comes later from email.</li>
+    {% else %}<li><strong>Nothing new to create.</strong></li>{% endif %}
+    {% if plan.waiting %}<li><strong>{{ plan.waiting|length }}</strong> waiting for a vendor that is not in the app yet: {{ plan.waiting_vendors|join(", ") }}. <a href="/vendors">Add them under Vendors</a> (or <a href="/vendors/import">import a vendor file</a>), then load this file again; nothing else changes.</li>{% endif %}
+    {% if plan.existing %}<li><strong>{{ plan.existing|length }}</strong> already in the app, left as they are: {{ plan.existing[:20]|join(", ") }}{% if plan.existing|length > 20 %} and {{ plan.existing|length - 20 }} more{% endif %}.</li>{% endif %}
+    {% if plan.received %}<li><strong>{{ plan.received|length }}</strong> line{{ "" if plan.received|length == 1 else "s" }} partly received in QuickBooks: each gets "received per QuickBooks", and shows what is still to come.</li>{% endif %}
+    {% if plan.rounded %}<li><strong>{{ plan.rounded|length }}</strong> unit price{{ "" if plan.rounded|length == 1 else "s" }} that QuickBooks' total does not divide into exactly, rounded to 4 places (each line's history says so): {% for o, l in plan.rounded[:10] %}PO {{ o.po_number }} {{ l.item }} ({{ l.amount }} ÷ {{ l.qty|quantity }} = {{ l.price }}){{ "; " if not loop.last }}{% endfor %}.</li>{% endif %}
+    {% if plan.ignored_columns %}<li class="muted">Columns not used: {{ plan.ignored_columns|join(", ") }}. Dates and sending come from emails, not from these.</li>{% endif %}
+  </ul>
+  {% if token %}
+  <form method="post" action="/orders/quickbooks/create">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <input type="hidden" name="token" value="{{ token }}">
+    <div class="form-row">
+      <div class="shrink"><label for="export_date">Export date</label><input id="export_date" name="export_date" type="date" required value="{{ plan.export_date.isoformat() }}"></div>
+      <div class="shrink"><button class="primary" type="submit" autofocus>{{ icon("check") }}Create {{ plan.create|length }} purchase order{{ "" if plan.create|length == 1 else "s" }}</button></div>
+      <div class="shrink"><a class="button" href="/orders/quickbooks">Cancel</a></div>
+    </div>
+    <p class="muted small">All of them are created, or none. This preview is kept for 15 minutes.</p>
+  </form>
+  {% elif not plan.problems and plan.create and not plan.export_date %}
+  <p class="error" role="alert">{{ icon("alert") }}<span>The file name has no date like 110526. Choose the file again and give the export date below.</span></p>
+  {% endif %}
+  {% if plan.create %}
+  <details class="timeline">
+    <summary>The purchase orders to create</summary>
+    <div class="table-wrap table-scroll"><table>
+      <thead><tr><th scope="col">PO</th><th scope="col">Vendor</th><th scope="col">PO date</th><th scope="col" class="num">Lines</th></tr></thead>
+      <tbody>{% for o in plan.create[:shown] %}<tr><td class="nowrap">{{ o.po_number }}</td><td>{{ o.vendor_name }}</td><td>{{ o.po_date|day }}</td><td class="num">{{ o.lines|length }}</td></tr>{% endfor %}</tbody>
+    </table></div>
+  </details>
+  {% endif %}
+</div>
+{% endif %}
+
+<div class="card">
+  <div class="card-head">{{ icon("upload") }}<h2>{{ "Choose another file" if plan else "Choose the report" }}</h2></div>
+  <p>In QuickBooks, run the <strong>Open Purchase Orders</strong> report (detail), all vendors and all dates, and export it as CSV or Excel. Upload it here as it is: nothing needs converting.</p>
+  <form method="post" action="/orders/quickbooks" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="form-row">
+      <div><label for="file">QuickBooks report (CSV or .xlsx)</label>
+        <input id="file" name="file" type="file" accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required {{ "autofocus" if not (plan and token) }}></div>
+      <div class="shrink"><label for="typed_date">Export date (if the name has none)</label><input id="typed_date" name="export_date" type="date"></div>
+      <div class="shrink"><button class="primary" type="submit">{{ icon("search") }}Show what it would do</button></div>
+    </div>
+  </form>
+  <p class="muted">This is the starting load: it only creates POs that are not in the app yet. It never creates vendors, never changes a PO that is already here, and does not close anything yet.</p>
+</div>
+{% endblock %}

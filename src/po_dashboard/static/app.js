@@ -53,8 +53,9 @@ for (const name of ["htmx:afterRequest", "htmx:afterSettle", "htmx:sendError", "
   });
 }
 
-// ---- Keeping a person's place. A form that saves and comes back to the same page (or is refused) updates the page
+// ---- Keeping a person's place. A form that saves and comes back to the same page, or is refused, updates the page
 // where it is: no jump to the top, the cursor is not moved to the first box, and a refusal is brought into view.
+// A form answered with a new page of its own (an upload's preview or result) behaves like a new page.
 // HTMX reports a settled swap once for each new element, so the work is done once, on the first report.
 let pending = null;
 
@@ -69,7 +70,8 @@ document.addEventListener("htmx:beforeSwap", (event) => {
   const info = detail.pathInfo || {};
   const landed = info.responsePath || info.finalRequestPath || "";
   const redirected = info.responsePath && info.responsePath !== info.finalRequestPath;
-  if (!redirected || new URL(landed, location.href).pathname === location.pathname) {
+  const refused = detail.xhr && detail.xhr.status >= 400;
+  if (refused || (redirected && new URL(landed, location.href).pathname === location.pathname)) {
     detail.swapOverride = "innerHTML show:none";
     Object.assign(pending, { stay: true, action: form.getAttribute("action"), scroll: window.scrollY });
   }
