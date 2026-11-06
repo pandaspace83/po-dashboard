@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block title %}Import vendors · {{ app_name }}{% endblock %}
+{% block content %}
+<p class="muted"><a href="/vendors">Vendors</a> /</p>
+<h1>Import vendors</h1>
+<div class="card">
+  <div class="card-head">{{ icon("upload") }}<h2>Choose a CSV file</h2></div>
+  <p>One row per vendor, or several rows for the same vendor. A new vendor is created. A vendor that already exists is never refused: anything new in its row is added, and nothing already there is overwritten. Upload as often as you like.</p>
+  <form method="post" action="/vendors/import" enctype="multipart/form-data" data-upload>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <label for="file">CSV file</label>
+    <input id="file" name="file" type="file" accept=".csv,text/csv" required autofocus>
+    <p class="form-actions"><button class="primary" type="submit">{{ icon("upload") }}Import</button>
+      <a class="button" href="/vendors/import/template">{{ icon("download") }}Download a template</a></p>
+  </form>
+  <div id="import-result" aria-live="polite">
+  {% if problem %}<div class="error" role="alert">{{ icon("alert") }}<span>{{ problem }}</span></div>{% endif %}
+  {% if result %}
+    <div class="notice" role="status">{{ icon("check-circle") }}<div>
+      <strong>Done.</strong> {{ result.created|length }} created, {{ result.updated|length }} updated, {{ result.unchanged|length }} already up to date{% if result.skipped %}, {{ result.skipped|length }} row{{ "" if result.skipped|length == 1 else "s" }} skipped{% endif %}.
+      {% if result.ignored_columns %}<br>{{ result.ignored_columns|length }} column{{ "" if result.ignored_columns|length == 1 else "s" }} in the file {{ "is" if result.ignored_columns|length == 1 else "are" }} not used and {{ "was" if result.ignored_columns|length == 1 else "were" }} skipped.{% endif %}
+    </div></div>
+    {% if result.created %}<h3>Created</h3><ul>{% for name in result.created[:shown] %}<li>{{ name }}</li>{% endfor %}</ul>{% endif %}
+    {% if result.updated %}<h3>Updated</h3><ul>{% for name, what in result.updated[:shown] %}<li>{{ name }}: {{ what }}</li>{% endfor %}</ul>{% endif %}
+    {% if result.notes %}<h3>Kept as they were</h3><ul>{% for note in result.notes[:shown] %}<li>{{ note }}</li>{% endfor %}</ul>{% endif %}
+    {% if result.skipped %}<div class="error" role="alert">{{ icon("alert") }}<div>These rows were not used. Fix them and upload the file again; the rest are already in.
+      <ul>{% for e in result.skipped[:shown] %}<li>Row {{ e.row }}: {{ e.message }}</li>{% endfor %}</ul></div></div>{% endif %}
+  {% endif %}
+  </div>
+</div>
+<div class="card">
+  <h2>Columns</h2>
+  <p>Found by name, in any order. Required: <strong>{{ required|join(", ") }}</strong>. Optional: {{ columns|reject("in", required)|join(", ") }}. Other columns are skipped. The file can be UTF-8 or Windows-1252.</p>
+  <ul class="muted">
+    <li><strong>email_domains</strong>: the domains the vendor writes from, separated by commas or spaces, like <em>acme.com, mail.acme.com</em>. The app recognises replies by these.</li>
+    <li><strong>contact_email</strong> is required on every row. An address that is already another vendor's contact is refused. Its domain is added to the vendor's domains too, unless it is a shared mail service such as gmail.com, which says nothing about the vendor.</li>
+    <li>A domain that already belongs to another vendor is never moved: that row is skipped and listed.</li>
+    <li>Contact name, contact email and notes are filled in only where the vendor has none yet.</li>
+  </ul>
+</div>
+{% endblock %}

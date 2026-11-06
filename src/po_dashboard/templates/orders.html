@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "_icons.html" import icon %}
+{% from "_picker.html" import vendor_picker %}
 {% block title %}Purchase orders · {{ app_name }}{% endblock %}
 {% block content %}
 <div class="page-head">
@@ -18,9 +19,7 @@
     <div><label for="status">Status</label>
       <select id="status" name="status"><option value="">Any</option>
       {% for key, label in statuses.items() %}<option value="{{ key }}" {{ "selected" if f.status == key }}>{{ label }}</option>{% endfor %}</select></div>
-    <div><label for="vendor">Vendor</label>
-      <select id="vendor" name="vendor"><option value="">Any</option>
-      {% for v in vendors %}<option value="{{ v.id }}" {{ "selected" if f.vendor_id == v.id }}>{{ v.name }}</option>{% endfor %}</select></div>
+    <div>{{ vendor_picker("vendor", "Vendor", f.vendor_id, vendor_name, false, "Any vendor") }}</div>
   </div>
   <div class="form-row">
     <div><label for="sent_from">Sent from</label><input id="sent_from" name="sent_from" type="date" value="{{ f.sent_from or '' }}"></div>

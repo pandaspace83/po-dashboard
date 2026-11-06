@@ -151,3 +151,21 @@ def po_counts(db: Session) -> dict[int, int]:
         row[0]: row[1]
         for row in db.execute(select(PurchaseOrder.vendor_id, func.count()).group_by(PurchaseOrder.vendor_id))
     }
+
+
+def search_vendors(db: Session, query: str, limit: int = 8) -> list[Vendor]:
+    """Vendors whose name or email domain contains what was typed, names that start with it first."""
+    found = query.strip()[:100]
+    if not found:
+        return list(db.scalars(select(Vendor).order_by(func.lower(Vendor.name)).limit(limit)))
+    by_domain = select(VendorDomain.vendor_id).where(VendorDomain.domain.icontains(found, autoescape=True))
+    match = select(Vendor).where(Vendor.name.icontains(found, autoescape=True) | Vendor.id.in_(by_domain))
+    starts = Vendor.name.istartswith(found, autoescape=True)
+    return list(db.scalars(match.order_by(~starts, func.lower(Vendor.name)).limit(limit)))
+
+
+def vendor_name_of(db: Session, vendor_id: int | str | None) -> str:
+    """The name to show in a picker for the chosen id; empty when there is none."""
+    text_id = str(vendor_id or "")
+    vendor = db.get(Vendor, int(text_id)) if text_id.isascii() and text_id.isdigit() else None
+    return vendor.name if vendor else ""

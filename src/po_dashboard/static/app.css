@@ -197,3 +197,12 @@ a.tile:hover { border-color: #b9b5ac; }
 .tile .value.bad { color: var(--bad); }
 .audit-text { max-width: 22rem; word-break: break-word; font-size: 0.85rem; color: var(--muted); }
 .pager { display: flex; gap: 12px; align-items: center; }
+
+/* Vendor search box */
+.picker { position: relative; }
+.picker-list { position: absolute; z-index: 20; left: 0; right: 0; margin: 2px 0 0; padding: 4px 0; list-style: none;
+  background: var(--surface); border: 1px solid var(--line-strong); border-radius: var(--radius);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, .12); max-height: 18rem; overflow-y: auto; }
+.picker-list li { padding: 8px 12px; cursor: pointer; }
+.picker-list li.active, .picker-list li:hover { background: var(--hover); }
+.picker-list li.none { cursor: default; color: var(--muted); }

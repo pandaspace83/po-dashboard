@@ -7,7 +7,7 @@ from datetime import date
 from fastapi import APIRouter, Query, Request
 from fastapi.responses import HTMLResponse, Response
 
-from po_dashboard.ledger import listing, reports
+from po_dashboard.ledger import reports, vendors
 from po_dashboard.pages.common import CurrentUser, Db, render
 
 router = APIRouter(prefix="/reports")
@@ -27,7 +27,8 @@ def open_items(request: Request, db: Db, user: CurrentUser, show: str = Query("a
     today = date.today()
     chosen, vendor_id = _choice(show), _vendor(vendor)
     return render(request, "open_items.html", user, items=reports.open_items(db, today, chosen, vendor_id),
-                  show=chosen, shows=reports.SHOWS, vendor_id=vendor_id, vendors=listing.vendor_choices(db),
+                  show=chosen, shows=reports.SHOWS, vendor_id=vendor_id,
+                  vendor_name=vendors.vendor_name_of(db, vendor_id),
                   today=today)  # fmt: skip
 
 

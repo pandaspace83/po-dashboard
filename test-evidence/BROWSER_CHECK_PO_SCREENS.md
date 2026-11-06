@@ -64,6 +64,15 @@ Open http://127.0.0.1:8000 and sign in. If you restart the server, run the `cd` 
 | 42 | Pick an action (for example `line.close`) and a person, press Show. Then press **Clear**. | The list narrows, then returns to everything. | | |
 | 43 | Type a wrong date like `soon` in From. | A message says it is not a date; the list still shows. | | |
 | 44 | Sign in as a **buyer** and try to open the Audit address by typing `/admin/audit`. | Refused. The top bar shows no Audit link for a buyer. | | |
+| 45 | Click **Vendors**, then **Import vendors**. | A page with a file chooser (**the cursor is on it**), an Import button, **Download a template**, and a list of the columns. | | |
+| 46 | Download the template, open it, change the names, save it, choose it, press **Import**. | In place, with no page reload: "Done. N created, ..." and the names created. The new vendors are on the Vendors page with their domains. | | |
+| 47 | Upload the **same file again**. | "0 created, 0 updated, N already up to date". Nothing is duplicated. | | |
+| 48 | Add a row for an existing vendor with a **new email** at a new domain (for example `new@other.example`). Upload. | The vendor is **updated**, not refused: the new domain is added to it, and the old details are kept. | | |
+| 49 | Add a row whose `email_domains` is a domain that already belongs to a different vendor, and another good row. Upload. | The bad row is listed ("already belongs to ..."), skipped; the good row is still created. | | |
+| 50 | Upload a file where one row has **no contact_email**. | That row is listed ("Contact email is required") and skipped; the others go in. | | |
+| 51 | Upload a row whose email is **already another vendor's contact email**. | Listed and skipped ("already the contact email of ..."). | | |
+| 52 | Open **New purchase order** and click the Vendor box. Type two letters of a vendor. | A list of matching vendors appears under the box. Arrow keys and Enter, or a click, pick one; the rest of the page does not change. Type something that matches nothing: "No vendor matches". | | |
+| 53 | Type a name but do not pick it, then press Create. | The box says "Pick a vendor from the list." Pick one and Create works. The same box is on the **Purchase orders** and **Open items** filters ("Any vendor" when empty). | | |
 
 ## Things to look at while you do it
 

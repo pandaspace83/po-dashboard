@@ -2,7 +2,10 @@
 {% from "_icons.html" import icon %}
 {% block title %}Vendors · {{ app_name }}{% endblock %}
 {% block content %}
-<h1>Vendors</h1>
+<div class="page-head">
+  <h1>Vendors</h1>
+  <div class="actions"><a class="button" href="/vendors/import">{{ icon("upload") }}Import vendors</a></div>
+</div>
 {% if error %}<p class="error" role="alert">{{ icon("alert") }}<span>{{ error }}</span></p>{% endif %}
 <div class="card">
   <div class="card-head">{{ icon("plus") }}<h2>Add a vendor</h2></div>

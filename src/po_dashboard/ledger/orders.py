@@ -173,7 +173,7 @@ def create_po(
 # ---- CSV import
 
 
-def _decode(raw: bytes) -> str | None:
+def decode_csv(raw: bytes) -> str | None:
     """Text from a file saved as UTF-8 or as Windows-1252, which is how QuickBooks and older Excel save CSV."""
     if b"\x00" in raw:
         return None  # a picture, a spreadsheet or another binary file
@@ -188,7 +188,7 @@ def _decode(raw: bytes) -> str | None:
 def _read(raw: bytes) -> tuple[list[tuple[int, dict[str, str]]], list[RowError], list[str]]:
     if len(raw) > MAX_CSV_BYTES:
         return [], [RowError(None, f"The file is larger than {MAX_CSV_BYTES // (1024 * 1024)} MB.")], []
-    content = _decode(raw)
+    content = decode_csv(raw)
     if content is None:
         return [], [RowError(None, "The file does not look like a CSV text file, so it was not read.")], []
     reader = csv.reader(io.StringIO(content))

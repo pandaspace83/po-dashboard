@@ -118,3 +118,7 @@ PO number make one PO. Required: `po_number, vendor, currency, line_no, item, qu
 separator); the file can be **UTF-8 or Windows-1252** (what QuickBooks and older Excel write); columns are found by name in any order, and columns the import does not use are skipped and counted. The vendor must already be on the **Vendors** page, spelled the same
 way. The file goes in whole or not at all, and a PO number that exists is never overwritten. If the page lists problems,
 fix those rows and import again: nothing from the failed attempt was kept.
+
+## 13. Importing vendors (PD-1.11, DEC-44)
+
+**Vendors → Import vendors** takes a CSV with the columns `vendor_name` and `contact_email` (both required), `contact_name`, `email_domains`, `notes`; **Download a template** gives an example. Upload it as often as you like: a new vendor is created, an existing one gets any new email domain added, and nothing already entered is overwritten. A row with no email, or with an email already used by another vendor, is skipped. A row with a problem is listed and skipped; the rest go in. A domain that already belongs to another vendor is never moved.

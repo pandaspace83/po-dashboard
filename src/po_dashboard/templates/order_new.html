@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "_icons.html" import icon %}
+{% from "_picker.html" import vendor_picker %}
 {% block title %}New purchase order · {{ app_name }}{% endblock %}
 {% block content %}
 <p class="muted"><a href="/orders">Purchase orders</a> /</p>
@@ -14,11 +15,7 @@
   <div class="card">
     <div class="form-row">
       <div><label for="po_number">PO number</label><input id="po_number" name="po_number" required maxlength="64" value="{{ header.po_number }}" autofocus></div>
-      <div><label for="vendor_id">Vendor</label>
-        <select id="vendor_id" name="vendor_id" required class="full">
-          <option value="">Choose a vendor</option>
-          {% for v in vendors %}<option value="{{ v.id }}" {{ 'selected' if header.vendor_id == v.id|string }}>{{ v.name }}</option>{% endfor %}
-        </select></div>
+      <div>{{ vendor_picker("vendor_id", "Vendor", header.vendor_id, vendor_name, true) }}</div>
     </div>
     <div class="form-row">
       <div><label for="currency">Currency</label>

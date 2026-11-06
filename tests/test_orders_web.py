@@ -201,7 +201,7 @@ def test_a_refused_po_keeps_every_box_and_lists_every_problem(client: TestClient
     assert "Line 2: Quantity" in text and "nothing is rounded" in text
     assert "three-letter" in text
     assert 'value="PO-7"' in text and 'value="Bolt"' in text and 'value="Nut"' in text
-    assert f'<option value="{vendor_id}" selected>' in text
+    assert f'name="vendor_id" value="{vendor_id}"' in text and 'value="Acme' in text
 
 
 def test_a_po_without_a_vendor_a_number_or_a_line_is_refused(client: TestClient) -> None:

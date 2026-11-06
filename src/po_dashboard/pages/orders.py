@@ -7,13 +7,14 @@ from typing import Annotated
 
 from fastapi import APIRouter, Form, Query, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
-from sqlalchemy import func, select
+from sqlalchemy import select
 from starlette.concurrency import run_in_threadpool
 from starlette.datastructures import UploadFile
 
 from po_dashboard.db.ledger import POLine, PurchaseOrder, Vendor
 from po_dashboard.ledger import closing, events, listing
 from po_dashboard.ledger import orders as rules
+from po_dashboard.ledger import vendors as vendor_rules
 from po_dashboard.ledger.errors import LedgerError
 from po_dashboard.ledger.expected import line_expectations
 from po_dashboard.ledger.status import LineState, line_states, po_state
@@ -26,13 +27,10 @@ UPLOAD_SLACK = 64 * 1024
 LINE_FIELDS = ("item", "description", "quantity", "unit", "unit_price", "requested_date")
 
 
-def _vendor_choices(db: Db) -> list[Vendor]:
-    return list(db.scalars(select(Vendor).order_by(func.lower(Vendor.name))))
-
-
 def _form_page(request: Request, db: Db, user: CurrentUser, header: dict[str, str], rows: list[dict[str, str]],
                errors: list[str] | None = None, status: int = 200) -> HTMLResponse:  # fmt: skip
-    return render(request, "order_new.html", user, status, vendors=_vendor_choices(db), header=header, rows=rows,
+    name = vendor_rules.vendor_name_of(db, header.get("vendor_id"))
+    return render(request, "order_new.html", user, status, vendor_name=name, header=header, rows=rows,
                   errors=errors or [], currencies=rules.COMMON_CURRENCIES)  # fmt: skip
 
 
@@ -50,7 +48,8 @@ def order_list(request: Request, db: Db, user: CurrentUser,
                ignored: int = Query(0, ge=0, le=1000)) -> HTMLResponse:  # fmt: skip
     found, problems = listing.parse_filters({key: value for key, value in request.query_params.items()})
     return render(request, "orders.html", user, orders=listing.list_orders(db, found, date.today()), f=found,
-                  problems=problems, vendors=listing.vendor_choices(db), statuses=listing.STATUS_CHOICES,
+                  problems=problems, vendor_name=vendor_rules.vendor_name_of(db, found.vendor_id),
+                  statuses=listing.STATUS_CHOICES,
                   raw=request.query_params, imported=imported, ignored=ignored)  # fmt: skip
 
 

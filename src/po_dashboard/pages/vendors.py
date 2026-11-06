@@ -5,10 +5,14 @@ from __future__ import annotations
 from typing import Annotated
 
 from fastapi import APIRouter, Form, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from sqlalchemy import func, select
+from starlette.concurrency import run_in_threadpool
+from starlette.datastructures import UploadFile
 
 from po_dashboard.db.ledger import PurchaseOrder, Vendor, VendorDomain
+from po_dashboard.ledger import orders as order_rules
+from po_dashboard.ledger import vendor_import
 from po_dashboard.ledger import vendors as rules
 from po_dashboard.ledger.errors import LedgerError
 from po_dashboard.pages.common import CurrentUser, Db, client_address, render
@@ -65,6 +69,62 @@ def create(
         db.rollback()
         return _list(request, db, user, error=str(problem), form=entered, status=400)
     return RedirectResponse(f"/vendors/{vendor.id}", status_code=303)
+
+
+UPLOAD_SLACK = 64 * 1024
+
+
+def _import_page(request: Request, user: CurrentUser, result: vendor_import.VendorImportResult | None = None,
+                 problem: str | None = None, status: int = 200) -> HTMLResponse:  # fmt: skip
+    return render(request, "vendor_import.html", user, status, columns=vendor_import.COLUMNS,
+                  required=vendor_import.REQUIRED, result=result, problem=problem,
+                  shown=vendor_import.MAX_SHOWN)  # fmt: skip
+
+
+@router.get("/import", response_class=HTMLResponse)
+def import_page(request: Request, user: CurrentUser) -> HTMLResponse:
+    return _import_page(request, user)
+
+
+@router.get("/import/template")
+def import_template(user: CurrentUser) -> Response:
+    return Response(vendor_import.TEMPLATE, media_type="text/csv; charset=utf-8",
+                    headers={"Content-Disposition": 'attachment; filename="vendors-template.csv"'})  # fmt: skip
+
+
+@router.post("/import", response_class=HTMLResponse, response_model=None)
+async def import_file(request: Request, db: Db, user: CurrentUser) -> Response:
+    length = request.headers.get("content-length", "")
+    if not length.isdigit():
+        return _import_page(request, user, problem="The file could not be read: its size was not stated.", status=411)
+    if int(length) > order_rules.MAX_CSV_BYTES + UPLOAD_SLACK:
+        return _import_page(request, user, problem="The file is larger than 2 MB.", status=413)
+    form = await request.form(max_files=1, max_fields=4)
+    upload = form.get("file")
+    if not isinstance(upload, UploadFile):
+        return _import_page(request, user, problem="Choose a CSV file first.", status=400)
+    raw = await upload.read(order_rules.MAX_CSV_BYTES + 1)
+
+    def work() -> vendor_import.VendorImportResult:
+        try:
+            result = vendor_import.import_vendors(db, raw, actor=user, client_address=client_address(request))
+            db.commit()
+            return result
+        except Exception:
+            db.rollback()
+            raise
+
+    try:
+        result = await run_in_threadpool(work)
+    except vendor_import.VendorFileRejected as problem:
+        return _import_page(request, user, problem=str(problem), status=400)
+    return _import_page(request, user, result=result)
+
+
+@router.get("/search")
+def search(db: Db, user: CurrentUser, q: str = "") -> JSONResponse:
+    """The pickers on other pages call this while a person types (read-only; any signed-in person)."""
+    return JSONResponse([{"id": v.id, "name": v.name} for v in rules.search_vendors(db, q)])
 
 
 @router.get("/{vendor_id}", response_class=HTMLResponse)
