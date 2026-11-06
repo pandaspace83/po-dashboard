@@ -56,3 +56,6 @@ scratch/
 
 # Laptop-only notes
 LEARNING_JOURNAL.md
+
+# VS Code workspace files are laptop-only
+*.code-workspace

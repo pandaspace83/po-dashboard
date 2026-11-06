@@ -60,6 +60,10 @@ Open http://127.0.0.1:8000 and sign in. If you restart the server, run the `cd` 
 | 38 | On **Open items**, change **Show** and **Vendor**, press Show. **The cursor starts in Show.** | The list narrows; an empty view says "Nothing to show". | | |
 | 39 | Press **Download CSV**. | A file `open-items-<date>.csv` downloads and opens in Excel or Numbers with the columns and accents correct. | | |
 | 40 | Add a PO line whose item is `=1+1` and download again. | The cell shows `'=1+1` as plain text, never the number 2. | | |
+| 41 | Signed in as the **admin**, click **Audit** in the top bar. | A table, newest first: time, person, address, action, what it was about, before and after. **The cursor starts in Action.** | | |
+| 42 | Pick an action (for example `line.close`) and a person, press Show. Then press **Clear**. | The list narrows, then returns to everything. | | |
+| 43 | Type a wrong date like `soon` in From. | A message says it is not a date; the list still shows. | | |
+| 44 | Sign in as a **buyer** and try to open the Audit address by typing `/admin/audit`. | Refused. The top bar shows no Audit link for a buyer. | | |
 
 ## Things to look at while you do it
 

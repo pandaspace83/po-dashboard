@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block title %}Audit trail · {{ app_name }}{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Audit trail</h1><span class="muted">{{ total }} record{{ "" if total == 1 else "s" }}, newest first</span></div>
+{% if problems %}<div class="error" role="alert">{{ icon("alert") }}<div>{% for p in problems %}<div>{{ p }}</div>{% endfor %}</div></div>{% endif %}
+<form method="get" action="/admin/audit" class="filters card">
+  <div class="form-row">
+    <div><label for="action">Action</label>
+      <select id="action" name="action" autofocus><option value="">Any</option>
+      {% for a in actions %}<option value="{{ a }}" {{ "selected" if f.action == a }}>{{ a }}</option>{% endfor %}</select></div>
+    <div><label for="person">Person</label>
+      <select id="person" name="person"><option value="">Anyone</option>
+      {% for id, email in people %}<option value="{{ id }}" {{ "selected" if who == id }}>{{ email }}</option>{% endfor %}</select></div>
+    <div class="wide"><label for="q">What it was about</label><input id="q" name="q" value="{{ f.q }}" maxlength="100" placeholder="po:12, vendor:3, ..."></div>
+  </div>
+  <div class="form-row">
+    <div><label for="date_from">From</label><input id="date_from" name="date_from" type="date" value="{{ f.date_from }}"></div>
+    <div><label for="date_to">To</label><input id="date_to" name="date_to" type="date" value="{{ f.date_to }}"></div>
+    <div class="shrink"><button class="primary" type="submit">{{ icon("search") }}Show</button> <a class="button" href="/admin/audit">Clear</a></div>
+  </div>
+</form>
+{% if entries %}
+<div class="table-wrap"><table>
+  <thead><tr><th>When (UTC)</th><th>Person</th><th>From</th><th>Action</th><th>About</th><th>Before</th><th>After</th></tr></thead>
+  <tbody>
+  {% for row, email, before, after in entries %}
+  <tr>
+    <td>{{ row.created_at.strftime("%Y-%m-%d %H:%M:%S") }}</td>
+    <td>{{ email or "system / command line" }}</td>
+    <td>{{ row.client_address or "" }}</td>
+    <td><strong>{{ row.action }}</strong></td>
+    <td>{{ row.object or "" }}</td>
+    <td class="audit-text">{{ before }}</td>
+    <td class="audit-text">{{ after }}</td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+<p class="pager">
+  {% set base = "action=" ~ (f.action|urlencode) ~ "&person=" ~ (f.person|urlencode) ~ "&q=" ~ (f.q|urlencode) ~ "&date_from=" ~ (f.date_from|urlencode) ~ "&date_to=" ~ (f.date_to|urlencode) %}
+  {% if page > 1 %}<a class="button" href="/admin/audit?{{ base }}&page={{ page - 1 }}">Newer</a>{% endif %}
+  <span class="muted">Page {{ page }} of {{ pages }}</span>
+  {% if page < pages %}<a class="button" href="/admin/audit?{{ base }}&page={{ page + 1 }}">Older</a>{% endif %}
+</p>
+{% else %}
+<div class="card empty">{{ icon("clipboard") }}<p><strong>No records match.</strong></p></div>
+{% endif %}
+<p class="muted">This page only shows the record. Nothing here can be changed or deleted.</p>
+{% endblock %}

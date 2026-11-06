@@ -20,7 +20,8 @@
   <a class="navlink" href="/orders" {% if request.url.path.startswith('/orders') %}aria-current="page"{% endif %}>{{ icon("clipboard") }}Purchase orders</a>
   <a class="navlink" href="/reports/open-items" {% if request.url.path.startswith('/reports') %}aria-current="page"{% endif %}>{{ icon("alert") }}Open items</a>
   <a class="navlink" href="/vendors" {% if request.url.path.startswith('/vendors') %}aria-current="page"{% endif %}>{{ icon("truck") }}Vendors</a>
-  {% if me.role == 'admin' %}<a class="navlink" href="/admin/users" {% if request.url.path.startswith('/admin/users') %}aria-current="page"{% endif %}>{{ icon("users") }}People</a>{% endif %}
+  {% if me.role == 'admin' %}<a class="navlink" href="/admin/audit" {% if request.url.path.startswith('/admin/audit') %}aria-current="page"{% endif %}>{{ icon("clipboard") }}Audit</a>
+  <a class="navlink" href="/admin/users" {% if request.url.path.startswith('/admin/users') %}aria-current="page"{% endif %}>{{ icon("users") }}People</a>{% endif %}
   <span class="spacer"></span>
   <span class="who">{{ icon("user") }}<span>{{ me.email }}</span></span>
   <a class="navlink" href="/change-password" {% if request.url.path == '/change-password' %}aria-current="page"{% endif %}>{{ icon("key") }}Change password</a>

@@ -195,3 +195,5 @@ label.check input { width: auto; margin-top: 4px; }
 a.tile { color: inherit; text-decoration: none; }
 a.tile:hover { border-color: #b9b5ac; }
 .tile .value.bad { color: var(--bad); }
+.audit-text { max-width: 22rem; word-break: break-word; font-size: 0.85rem; color: var(--muted); }
+.pager { display: flex; gap: 12px; align-items: center; }
