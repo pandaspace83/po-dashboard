@@ -51,7 +51,8 @@ Open http://127.0.0.1:8000 and sign in. If a page looks unstyled or old, reload 
 Write one line per item, saying which screen: for example "PO page: Settle by hand is too prominent". No real names
 or figures.
 
--
+- (Idea, parked) An "Add and start another" button next to Add vendor; not needed now, since vendors come from the file
+  upload. Recorded in PLAN.md.
 
 ## Clean up
 
@@ -64,4 +65,4 @@ unset PO_DASHBOARD_DATA
 
 ## Result
 
-Date:  Who:  Safari:  Chrome:  Notes (no real names or figures):
+Date: 2026-11-06  Who: owner  Result: "we are good with all tests" (browsers not named)  Notes (no real names or figures): one parked idea, above.
