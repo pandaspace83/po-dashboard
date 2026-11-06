@@ -9,9 +9,15 @@
   <div class="tile">{{ icon("chip") }}<div><span class="label">Model {{ health.model_name }}</span>
     <span class="value {{ 'ok' if health.model == 'reachable' else 'bad' }}">{{ health.model }}</span></div></div>
 </div>
-<div class="card empty">
-  {{ icon("clipboard") }}
-  <p><strong>No purchase orders yet.</strong></p>
-  <p class="version">Version {{ version }}</p>
+<h2>Purchasing today</h2>
+<div class="tiles">
+  <a class="tile" href="/orders?status=open">{{ icon("clipboard") }}<div><span class="label">Open purchase orders</span><span class="value">{{ counts.open_pos }}</span></div></a>
+  <a class="tile" href="/reports/open-items">{{ icon("truck") }}<div><span class="label">Open lines</span><span class="value">{{ counts.open_lines }}</span></div></a>
+  <a class="tile {{ 'alert-tile' if counts.late }}" href="/reports/open-items?show=late">{{ icon("alert") }}<div><span class="label">Late lines</span><span class="value {{ 'bad' if counts.late }}">{{ counts.late }}</span></div></a>
+  <a class="tile {{ 'alert-tile' if counts.no_ack }}" href="/reports/open-items?show=no_ack">{{ icon("clock") }}<div><span class="label">Waiting for an acknowledgement</span><span class="value {{ 'bad' if counts.no_ack }}">{{ counts.no_ack }}</span></div></a>
+  <a class="tile" href="/reports/open-items?show=slipped">{{ icon("refresh") }}<div><span class="label">Promised date slipped</span><span class="value {{ 'bad' if counts.slipped }}">{{ counts.slipped }}</span></div></a>
+  <a class="tile" href="/reports/open-items?show=needs_update">{{ icon("key") }}<div><span class="label">Original PO needs updating</span><span class="value {{ 'bad' if counts.needs_update }}">{{ counts.needs_update }}</span></div></a>
 </div>
+{% if not counts.open_pos %}<div class="card empty">{{ icon("clipboard") }}<p><strong>Nothing open.</strong></p><p>Enter a purchase order or import a CSV file to begin.</p></div>{% endif %}
+<p class="version">Version {{ version }}</p>
 {% endblock %}

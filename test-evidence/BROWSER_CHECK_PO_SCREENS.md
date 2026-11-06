@@ -55,6 +55,11 @@ Open http://127.0.0.1:8000 and sign in. If you restart the server, run the `cd` 
 | 33 | Choose **Cancelled** for one line, leave the reason empty, press Settle. | The browser asks for a reason. With a reason, the line shows **Cancelled** and a note "Settled by hand". The line is not offered again. | | |
 | 34 | On that line press **Reopen** with a reason. | The line returns to its earlier status. The page does not repeat the action on Reload. | | |
 | 35 | Open **Timeline by line** and a line's heading. | A list in time order: Ordered, Vendor acknowledged, Shipped, Invoiced, Settled by hand. | | |
+| 36 | Click **Home**. | Six tiles: open purchase orders, open lines, late lines, waiting for an acknowledgement, promised date slipped, original PO needs updating. The numbers match what you have entered. | | |
+| 37 | Click the **Late lines** tile (make one late first: promise a date in the past). | You land on **Open items** showing only the late lines, each with a red "N days late". | | |
+| 38 | On **Open items**, change **Show** and **Vendor**, press Show. **The cursor starts in Show.** | The list narrows; an empty view says "Nothing to show". | | |
+| 39 | Press **Download CSV**. | A file `open-items-<date>.csv` downloads and opens in Excel or Numbers with the columns and accents correct. | | |
+| 40 | Add a PO line whose item is `=1+1` and download again. | The cell shows `'=1+1` as plain text, never the number 2. | | |
 
 ## Things to look at while you do it
 

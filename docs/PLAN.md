@@ -71,7 +71,7 @@ The rest is following this plan, which suits Sonnet. I will say before each swit
 
 **Step 5: dashboard, audit, design.**
 
-- [ ] PD-1.6 Dashboard counts, open-items report, CSV export (REQ-DB-01, -03).
+- [ ] PD-1.6 Dashboard counts, open-items report, CSV export (REQ-DB-01, -03). **Built and tested 2026-11-05** (DEC-42: home tiles that link to the report, an Open items page with a view and vendor filter, CSV download with formula-safe cells; 27 new tests). **Waiting for the owner's browser check:** steps 36 to 40 of [BROWSER_CHECK_PO_SCREENS.md](../test-evidence/BROWSER_CHECK_PO_SCREENS.md).
 - [ ] PD-1.7 Audit trail on every change (NFR-03) and its screen (admins). Sign-in events are written from PD-1.9b.
 - [x] PD-1.9e Name, look and feel (DEC-35): RaceSpec Internal Dashboard, light theme, inline icons, logo committed at the owner's say-so, the cursor ready in the first box of every form page. The sign-in and People pages are done.
 - [ ] PD-1.10 *Proposed, waiting for OPEN-15:* reconcile with the ERP's export (DEC-41). A folder the app reads, a compare screen, and the update-the-PO flag clearing when the export matches. The export should carry, per PO line: **PO number; line number (or item number); vendor; item or part number; ordered quantity; received quantity; invoiced quantity; open quantity; line status (open, closed, cancelled); closed date; unit price; PO date; the promised or required date**. Nice to have: currency, invoice number, last receipt date, buyer. It must include **closed lines for the period**, not only open ones.

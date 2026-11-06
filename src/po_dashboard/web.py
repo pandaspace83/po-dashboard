@@ -14,7 +14,7 @@ from po_dashboard import __version__
 from po_dashboard.auth.gate import Gate
 from po_dashboard.config import Settings
 from po_dashboard.db.migrate import upgrade
-from po_dashboard.pages import account, admin, entries, orders, vendors
+from po_dashboard.pages import account, admin, entries, orders, reports, vendors
 from po_dashboard.pages.formats import money, quantity
 
 HERE = Path(__file__).parent
@@ -46,6 +46,7 @@ def create_app(settings: Settings | None = None, engine: Engine | None = None) -
     app.include_router(vendors.router)
     app.include_router(orders.router)
     app.include_router(entries.router)
+    app.include_router(reports.router)
     app.mount("/static", StaticFiles(directory=HERE / "static"), name="static")
     app.add_middleware(Gate, settings=settings, engine=engine)
     return app

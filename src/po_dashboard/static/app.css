@@ -192,3 +192,6 @@ label.check input { width: auto; margin-top: 4px; }
 .timeline summary { cursor: pointer; font-weight: 600; }
 .timeline ol { margin: 8px 0 12px; padding-left: 20px; }
 .timeline li { margin: 3px 0; }
+a.tile { color: inherit; text-decoration: none; }
+a.tile:hover { border-color: #b9b5ac; }
+.tile .value.bad { color: var(--bad); }

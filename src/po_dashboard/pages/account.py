@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import secrets
+from datetime import date
 from typing import Annotated
 
 from fastapi import APIRouter, Form, Request
@@ -15,6 +16,7 @@ from po_dashboard.auth import passwords, service
 from po_dashboard.auth.gate import SESSION_COOKIE, SIGN_IN_COOKIE, cookie_value
 from po_dashboard.db.base import utcnow
 from po_dashboard.db.models import AppUser, SignInSession
+from po_dashboard.ledger import reports
 from po_dashboard.models import llm
 from po_dashboard.pages.common import (
     CurrentUser,
@@ -105,11 +107,12 @@ def change_password(
 
 
 @router.get("/", response_class=HTMLResponse)
-def home(request: Request, user: CurrentUser) -> HTMLResponse:
+def home(request: Request, db: Db, user: CurrentUser) -> HTMLResponse:
     settings = request.app.state.settings
     health = {
         "last_scan": "no scan yet",
         "model": "reachable" if llm.is_reachable(settings) else "not reachable",
         "model_name": settings.model,
     }
-    return _page(request, "home.html", me=user, health=health, version=__version__)
+    return _page(request, "home.html", me=user, health=health, version=__version__,
+                 counts=reports.counts(db, date.today()))  # fmt: skip
