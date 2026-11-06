@@ -7,12 +7,12 @@
 <div class="card">
   <div class="card-head">{{ icon("upload") }}<h2>Choose a CSV file</h2></div>
   <p>One row per vendor, or several rows for the same vendor. A new vendor is created. A vendor that already exists is never refused: anything new in its row is added, and nothing already there is overwritten. Upload as often as you like.</p>
-  <form method="post" action="/vendors/import" enctype="multipart/form-data" data-upload>
+  <form method="post" action="/vendors/import" enctype="multipart/form-data">
     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
     <label for="file">CSV file</label>
     <input id="file" name="file" type="file" accept=".csv,text/csv" required autofocus>
     <p class="form-actions"><button class="primary" type="submit">{{ icon("upload") }}Import</button>
-      <a class="button" href="/vendors/import/template">{{ icon("download") }}Download a template</a></p>
+      <a class="button" hx-boost="false" download href="/vendors/import/template">{{ icon("download") }}Download a template</a></p>
   </form>
   <div id="import-result" aria-live="polite">
   {% if problem %}<div class="error" role="alert">{{ icon("alert") }}<span>{{ problem }}</span></div>{% endif %}

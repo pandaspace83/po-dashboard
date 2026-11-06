@@ -46,7 +46,7 @@
 {% if orders %}
 <div class="table-wrap"><table>
   <thead><tr><th>PO</th><th>Date sent</th><th>Currency</th></tr></thead>
-  <tbody>{% for o in orders %}<tr><td><a href="/orders/{{ o.id }}">{{ o.po_number }}</a></td><td>{{ o.date_sent or "" }}</td><td>{{ o.currency }}</td></tr>{% endfor %}</tbody>
+  <tbody>{% for o in orders %}<tr><td><a href="/orders/{{ o.id }}">{{ o.po_number }}</a></td><td>{{ o.date_sent|day }}</td><td>{{ o.currency }}</td></tr>{% endfor %}</tbody>
 </table></div>
 {% else %}<p class="muted">No purchase orders for this vendor yet.</p>{% endif %}
 {% endblock %}

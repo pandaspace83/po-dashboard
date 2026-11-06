@@ -1,0 +1,24 @@
+{#- Sortable headings and the pager (DEC-45 item 6). Links update only the list (#results) and keep the address. -#}
+{% macro sort_th(label, key, sorting, cls="") -%}
+<th class="{{ cls }}" aria-sort="{{ sorting.aria(key) }}" scope="col"><a class="sort" href="{{ with_query(request, sort=sorting.next_for(key)) }}"
+  hx-get="{{ with_query(request, sort=sorting.next_for(key)) }}" hx-target="#results" hx-select="#results" hx-swap="outerHTML show:none" hx-push-url="true">{{ label }}<span class="arrow" aria-hidden="true">{% if sorting.key == key %}{{ "▼" if sorting.descending else "▲" }}{% else %}↕{% endif %}</span></a></th>
+{%- endmacro %}
+
+{% macro pager(page, noun="row") -%}
+{% if page.total %}
+<nav class="pager" aria-label="Pages">
+  <span class="muted">{{ page.first }}–{{ page.last }} of {{ page.total }} {{ noun }}{{ "" if page.total == 1 else "s" }}</span>
+  {% if page.pages > 1 %}
+  {% if page.number > 1 %}<a class="button small" rel="prev" href="{{ with_query(request, page=page.number - 1) }}" hx-get="{{ with_query(request, page=page.number - 1) }}" hx-target="#results" hx-select="#results" hx-swap="outerHTML show:#results:top" hx-push-url="true">Previous</a>{% endif %}
+  <span class="muted">Page {{ page.number }} of {{ page.pages }}</span>
+  {% if page.number < page.pages %}<a class="button small" rel="next" href="{{ with_query(request, page=page.number + 1) }}" hx-get="{{ with_query(request, page=page.number + 1) }}" hx-target="#results" hx-select="#results" hx-swap="outerHTML show:#results:top" hx-push-url="true">Next</a>{% endif %}
+  {% endif %}
+</nav>
+{% endif %}
+{%- endmacro %}
+
+{#- A filter form that updates the list as a person chooses, with no Show button (item 4). The button stays for
+    a browser without script. -#}
+{% macro live_filters(action) -%}
+hx-get="{{ action }}" hx-trigger="input delay:400ms, change, submit" hx-target="#results" hx-select="#results" hx-swap="outerHTML show:none" hx-push-url="true" hx-sync="this:replace"
+{%- endmacro %}

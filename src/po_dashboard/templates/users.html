@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "_icons.html" import icon %}
+{% from "_table.html" import sort_th, pager with context %}
 {% block title %}People · {{ app_name }}{% endblock %}
 {% block content %}
 <h1>People</h1>
@@ -22,9 +23,10 @@
     </div>
   </form>
 </div>
-<div class="table-wrap">
+<div id="results">
+<div class="table-wrap table-scroll">
 <table>
-  <thead><tr><th>Email</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
+  <thead><tr>{{ sort_th("Email", "email", sorting) }}{{ sort_th("Role", "role", sorting) }}{{ sort_th("Status", "status", sorting) }}<th scope="col">Actions</th></tr></thead>
   <tbody>
   {% for p in people %}
   <tr>
@@ -53,5 +55,7 @@
   {% endfor %}
   </tbody>
 </table>
+</div>
+{{ pager(page, "person") }}
 </div>
 {% endblock %}

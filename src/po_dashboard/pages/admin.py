@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import threading
 import time
-from typing import Annotated
+from collections.abc import Callable
+from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -13,6 +14,7 @@ from sqlalchemy import select
 
 from po_dashboard.auth import passwords, service
 from po_dashboard.db.models import AppUser
+from po_dashboard.pages import tables
 from po_dashboard.pages.common import Admin, Db, context, require_admin
 
 router = APIRouter(prefix="/admin", dependencies=[Depends(require_admin)])
@@ -40,8 +42,16 @@ def _take_once(admin: AppUser) -> tuple[str, str] | None:
 
 def _render(request: Request, db: Db, admin: AppUser, error: str | None = None, shown: tuple[str, str] | None = None,
             status: int = 200) -> HTMLResponse:  # fmt: skip
-    people = db.scalars(select(AppUser).order_by(AppUser.email)).all()
-    ctx = context(request, me=admin, people=people, error=error, shown=shown, roles=service.ROLES)
+    everyone = db.scalars(select(AppUser).order_by(AppUser.email)).all()
+    keys: dict[str, Callable[[AppUser], Any]] = {
+        "email": lambda p: p.email.lower(),
+        "role": lambda p: p.role,
+        "status": lambda p: 2 if p.disabled_at else 1 if p.locked_until else 0,
+    }
+    ordered, sorting = tables.sort_rows(everyone, request.query_params.get("sort"), keys, "email")
+    page = tables.page_of(ordered, request.query_params.get("page"))
+    ctx = context(request, me=admin, people=page.rows, page=page, sorting=sorting, error=error, shown=shown,
+                  roles=service.ROLES)  # fmt: skip
     templates: Jinja2Templates = request.app.state.templates
     return templates.TemplateResponse(request, "users.html", ctx, status_code=status)
 

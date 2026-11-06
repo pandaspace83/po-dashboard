@@ -120,8 +120,8 @@ def test_an_empty_dashboard_says_so(client: TestClient) -> None:
 def test_the_report_page_filters_and_downloads(client: TestClient, po) -> None:  # noqa: ANN001
     page = client.get("/reports/open-items").text
     assert page.count(" autofocus") == 1 and "Bolt" in page and "Nut" in page
-    assert "Nothing to show" in client.get("/reports/open-items?show=late").text
-    assert "Nothing to show" in client.get("/reports/open-items?vendor=99999").text
+    assert "All clear" in client.get("/reports/open-items?show=late").text
+    assert "All clear" in client.get("/reports/open-items?vendor=99999").text
     assert client.get("/reports/open-items?show=%3Cscript%3E&vendor=%27").status_code == 200
     download = client.get("/reports/open-items.csv")
     assert download.status_code == 200 and download.headers["content-type"].startswith("text/csv")
@@ -133,3 +133,21 @@ def test_the_report_needs_a_sign_in(env) -> None:  # noqa: ANN001
     anonymous = new_client(env[0])
     for path in ("/reports/open-items", "/reports/open-items.csv"):
         assert anonymous.get(path, headers=ORIGIN, follow_redirects=False).status_code in (303, 401, 403)
+
+
+
+def test_the_to_do_list_puts_the_most_urgent_first_and_says_what_to_do(client: TestClient, env, po) -> None:  # noqa: ANN001
+    post(client, f"/orders/{po[0]}/ack", ack(po, [("6", "", "2026-11-10"), NONE]))
+    with Session(env[1]) as db:
+        items = reports.open_items(db, LATER)
+        needing, total = reports.attention(items)
+        assert total == len(reports.open_items(db, LATER, "attention")) == 2
+        assert [i.line_no for i in needing] == [1, 2]  # line 1 is late; line 2 only waits for an acknowledgement
+        assert needing[0].next_step == "Ask the vendor for a new date"
+        assert needing[1].next_step == "Ask the vendor to acknowledge the PO"
+
+
+def test_home_shows_the_to_do_list_or_all_clear(client: TestClient, po) -> None:  # noqa: ANN001
+    page = client.get("/").text
+    assert "Needs attention" in page and 'id="live"' in page and 'hx-trigger="every 60s"' in page
+    assert '"X-Background": "1"' in page and 'hx-disinherit="*"' in page

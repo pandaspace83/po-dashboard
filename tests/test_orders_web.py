@@ -169,7 +169,7 @@ def test_a_po_is_entered_and_its_page_shows_lines_in_exact_numbers(client: TestC
     response = place(client, order_form(vendor_id))
     assert response.status_code == 303
     page = client.get(response.headers["location"]).text
-    assert "PO PO-1" in page and "Acme Fasteners" in page and "2026-11-04" in page
+    assert "PO PO-1" in page and "Acme Fasteners" in page and "11/04/2026" in page
     assert "10 EA" in page and "2.5 EA" in page and "2.50 USD" in page and "0.10 USD" in page
     assert page.count("Sent") >= 2  # both lines have had nothing happen yet
 

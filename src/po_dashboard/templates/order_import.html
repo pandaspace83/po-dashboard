@@ -7,12 +7,12 @@
 <div class="card">
   <div class="card-head">{{ icon("upload") }}<h2>Choose a CSV file</h2></div>
   <p>One row per PO line. Rows with the same PO number make one PO. The file is imported whole or not at all, and nothing existing is changed.</p>
-  <form method="post" action="/orders/import" enctype="multipart/form-data" data-upload>
+  <form method="post" action="/orders/import" enctype="multipart/form-data">
     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
     <label for="file">CSV file</label>
     <input id="file" name="file" type="file" accept=".csv,text/csv" required autofocus>
     <p class="form-actions"><button class="primary" type="submit">{{ icon("upload") }}Import</button>
-      <a class="button" href="/orders/import/template">{{ icon("download") }}Download a template</a></p>
+      <a class="button" hx-boost="false" download href="/orders/import/template">{{ icon("download") }}Download a template</a></p>
   </form>
   <div id="import-result" aria-live="polite">
   {% if errors %}

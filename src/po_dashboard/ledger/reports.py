@@ -11,6 +11,7 @@ import io
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from decimal import Decimal
+from functools import lru_cache
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -27,12 +28,14 @@ from po_dashboard.db.ledger import (
     ShipmentLine,
     Vendor,
 )
+from po_dashboard.display import day, moment
 from po_dashboard.ledger.expected import Expectation, line_expectations
 from po_dashboard.ledger.status import LineState, LineStatus, line_states
 
 NO_ACK_BUSINESS_DAYS = 2  # DEC-22: a sent PO with no acknowledgement for more than this is flagged
 SHOWS = {
     "all": "All open lines",
+    "attention": "Needs attention (any of the below)",
     "late": "Late",
     "no_ack": "No acknowledgement",
     "slipped": "Promised date slipped",
@@ -40,12 +43,14 @@ SHOWS = {
 }
 CSV_COLUMNS = (
     "PO", "Vendor", "Line", "Item", "Description", "Unit", "Ordered", "Open quantity", "Status", "Expected date",
-    "Expected from", "Days late", "Promised date slipped", "Last vendor activity (UTC)", "Flags",
+    "Expected from", "Days late", "Promised date slipped", "Last vendor activity", "Flags",
 )  # fmt: skip
 
 
+@lru_cache(maxsize=4096)
 def business_days_since(start: date, today: date) -> int:
-    """Whole weekdays after `start` up to and including `today` (weekends only; there is no holiday calendar)."""
+    """Whole weekdays after `start` up to and including `today` (weekends only; there is no holiday calendar).
+    Kept for repeated pairs: many lines share a PO date, and the report asks for each line."""
     days, day = 0, start
     while day < today:
         day += timedelta(days=1)
@@ -85,6 +90,19 @@ class OpenItem:
             found.append("update the original PO")
         return found
 
+    @property
+    def next_step(self) -> str:
+        """What a person does about it, most urgent first (DEC-45 item 8). Empty when nothing is needed."""
+        if self.expectation.late:
+            return "Ask the vendor for a new date"
+        if self.no_ack:
+            return "Ask the vendor to acknowledge the PO"
+        if self.needs_update:
+            return "Update the PO in QuickBooks to the confirmed quantity"
+        if self.slipped:
+            return "Check the new promised date"
+        return ""
+
 
 @dataclass(frozen=True)
 class Counts:
@@ -102,10 +120,10 @@ def _slipped_lines(db: Session) -> set[int]:
     rows = select(PromisedDateHistory.po_line_id, PromisedDateHistory.promised_date).order_by(
         PromisedDateHistory.recorded_at, PromisedDateHistory.id
     )
-    for line_id, day in db.execute(rows):
-        if line_id in last and day > last[line_id]:
+    for line_id, promised in db.execute(rows):
+        if line_id in last and promised > last[line_id]:
             slipped.add(line_id)
-        last[line_id] = day
+        last[line_id] = promised
     return slipped
 
 
@@ -138,43 +156,50 @@ def open_items(db: Session, today: date, show: str = "all", vendor_id: int | Non
     expectations = line_expectations(db, today, states=states)
     slipped = _slipped_lines(db)
     activity = _last_activity(db)
+    # Plain columns, not whole objects: the report reads thousands of lines and needs only these (DEC-45 item 14).
     query = (
-        select(POLine, PurchaseOrder, Vendor.name)
+        select(
+            POLine.id, POLine.line_no, POLine.item, POLine.description, POLine.unit, POLine.ordered_qty,
+            PurchaseOrder.id, PurchaseOrder.po_number, PurchaseOrder.date_sent, Vendor.name,
+        )
         .join(PurchaseOrder, PurchaseOrder.id == POLine.po_id)
         .join(Vendor, Vendor.id == PurchaseOrder.vendor_id)
         .order_by(PurchaseOrder.id, POLine.line_no)
-    )
+    )  # fmt: skip
     if vendor_id is not None:
         query = query.where(PurchaseOrder.vendor_id == vendor_id)
     found: list[OpenItem] = []
-    for line, order, vendor_name in db.execute(query):
-        state = states[line.id]
+    for line_id, line_no, item_text, description, unit, ordered, po_id, po_number, date_sent, vendor_name in db.execute(
+        query
+    ):
+        state = states[line_id]
         if state.status.done:
             continue
         waiting = (
             state.status is LineStatus.SENT
-            and order.date_sent is not None
-            and business_days_since(order.date_sent, today) > NO_ACK_BUSINESS_DAYS
+            and date_sent is not None
+            and business_days_since(date_sent, today) > NO_ACK_BUSINESS_DAYS
         )
         item = OpenItem(
-            po_id=order.id,
-            po_number=order.po_number,
+            po_id=po_id,
+            po_number=po_number,
             vendor=vendor_name,
-            line_no=line.line_no,
-            item=line.item,
-            description=line.description or "",
-            unit=line.unit,
-            ordered=line.ordered_qty,
+            line_no=line_no,
+            item=item_text,
+            description=description or "",
+            unit=unit,
+            ordered=ordered,
             open_qty=state.open_qty,
             status=state.status.value,
-            expectation=expectations[line.id],
-            slipped=line.id in slipped,
+            expectation=expectations[line_id],
+            slipped=line_id in slipped,
             no_ack=waiting,
             needs_update=state.po_needs_update,
-            last_activity=activity.get(line.id),
+            last_activity=activity.get(line_id),
         )
         keep = {
             "all": True,
+            "attention": bool(item.next_step),
             "late": item.expectation.late,
             "no_ack": item.no_ack,
             "slipped": item.slipped,
@@ -185,8 +210,8 @@ def open_items(db: Session, today: date, show: str = "all", vendor_id: int | Non
     return found
 
 
-def counts(db: Session, today: date) -> Counts:
-    items = open_items(db, today)
+def counts(db: Session, today: date, items: list[OpenItem] | None = None) -> Counts:
+    items = open_items(db, today) if items is None else items
     open_pos = len({item.po_id for item in items})
     return Counts(
         open_pos=open_pos,
@@ -226,12 +251,27 @@ def to_csv(items: list[OpenItem]) -> bytes:
                 format(item.ordered.normalize(), "f"),
                 format(item.open_qty.normalize(), "f"),
                 item.status,
-                expected.expected.isoformat() if expected.expected else "",
+                day(expected.expected),
                 {"shipment": "shipment", "promised": "promised date"}.get(expected.source or "", ""),
                 expected.days_late or "",
                 "yes" if item.slipped else "",
-                item.last_activity.strftime("%Y-%m-%d %H:%M") if item.last_activity else "",
+                moment(item.last_activity),
                 "; ".join(item.flags),
             )
         )
     return b"\xef\xbb\xbf" + out.getvalue().encode("utf-8")
+
+
+def attention(items: list[OpenItem], limit: int = 10) -> tuple[list[OpenItem], int]:
+    """The lines that need a person, most urgent first: the longest late, then no acknowledgement, then the rest.
+    Returns the first `limit` and how many there are in all."""
+    needing = [item for item in items if item.next_step]
+    needing.sort(
+        key=lambda i: (
+            0 if i.expectation.late else 1 if i.no_ack else 2 if i.needs_update else 3,
+            -(i.expectation.days_late or 0),
+            i.po_number.lower(),
+            i.line_no,
+        )
+    )
+    return needing[:limit], len(needing)

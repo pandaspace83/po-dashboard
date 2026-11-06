@@ -28,6 +28,8 @@ SESSION_COOKIE = "po_session"
 SIGN_IN_COOKIE = "po_csrf"  # double-submit token for the sign-in form, where no session exists yet
 # A host name or address, with an optional port, and nothing else (no user info, no path).
 HOST = re.compile(r"(?P<name>\[[0-9a-f:.]+\]|[a-z0-9]([a-z0-9.-]*[a-z0-9])?)(:[0-9]{1,5})?")
+HTMX_FILE = "/static/htmx-2.0.11.min.js"  # pinned; its checksum is checked by a test (DEC-45)
+CACHEABLE = frozenset({"/static/app.css", HTMX_FILE})
 PUBLIC = frozenset(
     {"/sign-in", "/health", "/static/app.css", "/static/brand/logo.png", "/static/brand/favicon.png"}
 )
@@ -90,7 +92,8 @@ class Gate:
         user: AppUser | None = None
         if token:
             with Session(self.engine) as db:
-                row = service.resolve_session(db, token)
+                background = headers.get(b"x-background") == b"1"
+                row = service.resolve_session(db, token, touch=not background)
                 if row is not None:
                     user = db.get(AppUser, row.user_id)
                     state.update(session_id=row.id, user_id=row.user_id, stage=row.stage, csrf_token=row.csrf_token)
@@ -118,9 +121,17 @@ class Gate:
                 await respond(403, b"Missing or wrong security token. Reload the page and try again.")
                 return
 
+        # A form sent by HTMX that is answered with a page, not a redirect (a refusal, or a page shown once such as
+        # a temporary password), must not put the form's own address in the browser history: Back or Reload there
+        # would ask for a page that only answers a POST.
+        no_history = b"hx-request" in headers and method not in SAFE_METHODS
+
         async def wrapped_send(message: MutableMapping[str, Any]) -> None:
             if message["type"] == "http.response.start":
-                message["headers"] = self._headers(path, list(message.get("headers", [])))
+                extra = list(message.get("headers", []))
+                if no_history and not 300 <= int(message["status"]) < 400:
+                    extra.append((b"hx-push-url", b"false"))
+                message["headers"] = self._headers(path, extra)
             await send(message)
 
         await self.app(scope, receive, wrapped_send)
@@ -129,6 +140,9 @@ class Gate:
         wants_page = b"text/html" in headers.get(b"accept", b"") and b"hx-request" not in headers
         if wants_page and scope["method"] in SAFE_METHODS:
             await respond(303, b"", [(b"location", b"/sign-in")])
+        elif b"hx-request" in headers:
+            # HTMX does not show a 401; this header sends the whole browser tab to the sign-in page instead.
+            await respond(401, b"Sign in required.", [(b"hx-redirect", b"/sign-in")])
         else:
             await respond(401, b"Sign in required.")
 
@@ -170,7 +184,7 @@ class Gate:
         for key, value in HEADERS.items():
             if key not in names:
                 out.append((key, value))
-        if path != "/static/app.css" and b"cache-control" not in names:
+        if path not in CACHEABLE and b"cache-control" not in names:
             out.append((b"cache-control", b"no-store"))
         return out
 

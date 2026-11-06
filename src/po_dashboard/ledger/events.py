@@ -33,6 +33,7 @@ from po_dashboard.db.ledger import (
 )
 from po_dashboard.db.models import AppUser, AuditLog
 from po_dashboard.db.types import Money, Quantity
+from po_dashboard.display import day
 from po_dashboard.ledger.errors import LedgerError, number, text, when
 from po_dashboard.ledger.tracking import tracking_url
 
@@ -313,7 +314,7 @@ def entries(db: Session, order: PurchaseOrder) -> list[EntryView]:
             if ack_row.confirmed_price is not None:
                 parts.append(f"price {_shown(ack_row.confirmed_price)}")
             if ack_row.promised_date is not None:
-                parts.append(f"promised {ack_row.promised_date.isoformat()}")
+                parts.append(f"promised {day(ack_row.promised_date)}")
             view.details.append(f"Line {numbers[ack_row.po_line_id]}: {', '.join(parts) or 'acknowledged'}")
         found.append(view)
 
@@ -324,9 +325,9 @@ def entries(db: Session, order: PurchaseOrder) -> list[EntryView]:
         )
         view.link = tracking_url(ship.carrier, ship.tracking_number)
         if ship.eta:
-            view.details.append(f"Expected {ship.eta.isoformat()}")
+            view.details.append(f"Expected {day(ship.eta)}")
         for ship_row in db.scalars(select(ShipmentLine).where(ShipmentLine.shipment_id == ship.id)):
-            extra = f", expected {ship_row.eta.isoformat()}" if ship_row.eta else ""
+            extra = f", expected {day(ship_row.eta)}" if ship_row.eta else ""
             view.details.append(f"Line {numbers[ship_row.po_line_id]}: {_shown(ship_row.qty)}{extra}")
         found.append(view)
 
@@ -393,7 +394,7 @@ def line_timeline(db: Session, order: PurchaseOrder) -> dict[int, list[TimelineS
         if ack_row.confirmed_price is not None:
             parts.append(f"price {_shown(ack_row.confirmed_price)}")
         if ack_row.promised_date is not None:
-            parts.append(f"promised {ack_row.promised_date.isoformat()}")
+            parts.append(f"promised {day(ack_row.promised_date)}")
         steps[ack_row.po_line_id].append(
             TimelineStep(ack_at, "Vendor acknowledged: " + (", ".join(parts) or "no figures"))
         )
@@ -406,7 +407,7 @@ def line_timeline(db: Session, order: PurchaseOrder) -> dict[int, list[TimelineS
         label = " ".join(part for part in (ship.carrier, ship.tracking_number) if part)
         text_ = f"Shipped {_shown(ship_row.qty)}" + (f" ({label})" if label else "")
         steps[ship_row.po_line_id].append(
-            TimelineStep(ship.accepted_at, text_ + (f", expected {arrival.isoformat()}" if arrival else ""))
+            TimelineStep(ship.accepted_at, text_ + (f", expected {day(arrival)}" if arrival else ""))
         )
     for bill, bill_row in db.execute(
         select(Invoice, InvoiceLine)

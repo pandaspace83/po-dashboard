@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Annotated
+from collections.abc import Callable
+from typing import Annotated, Any
 
 from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
@@ -15,22 +16,43 @@ from po_dashboard.ledger import orders as order_rules
 from po_dashboard.ledger import vendor_import
 from po_dashboard.ledger import vendors as rules
 from po_dashboard.ledger.errors import LedgerError
+from po_dashboard.pages import tables
 from po_dashboard.pages.common import CurrentUser, Db, client_address, render
 
 router = APIRouter(prefix="/vendors")
 Field = Annotated[str, Form()]
 
 
-def _list(request: Request, db: Db, user: CurrentUser, error: str | None = None, form: dict[str, str] | None = None,
-          status: int = 200) -> HTMLResponse:  # fmt: skip
-    rows = db.scalars(select(Vendor).order_by(func.lower(Vendor.name))).all()
+def _list(request: Request, db: Db, user: CurrentUser, error: str | None = None, status: int = 200) -> HTMLResponse:
+    """The vendor list: searched by name, domain or contact, sorted by a heading, 50 a page (DEC-45)."""
     domains: dict[int, list[str]] = {}
     for vendor_id, domain in db.execute(
         select(VendorDomain.vendor_id, VendorDomain.domain).order_by(VendorDomain.domain)
     ):
         domains.setdefault(vendor_id, []).append(domain)
-    return render(request, "vendors.html", user, status, vendors=rows, domains=domains, orders=rules.po_counts(db),
-                  error=error, form=form or {})  # fmt: skip
+    orders = rules.po_counts(db)
+    q = request.query_params.get("q", "").strip()[:100]
+    wanted = q.lower()
+    rows = [
+        v for v in db.scalars(select(Vendor).order_by(func.lower(Vendor.name)))
+        if not wanted or wanted in v.name.lower() or wanted in (v.contact_name or "").lower()
+        or wanted in (v.contact_email or "").lower() or any(wanted in d for d in domains.get(v.id, []))
+    ]  # fmt: skip
+    keys: dict[str, Callable[[Vendor], Any]] = {
+        "name": lambda v: v.name.lower(),
+        "domains": lambda v: domains[v.id][0] if domains.get(v.id) else None,
+        "contact": lambda v: (v.contact_name or v.contact_email or "").lower() or None,
+        "pos": lambda v: orders.get(v.id, 0),
+    }
+    ordered, sorting = tables.sort_rows(rows, request.query_params.get("sort"), keys, "name")
+    shown = tables.page_of(ordered, request.query_params.get("page"))
+    return render(request, "vendors.html", user, status, vendors=shown.rows, page=shown, sorting=sorting, q=q,
+                  domains=domains, orders=orders, error=error)  # fmt: skip
+
+
+def _new(request: Request, user: CurrentUser, error: str | None = None, form: dict[str, str] | None = None,
+         status: int = 200) -> HTMLResponse:  # fmt: skip
+    return render(request, "vendor_new.html", user, status, error=error, form=form or {})
 
 
 def _detail(request: Request, db: Db, user: CurrentUser, vendor: Vendor, error: str | None = None,
@@ -54,6 +76,11 @@ def vendor_list(request: Request, db: Db, user: CurrentUser) -> HTMLResponse:
     return _list(request, db, user)
 
 
+@router.get("/new", response_class=HTMLResponse)
+def new_vendor(request: Request, user: CurrentUser) -> HTMLResponse:
+    return _new(request, user)
+
+
 @router.post("/create", response_class=HTMLResponse, response_model=None)
 def create(
     request: Request, db: Db, user: CurrentUser, name: Field, contact_name: Field = "",
@@ -67,7 +94,7 @@ def create(
         db.commit()
     except LedgerError as problem:
         db.rollback()
-        return _list(request, db, user, error=str(problem), form=entered, status=400)
+        return _new(request, user, error=str(problem), form=entered, status=400)
     return RedirectResponse(f"/vendors/{vendor.id}", status_code=303)
 
 

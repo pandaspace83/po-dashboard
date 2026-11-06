@@ -114,5 +114,8 @@ def home(request: Request, db: Db, user: CurrentUser) -> HTMLResponse:
         "model": "reachable" if llm.is_reachable(settings) else "not reachable",
         "model_name": settings.model,
     }
+    today = date.today()
+    items = reports.open_items(db, today)
+    needing, needing_total = reports.attention(items)
     return _page(request, "home.html", me=user, health=health, version=__version__,
-                 counts=reports.counts(db, date.today()))  # fmt: skip
+                 counts=reports.counts(db, today, items), needing=needing, needing_total=needing_total)  # fmt: skip

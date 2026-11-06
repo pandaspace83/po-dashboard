@@ -236,7 +236,7 @@ def test_an_invoice_needs_a_number_a_line_and_a_valid_total(db: Session, order: 
     with pytest.raises(LedgerError, match="Total"):
         E.record_invoice(db, order, line, invoice_number="INV-1", total="lots")
     with pytest.raises(LedgerError, match="Invoice date"):
-        E.record_invoice(db, order, line, invoice_number="INV-1", invoice_date="12/31/2026")
+        E.record_invoice(db, order, line, invoice_number="INV-1", invoice_date="31/12/2026")
     assert db.scalar(select(func.count()).select_from(L.Invoice)) == 0
 
 
@@ -272,8 +272,8 @@ def test_the_history_lists_every_entry_with_who_and_what(db: Session, order: L.P
     shown = E.entries(db, order)
     assert [view.kind for view in shown] == ["ack", "shipment", "invoice"]
     assert {view.who for view in shown} == {"buyer@example.com"}
-    assert shown[0].details == ["Line 1: confirmed 60, price 2.5, promised 2026-12-01"]
-    assert shown[1].title == "Shipment UPS 1Z9" and "Expected 2026-12-05" in shown[1].details
+    assert shown[0].details == ["Line 1: confirmed 60, price 2.5, promised 12/01/2026"]
+    assert shown[1].title == "Shipment UPS 1Z9" and "Expected 12/05/2026" in shown[1].details
     assert shown[2].title == "Invoice INV-7" and "Total 150 USD" in shown[2].details
 
 

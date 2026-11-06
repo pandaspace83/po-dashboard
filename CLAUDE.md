@@ -48,5 +48,8 @@ and status: [docs/PLAN.md](docs/PLAN.md). Audit: [docs/AUDIT.md](docs/AUDIT.md).
 - A test client that always sends a proper `Origin` cannot find browser behaviour. `Referrer-Policy: no-referrer` made
   real browsers send `Origin: null` and the Origin check refused a real sign-in. Answer a form post with a redirect, so
   Reload never repeats an action. Restart the server after every change; check its start time against the file.
+- HTMX's response events (`beforeSwap`, `afterRequest`) carry the sending element as `detail.requestConfig.elt`, not
+  `detail.elt`; `htmx:afterSettle` fires once for each swapped element, not once per swap. Drive real Chrome
+  (Playwright with `channel="chrome"`, run from the scratchpad) before ticking script work: the tests cannot see it.
 - Read new warnings in test output; don't just count passes. SQLAlchemy reads `cache_ok` from each `TypeDecorator` class
   itself, so a subclass without it silently skips the query cache.

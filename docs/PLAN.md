@@ -78,7 +78,13 @@ The rest is following this plan, which suits Sonnet. I will say before each swit
 - [ ] PD-1.11 Vendor import in a fixed format (DEC-44). **Built and tested 2026-11-05** (an Import vendors button on the Vendors page; creates new, adds to existing, lists bad rows; 23 new tests). **Waiting for the owner's browser check:** steps 45 to 49 of [BROWSER_CHECK_PO_SCREENS.md](../test-evidence/BROWSER_CHECK_PO_SCREENS.md).
 - [ ] PD-1.10a *Waiting for OPEN-19 (vendors) and the unit default:* the QuickBooks starting load and weekly check, as in DEC-41. Currency defaults to USD. POs whose vendor is not in the list wait; vendors are never created by this upload.
 - [x] PD-1.12 Vendor search box (2026-11-06): the vendor drop-down on the New PO form, the PO list filter and the Open items filter is a type-to-search box (`GET /vendors/search`, matches name or email domain), so hundreds of vendors stay quick and the page is not reloaded. Vendor upload now requires an email. Steps 50 to 53 of the browser check.
-- [ ] PD-1.8 The visual design pass for the screens built after sign-in: tokens, status chips with text, phone width. The owner has more small tweaks to list.
+- [ ] PD-1.8 The design pass for every screen, to the web standards in DEC-45. *Opus for 1.8a (the standards); Sonnet for the rest.*
+  - [x] PD-1.8a The owner approved DEC-45 on 2026-11-06, unchanged. Date format decided 2026-11-06: MM/DD/YYYY, as in QuickBooks.
+  - [x] PD-1.8b HTMX in place (2026-11-06): the pinned file and its checksum test, the CSP-safe settings, the CSRF header, every page boosted, the existing scripts re-attached after a swap, busy buttons, expired session goes to sign-in, background updates do not count as activity.
+  - [x] PD-1.8c Tables (2026-11-06): sorting, 50 a page with counts, the heading row kept on screen. PO list, Open items, Vendors, People, Audit.
+  - [x] PD-1.8d In place (2026-11-06): fading Saved notes on every form, errors next to their box, filters as you choose, the `/` key, messages read out by screen readers.
+  - [x] PD-1.8e (2026-11-06) Home as the exceptions list with "All clear", and the 60-second live counts on Home and Open items.
+  - [ ] PD-1.8f Phone width and accessibility sweep, one date and time format, the large-data speed test, and the owner's own list of tweaks. Browser check in Safari and Chrome. **Built 2026-11-06 except the owner's tweak list:** Claude ran 51 checks in real Chrome (desktop and phone width, all pass, no script errors or policy violations) and the speed test (slowest page 137 ms on 300 vendors, 1,000 POs, 5,000 lines). **Waiting for:** the owner's browser check, [BROWSER_CHECK_DESIGN.md](../test-evidence/BROWSER_CHECK_DESIGN.md), and the owner's own list of small tweaks.
 
 **Demo:** enter a PO, add a partial ack, a partial shipment and a partial invoice by hand; the line statuses, the
 dashboard and the open-items report follow.

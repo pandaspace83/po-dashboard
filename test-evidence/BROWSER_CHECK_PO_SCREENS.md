@@ -17,14 +17,18 @@ Open http://127.0.0.1:8000 and sign in. If you restart the server, run the `cd` 
 
 ## Steps
 
+*Changed by PD-1.8 (2026-11-06, DEC-45): a vendor is added on its own page (**Vendors → Add a vendor**); the lists
+have no Show button, because filters apply as they are chosen; dates read 11/06/2026. The steps below are worded for
+the new screens; [BROWSER_CHECK_DESIGN.md](BROWSER_CHECK_DESIGN.md) checks the new behaviour itself.*
+
 | # | Do this | Expected | Safari | Chrome |
 |---|---|---|---|---|
-| 1 | Click **Vendors**. | An empty list, with the "Add a vendor" form and **the cursor already blinking in Name**. | | |
+| 1 | Click **Vendors**, then **Add a vendor**. | The Vendors page says "No vendors yet"; the Add page has **the cursor already blinking in Name**. | | |
 | 2 | Add `Acme Fasteners` with domains `acme.com, mail.acme.com`. | You land on the vendor's page showing both domains. | | |
-| 3 | Add `acme fasteners` (other case) as a vendor again. | "A vendor with that name already exists", and the boxes keep what you typed. | | |
+| 3 | **Add a vendor** `acme fasteners` (other case) again. | "A vendor with that name already exists", and the boxes keep what you typed. | | |
 | 4 | On the vendor page, add the domain `not a domain`. | Refused with a clear reason. Then add `acme.co.uk`: it appears. Click it to remove it. | | |
 | 4b | On the vendor page, add `ACME.com` again (other case). Then change a detail and press **Save**. | "acme.com is already added to this vendor". After Save the page reloads with a green **Saved** note that fades after about 3 seconds. | | |
-| 5 | Add a second vendor, `Northwind Metals`, with no domains. | It appears in the list. | | |
+| 5 | Add a second vendor, `Northwind Metals`, with no domains. | It appears in the list, marked "no domain: replies cannot be matched". | | |
 | 6 | Click **Purchase orders**, then **New purchase order**. | A form with PO number, vendor, currency, date, buyer and 10 line rows. **The cursor is already in PO number.** Buyer is your email. | | |
 | 7 | Fill PO number `PO-1001`, vendor Acme, currency `usd`, and line 1: item `Bolt`, quantity `0`, unit `EA`, price `2.5`. Create. | Refused: "Line 1: Quantity must be more than zero", and **every box keeps what you typed**. | | |
 | 8 | Fix the quantity to `10.5` and press Create. | You land on the PO page: PO 1001, vendor, currency **USD**, a line showing `10.5 EA`, `2.50 USD`, status **Sent**. | | |
@@ -35,7 +39,7 @@ Open http://127.0.0.1:8000 and sign in. If you restart the server, run the `cd` 
 | 13 | Import the **same file again**. | The page stays put and lists the problems in place: "PO number PO-2001 already exists. Nothing is overwritten." No page reload, nothing added. | | |
 | 14 | Open the sample file in a text editor, change a quantity to `abc`, save a copy, and import the copy. | The problem is listed with its row number, e.g. "Row 3: Quantity: 'abc' is not a number", and nothing is imported. | | |
 | 15 | Search the PO list for `2001`, then for `%`. | `2001` finds PO-2001. `%` finds nothing ("No purchase orders match"). | | |
-| 16 | Add a vendor named `<b>Bold</b>`. Look at the vendor list and at the vendor page. | The name is shown literally as `<b>Bold</b>`, not in bold. | | |
+| 16 | **Add a vendor** named `<b>Bold</b>`. Look at the vendor list and at the vendor page. | The name is shown literally as `<b>Bold</b>`, not in bold. | | |
 | 17 | Sign in as a **buyer** (add one on **People**), and open **Vendors** and **Purchase orders**. | A buyer can use all of these pages, not only an admin. | | |
 | 18 | Open PO-1001 (from step 8). Click **Record acknowledgement**. | A form listing each line, with **the cursor already in the first Confirmed quantity box**. | | |
 | 19 | Enter confirmed quantity `6` (the PO ordered `10.5`), price `2.75`, promised date in the future. Record. | Back on the PO page: the line shows **Acknowledged**, the promised date, a note "The vendor's price 2.75 differs from the PO price 2.5", and "confirmed 6, not 10.5. Update the original purchase order". | | |
@@ -47,8 +51,8 @@ Open http://127.0.0.1:8000 and sign in. If you restart the server, run the `cd` 
 | 25 | In **History**, remove `INV-2`: first press Remove with the reason empty, then with a reason. | Without a reason the browser asks for one. With one, the entry goes, the notes clear and the line returns to **Shipped**. | | |
 | 26 | Press **Reload** after recording or removing anything. | Nothing is recorded or removed a second time. | | |
 | 27 | Make a mistake on purpose in a form (a negative quantity, a date typed as `soon`). | The message names the line and the field, and every box keeps what you typed. | | |
-| 28 | Open **Purchase orders**. | A filter box above the list: Search, Status, Vendor, Sent from/to, Expected from/to, Late only. **The cursor is in Search.** | | |
-| 29 | Click an **Expected from** box. | The browser shows a **calendar** to pick from. Pick a date range and press **Show**: only matching POs stay. **Clear** resets it. | | |
+| 28 | Open **Purchase orders**. | A filter box above the list: Search, Status, Vendor, Sent from/to, Expected from/to, Late only, Clear. **The cursor is in Search.** | | |
+| 29 | Click an **Expected from** box. | The browser shows a **calendar** to pick from. Pick a date range: only matching POs stay, with no button to press. **Clear** resets it. | | |
 | 30 | On a PO, record an acknowledgement promising a date **in the past**. | The PO page shows the line as **N days late** in red; the list shows "1 late, up to N days". Tick **Late only**: the PO is found. | | |
 | 31 | Record a shipment with carrier `UPS`, a tracking number like `1Z999AA10123456784` and an arrival date in the future. | The line's Expected date becomes "from the shipment" and the late flag goes. The History entry has **Track with the carrier**; it opens UPS's own page in a new tab. | | |
 | 32 | On an open PO, open **Settle lines by hand**. | A collapsed box (it says it is the last resort). Opening it lists the open lines, each with "Leave as it is / Received / Closed short / Cancelled", and one Reason box. | | |
@@ -57,11 +61,11 @@ Open http://127.0.0.1:8000 and sign in. If you restart the server, run the `cd` 
 | 35 | Open **Timeline by line** and a line's heading. | A list in time order: Ordered, Vendor acknowledged, Shipped, Invoiced, Settled by hand, **Reopened** (with the reason and who did it), and "Entry taken back" for any entry you removed. Nothing that happened disappears from it. | | |
 | 36 | Click **Home**. | Six tiles: open purchase orders, open lines, late lines, waiting for an acknowledgement, promised date slipped, original PO needs updating. The numbers match what you have entered. | | |
 | 37 | Click the **Late lines** tile (make one late first: promise a date in the past). | You land on **Open items** showing only the late lines, each with a red "N days late". | | |
-| 38 | On **Open items**, change **Show** and **Vendor**, press Show. **The cursor starts in Show.** | The list narrows; an empty view says "Nothing to show". | | |
+| 38 | On **Open items**, change **Show** and **Vendor**. **The cursor starts in Show.** | The list narrows as you choose; an empty view says "All clear". | | |
 | 39 | Press **Download CSV**. | A file `open-items-<date>.csv` downloads and opens in Excel or Numbers with the columns and accents correct. | | |
 | 40 | Add a PO line whose item is `=1+1` and download again. | The cell shows `'=1+1` as plain text, never the number 2. | | |
 | 41 | Signed in as the **admin**, click **Audit** in the top bar. | A table, newest first: time, person, address, action, what it was about, before and after. **The cursor starts in Action.** | | |
-| 42 | Pick an action (for example `line.close`) and a person, press Show. Then press **Clear**. | The list narrows, then returns to everything. | | |
+| 42 | Type an action (for example `line.close`) and pick a person. Then press **Clear**. | The list narrows, then returns to everything. | | |
 | 43 | Type a wrong date like `soon` in From. | A message says it is not a date; the list still shows. | | |
 | 44 | Sign in as a **buyer** and try to open the Audit address by typing `/admin/audit`. | Refused. The top bar shows no Audit link for a buyer. | | |
 | 45 | Click **Vendors**, then **Import vendors**. | A page with a file chooser (**the cursor is on it**), an Import button, **Download a template**, and a list of the columns. | | |

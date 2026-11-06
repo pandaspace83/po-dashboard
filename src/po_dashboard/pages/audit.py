@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime, time, timedelta
+from datetime import datetime, time, timedelta
 
 from fastapi import APIRouter, Depends, Query, Request
 from fastapi.responses import HTMLResponse
@@ -10,6 +10,7 @@ from sqlalchemy import func, select
 
 from po_dashboard.db.models import AppUser, AuditLog
 from po_dashboard.ledger.errors import LedgerError, when
+from po_dashboard.pages import tables
 from po_dashboard.pages.common import Admin, Db, render, require_admin
 
 router = APIRouter(prefix="/admin/audit", dependencies=[Depends(require_admin)])
@@ -36,7 +37,8 @@ def audit_trail(request: Request, db: Db, admin: Admin, action: str = Query("", 
         except LedgerError as problem:
             problems.append(str(problem))
             return None
-        return None if found is None else datetime.combine(found, time.min, tzinfo=UTC)
+        # A day starts at midnight in the office's own time zone, the zone the page shows times in (DEC-45).
+        return None if found is None else datetime.combine(found, time.min).astimezone()
 
     start, end = day(date_from, "From"), day(date_to, "To")
     who = int(person) if person.isascii() and person.isdigit() and len(person) < 10 else None
@@ -52,13 +54,17 @@ def audit_trail(request: Request, db: Db, admin: Admin, action: str = Query("", 
     if end:
         query = query.where(AuditLog.created_at < end + timedelta(days=1))
     total = db.scalar(select(func.count()).select_from(query.subquery())) or 0
-    rows = db.execute(
-        query.order_by(AuditLog.created_at.desc(), AuditLog.id.desc()).limit(PAGE_SIZE).offset((page - 1) * PAGE_SIZE)
-    ).all()
+    pages = max((total + PAGE_SIZE - 1) // PAGE_SIZE, 1)
+    page = min(page, pages)
+    oldest_first = request.query_params.get("sort") == "when"
+    order = (AuditLog.created_at.asc(), AuditLog.id.asc()) if oldest_first else (AuditLog.created_at.desc(),
+                                                                                  AuditLog.id.desc())  # fmt: skip
+    rows = db.execute(query.order_by(*order).limit(PAGE_SIZE).offset((page - 1) * PAGE_SIZE)).all()
     entries = [(row, email, _cut(row.before), _cut(row.after)) for row, email in rows]
     actions = list(db.scalars(select(AuditLog.action).distinct().order_by(AuditLog.action)))
     people = list(db.execute(select(AppUser.id, AppUser.email).order_by(AppUser.email)))
-    pages = max((total + PAGE_SIZE - 1) // PAGE_SIZE, 1)
     keep = {"action": action, "person": person, "q": q, "date_from": date_from, "date_to": date_to}
-    return render(request, "audit.html", admin, entries=entries, total=total, page=page, pages=pages, actions=actions,
-                  people=people, f=keep, who=who, problems=problems)  # fmt: skip
+    shown = tables.Page(entries, page, pages, total, PAGE_SIZE)
+    sorting = tables.Sorting("when", not oldest_first)
+    return render(request, "audit.html", admin, entries=entries, total=total, page=shown, sorting=sorting,
+                  actions=actions, people=people, f=keep, who=who, problems=problems)  # fmt: skip

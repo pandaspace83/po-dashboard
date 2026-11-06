@@ -168,7 +168,7 @@ def upload(client: TestClient, raw: bytes, token: object = ...):  # noqa: ANN201
 
 def test_the_page_opens_with_the_cursor_on_the_file_chooser_and_offers_a_template(client: TestClient) -> None:
     page = client.get("/vendors/import")
-    assert page.status_code == 200 and page.text.count(" autofocus") == 1 and "data-upload" in page.text
+    assert page.status_code == 200 and page.text.count(" autofocus") == 1 and "multipart/form-data" in page.text
     template = client.get("/vendors/import/template")
     assert template.headers["content-type"].startswith("text/csv") and template.text.startswith("vendor_name,")
     assert "Import vendors" in client.get("/vendors").text

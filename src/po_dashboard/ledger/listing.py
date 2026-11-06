@@ -33,7 +33,6 @@ _LINE_STATUS = {
     "partially_shipped": LineStatus.PARTIALLY_SHIPPED,
     "shipped": LineStatus.SHIPPED,
 }
-LIMIT = 500
 
 
 @dataclass(frozen=True)
@@ -155,8 +154,6 @@ def list_orders(db: Session, found: Filters, today: date) -> list[OrderRow]:
         )
         if _wanted(row, lines, found):
             shown.append(row)
-            if len(shown) == LIMIT:
-                break
     return shown
 
 

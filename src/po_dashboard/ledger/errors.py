@@ -10,6 +10,7 @@ from po_dashboard.db.types import Money, Quantity
 
 CONTROL = re.compile(r"[\x00-\x1f\x7f]")
 ISO_DATE = re.compile(r"\d{4}-\d{2}-\d{2}")
+US_DATE = re.compile(r"(\d{1,2})/(\d{1,2})/(\d{4})")  # as QuickBooks writes it: month/day/year (DEC-45)
 
 
 class LedgerError(ValueError):
@@ -53,10 +54,11 @@ def when(value: str | None, field: str) -> date | None:
     raw = (value or "").strip()
     if not raw:
         return None
-    if not ISO_DATE.fullmatch(raw):
-        raise LedgerError(f"{field}: '{raw[:30]}' is not a date. Write it as year-month-day, like 2026-12-31.")
+    us = US_DATE.fullmatch(raw)
+    if not us and not ISO_DATE.fullmatch(raw):
+        raise LedgerError(f"{field}: '{raw[:30]}' is not a date. Write it as month/day/year, like 12/31/2026.")
     try:
-        parsed = date.fromisoformat(raw)
+        parsed = date(int(us[3]), int(us[1]), int(us[2])) if us else date.fromisoformat(raw)
     except ValueError:
         raise LedgerError(f"{field}: '{raw}' is not a real date.") from None
     if not 1990 <= parsed.year <= 2100:

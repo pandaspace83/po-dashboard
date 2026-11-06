@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block title %}Add a vendor · {{ app_name }}{% endblock %}
+{% block content %}
+<p class="muted"><a href="/vendors">Vendors</a> /</p>
+<h1>Add a vendor</h1>
+{% if error %}<p class="error" role="alert">{{ icon("alert") }}<span>{{ error }}</span></p>{% endif %}
+<div class="card">
+  <form method="post" action="/vendors/create">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="form-row">
+      <div><label for="name">Name</label><input id="name" name="name" required maxlength="200" value="{{ form.name }}" autofocus></div>
+      <div><label for="domains">Email domains</label><input id="domains" name="domains" placeholder="acme.com, mail.acme.com" value="{{ form.domains }}"></div>
+    </div>
+    <div class="form-row">
+      <div><label for="contact_name">Contact name</label><input id="contact_name" name="contact_name" maxlength="200" value="{{ form.contact_name }}"></div>
+      <div><label for="contact_email">Contact email</label><input id="contact_email" name="contact_email" type="email" maxlength="254" value="{{ form.contact_email }}"></div>
+    </div>
+    <p class="form-actions"><button class="primary" type="submit">{{ icon("plus") }}Add vendor</button> <a class="button" href="/vendors">Cancel</a></p>
+  </form>
+  <p class="muted">The email domains are what a vendor's mail comes from. They are how the app will recognise a reply (a vendor is never guessed). Many vendors at once: use <a href="/vendors/import">Import vendors</a>.</p>
+</div>
+{% endblock %}

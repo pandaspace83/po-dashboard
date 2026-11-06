@@ -8,9 +8,17 @@
   <title>{% block title %}{{ app_name }}{% endblock %}</title>
   {% if has_logo %}<link rel="icon" type="image/png" href="/static/brand/favicon.png">{% endif %}
   <link rel="stylesheet" href="/static/app.css">
+  {% if me %}
+  {#- HTMX settings (DEC-45): no page copies kept in browser storage, no eval or inline script or style (the CSP forbids
+      them), and refused forms are shown, not dropped. -#}
+  <meta name="htmx-config" content='{"historyCacheSize":0,"includeIndicatorStyles":false,"allowEval":false,"allowScriptTags":false,"selfRequestsOnly":true,"reportValidityOfForms":true,"responseHandling":[{"code":"204","swap":false},{"code":"[23]..","swap":true},{"code":"[45]..","swap":true,"error":true}]}'>
+  <script src="/static/htmx-2.0.11.min.js" defer></script>
   <script src="/static/app.js" defer></script>
+  {% endif %}
 </head>
-<body>
+<body hx-boost="true">
+<a class="skip" href="#main">Skip to the page</a>
+<div id="announce" class="visually-hidden" aria-live="polite" hx-preserve></div>
 {% block nav %}
 {% if me %}
 <header class="topbar">
@@ -23,17 +31,21 @@
   {% if me.role == 'admin' %}<a class="navlink" href="/admin/audit" {% if request.url.path.startswith('/admin/audit') %}aria-current="page"{% endif %}>{{ icon("clipboard") }}Audit</a>
   <a class="navlink" href="/admin/users" {% if request.url.path.startswith('/admin/users') %}aria-current="page"{% endif %}>{{ icon("users") }}People</a>{% endif %}
   <span class="spacer"></span>
-  <span class="who">{{ icon("user") }}<span>{{ me.email }}</span></span>
-  <a class="navlink" href="/change-password" {% if request.url.path == '/change-password' %}aria-current="page"{% endif %}>{{ icon("key") }}Change password</a>
-  <form method="post" action="/sign-out" class="inline">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-    <button type="submit" class="quiet">{{ icon("logout") }}Sign out</button>
-  </form>
+  <details class="account">
+    <summary class="navlink" title="Signed in as {{ me.email }}" {% if request.url.path == '/change-password' %}aria-current="page"{% endif %}>{{ icon("user") }}<span class="who-name">{{ me.email }}</span></summary>
+    <div class="menu">
+      <a class="navlink" href="/change-password">{{ icon("key") }}Change password</a>
+      <form method="post" action="/sign-out" class="inline">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button type="submit" class="quiet">{{ icon("logout") }}Sign out</button>
+      </form>
+    </div>
+  </details>
 </nav>
 </header>
 {% endif %}
 {% endblock %}
-<main>
+<main id="main" tabindex="-1">
 {% block content %}{% endblock %}
 </main>
 </body>

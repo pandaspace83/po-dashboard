@@ -10,7 +10,7 @@
 </div>
 <div class="tiles">
   <div class="tile">{{ icon("truck") }}<div><span class="label">Vendor</span><span class="value"><a href="/vendors/{{ vendor.id }}">{{ vendor.name }}</a></span></div></div>
-  <div class="tile">{{ icon("clock") }}<div><span class="label">Date sent</span><span class="value">{{ order.date_sent or "not set" }}</span></div></div>
+  <div class="tile">{{ icon("clock") }}<div><span class="label">Date sent</span><span class="value">{{ order.date_sent|day or "not set" }}</span></div></div>
   <div class="tile">{{ icon("user") }}<div><span class="label">Buyer</span><span class="value">{{ order.buyer or "not set" }}</span></div></div>
   <div class="tile">{{ icon("clipboard") }}<div><span class="label">Currency</span><span class="value">{{ order.currency }}</span></div></div>
 </div>
@@ -31,10 +31,10 @@
     <td>{{ line.item }}{% if line.description %}<br><span class="muted">{{ line.description }}</span>{% endif %}</td>
     <td class="num">{{ line.ordered_qty|quantity }} {{ line.unit }}</td>
     <td class="num">{{ line.unit_price|money(order.currency) }}</td>
-    <td>{{ line.requested_date or "" }}</td>
-    <td>{% for step in promised.get(line.id, []) %}{% if not loop.first %} &rarr; {% endif %}<span class="{{ 'bad' if step.slipped }}">{{ step.promised }}</span>{% if step.slipped %} <span class="pill bad">slipped</span>{% endif %}{% endfor %}</td>
+    <td>{{ line.requested_date|day }}</td>
+    <td>{% for step in promised.get(line.id, []) %}{% if not loop.first %} &rarr; {% endif %}<span class="{{ 'bad' if step.slipped }}">{{ step.promised|day }}</span>{% if step.slipped %} <span class="pill bad">slipped</span>{% endif %}{% endfor %}</td>
     {% set ex = expected[line.id] %}
-    <td>{% if ex.expected %}{{ ex.expected }}<br><span class="muted">{{ "from the shipment" if ex.source == "shipment" else "as promised" }}</span>{% elif st.status.value != "Closed" %}<span class="muted">no date yet</span>{% endif %}
+    <td>{% if ex.expected %}{{ ex.expected|day }}<br><span class="muted">{{ "from the shipment" if ex.source == "shipment" else "as promised" }}</span>{% elif st.status.value != "Closed" %}<span class="muted">no date yet</span>{% endif %}
       {% if ex.late %}<br><span class="pill bad">{{ icon("alert") }}{{ ex.days_late }} day{{ "" if ex.days_late == 1 else "s" }} late</span>{% endif %}</td>
     <td class="num">{{ st.facts.confirmed|quantity if st.facts.confirmed is not none else "" }}</td>
     <td class="num">{{ st.facts.shipped|quantity }}</td>
@@ -84,7 +84,7 @@
 {% for line in lines %}
 <details class="timeline">
   <summary>Line {{ line.line_no }}: {{ line.item }}</summary>
-  <ol>{% for step in timeline[line.id] %}<li><span class="muted">{{ step.at.strftime("%Y-%m-%d %H:%M") }} UTC</span> {{ step.text }}</li>{% endfor %}</ol>
+  <ol>{% for step in timeline[line.id] %}<li><span class="muted">{{ step.at|moment }}</span> {{ step.text }}</li>{% endfor %}</ol>
 </details>
 {% endfor %}
 <h2>History</h2>
@@ -95,7 +95,7 @@
   <tbody>
   {% for h in history %}
   <tr>
-    <td>{{ h.at.strftime("%Y-%m-%d %H:%M") }} UTC</td>
+    <td>{{ h.at|moment }}</td>
     <td><strong>{{ h.title }}</strong>{% if h.link %}<br><a href="{{ h.link }}" target="_blank" rel="noopener noreferrer">Track with the carrier</a>{% endif %}</td>
     <td>{% for d in h.details %}{{ d }}{% if not loop.last %}<br>{% endif %}{% endfor %}</td>
     <td>{{ h.who or "" }}</td>

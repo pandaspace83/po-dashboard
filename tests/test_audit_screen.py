@@ -63,13 +63,16 @@ def test_filters_narrow_the_list_and_a_wrong_date_is_reported(boss: TestClient, 
     assert boss.get("/admin/audit?person=x%27&page=1").status_code == 200
 
 
-def test_the_trail_pages_and_a_page_beyond_the_end_is_empty_not_an_error(boss: TestClient, client: TestClient) -> None:
+def test_the_trail_pages_and_a_page_beyond_the_end_shows_the_last(boss: TestClient, client: TestClient) -> None:
     for number in range(60):
         post(client, "/vendors/create", {"name": f"Vendor {number}", "domains": f"v{number}.example"})
     first = boss.get("/admin/audit")
-    assert "Page 1 of" in first.text and "Older" in first.text
-    assert boss.get("/admin/audit?page=2").status_code == 200
-    assert "No records match" in boss.get("/admin/audit?page=900").text
+    assert "Page 1 of 2" in first.text and "1–50 of" in first.text and ">Next</a>" in first.text
+    second = boss.get("/admin/audit?page=2").text
+    assert "Page 2 of 2" in second and ">Previous</a>" in second
+    assert "Page 2 of 2" in boss.get("/admin/audit?page=900").text
+    oldest = boss.get("/admin/audit?sort=when").text
+    assert 'aria-sort="ascending"' in oldest and oldest.index("Vendor 0") < oldest.index("Vendor 1")
 
 
 def test_what_a_record_holds_is_shown_as_text_never_as_markup(boss: TestClient, client: TestClient) -> None:

@@ -136,8 +136,13 @@ def sign_in(
     return result
 
 
-def resolve_session(db: Session, token: str | None, *, now: datetime | None = None) -> SignInSession | None:
-    """The live session for a browser's token, or None. Applies idle and absolute expiry and refreshes last_seen."""
+def resolve_session(
+    db: Session, token: str | None, *, now: datetime | None = None, touch: bool = True
+) -> SignInSession | None:
+    """The live session for a browser's token, or None. Applies idle and absolute expiry and refreshes last_seen.
+
+    `touch=False` is for a page updating itself in the background (DEC-45 item 9): it must not count as activity, or
+    a page left open would never be signed out for being idle."""
     if not token:
         return None
     now = now or utcnow()
@@ -150,8 +155,9 @@ def resolve_session(db: Session, token: str | None, *, now: datetime | None = No
         db.delete(row)
         db.commit()
         return None
-    row.last_seen_at = now
-    db.commit()
+    if touch:
+        row.last_seen_at = now
+        db.commit()
     return row
 
 

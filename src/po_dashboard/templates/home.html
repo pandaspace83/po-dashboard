@@ -9,6 +9,9 @@
   <div class="tile">{{ icon("chip") }}<div><span class="label">Model {{ health.model_name }}</span>
     <span class="value {{ 'ok' if health.model == 'reachable' else 'bad' }}">{{ health.model }}</span></div></div>
 </div>
+{#- Counts and the to-do list update themselves every minute; those updates are not activity (DEC-45 item 9). -#}
+<div id="live" data-background hx-get="/" hx-trigger="every 60s" hx-target="this" hx-select="#live" hx-swap="outerHTML show:none"
+     hx-headers='{"X-Background": "1"}' hx-disinherit="*">
 <h2>Purchasing today</h2>
 <div class="tiles">
   <a class="tile" href="/orders?status=open">{{ icon("clipboard") }}<div><span class="label">Open purchase orders</span><span class="value">{{ counts.open_pos }}</span></div></a>
@@ -18,6 +21,29 @@
   <a class="tile" href="/reports/open-items?show=slipped">{{ icon("refresh") }}<div><span class="label">Promised date slipped</span><span class="value {{ 'bad' if counts.slipped }}">{{ counts.slipped }}</span></div></a>
   <a class="tile" href="/reports/open-items?show=needs_update">{{ icon("key") }}<div><span class="label">Original PO needs updating</span><span class="value {{ 'bad' if counts.needs_update }}">{{ counts.needs_update }}</span></div></a>
 </div>
-{% if not counts.open_pos %}<div class="card empty">{{ icon("clipboard") }}<p><strong>Nothing open.</strong></p><p>Enter a purchase order or import a CSV file to begin.</p></div>{% endif %}
+<h2>Needs attention</h2>
+{% if needing %}
+<div class="table-wrap"><table class="todo">
+  <thead><tr><th scope="col">What to do</th><th scope="col">PO</th><th scope="col">Vendor</th><th scope="col">Line</th><th scope="col">Why</th></tr></thead>
+  <tbody>
+  {% for i in needing %}
+  <tr>
+    <td><a href="/orders/{{ i.po_id }}"><strong>{{ i.next_step }}</strong></a></td>
+    <td class="nowrap">{{ i.po_number }}</td>
+    <td>{{ i.vendor }}</td>
+    <td>{{ i.line_no }}: {{ i.item }}</td>
+    <td>{% for flag in i.flags %}<span class="pill bad">{{ icon("alert") }}{{ flag }}</span> {% endfor %}</td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+{% if needing_total > needing|length %}<p><a href="/reports/open-items?show=attention">See all {{ needing_total }} lines that need attention</a></p>{% endif %}
+{% elif counts.open_pos %}
+<div class="card empty all-clear">{{ icon("check-circle") }}<p><strong>All clear.</strong></p><p>Nothing needs you right now. The app keeps watching.</p></div>
+{% else %}
+<div class="card empty">{{ icon("clipboard") }}<p><strong>Nothing open.</strong></p><p>Enter a purchase order or import a CSV file to begin.</p></div>
+{% endif %}
+<p class="muted small">Updated {{ now|moment }}. This page refreshes itself every minute.</p>
+</div>
 <p class="version">Version {{ version }}</p>
 {% endblock %}

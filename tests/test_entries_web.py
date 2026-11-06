@@ -137,7 +137,7 @@ def test_a_later_promised_date_is_shown_as_a_slip(client: TestClient, po) -> Non
     post(client, f"/orders/{po[0]}/ack", ack(po, [("", "", "2026-12-01"), NONE]))
     post(client, f"/orders/{po[0]}/ack", ack(po, [("", "", "2026-12-15"), NONE]))
     html = page(client, po[0])
-    assert "2026-12-01" in html and "2026-12-15" in html and "slipped" in html
+    assert "12/01/2026" in html and "12/15/2026" in html and "slipped" in html
 
 
 def test_a_different_price_and_over_billing_are_flagged_and_still_recorded(client: TestClient, po) -> None:  # noqa: ANN001

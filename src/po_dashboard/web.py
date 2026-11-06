@@ -14,8 +14,10 @@ from po_dashboard import __version__
 from po_dashboard.auth.gate import Gate
 from po_dashboard.config import Settings
 from po_dashboard.db.migrate import upgrade
+from po_dashboard.display import day, moment
 from po_dashboard.pages import account, admin, audit, entries, orders, reports, vendors
 from po_dashboard.pages.formats import money, quantity
+from po_dashboard.pages.tables import with_query
 
 HERE = Path(__file__).parent
 APP_NAME = "RaceSpec Internal Dashboard"
@@ -31,10 +33,10 @@ def create_app(settings: Settings | None = None, engine: Engine | None = None) -
     app.state.engine = engine
     app.state.templates = Jinja2Templates(directory=HERE / "templates")
     app.state.templates.env.globals.update(
-        app_name=APP_NAME, has_logo=(HERE / "static" / "brand" / "logo.png").is_file()
+        app_name=APP_NAME, has_logo=(HERE / "static" / "brand" / "logo.png").is_file(), with_query=with_query
     )
 
-    app.state.templates.env.filters.update(quantity=quantity, money=money)
+    app.state.templates.env.filters.update(quantity=quantity, money=money, day=day, moment=moment)
 
     @app.get("/health")
     def health() -> JSONResponse:

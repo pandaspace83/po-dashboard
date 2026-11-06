@@ -71,7 +71,8 @@ Nightly copy of the database and stored files to the chosen folder, 35 days kept
 ## 7. Update (PD-6.5)
 
 `git pull`, then restart the service. On start the app backs up the database, then applies migrations. If a migration
-fails the app does not start and says why; restore the backup and report it.
+fails the app does not start and says why; restore the backup and report it. After an update, reload each open tab once
+with Cmd-Shift-R (Safari: Cmd-Option-R) so the browser picks up the new stylesheet and script.
 
 ## 8. Moving to another machine
 
@@ -122,3 +123,15 @@ fix those rows and import again: nothing from the failed attempt was kept.
 ## 13. Importing vendors (PD-1.11, DEC-44)
 
 **Vendors → Import vendors** takes a CSV with the columns `vendor_name` and `contact_email` (both required), `contact_name`, `email_domains`, `notes`; **Download a template** gives an example. Upload it as often as you like: a new vendor is created, an existing one gets any new email domain added, and nothing already entered is overwritten. A row with no email, or with an email already used by another vendor, is skipped. A row with a problem is listed and skipped; the rest go in. A domain that already belongs to another vendor is never moved.
+
+## 14. Using the screens (DEC-45)
+
+- **Home** lists what needs doing, most urgent first, each with its next step; "All clear" means nothing needs you. Home
+  and Open items update themselves every minute; that does not keep you signed in, so after 30 idle minutes the tab goes
+  to the sign-in page.
+- **Lists:** click a column heading to sort (again to reverse); 50 rows a page. Filters apply as you choose them. The
+  address keeps the view, so a bookmark or Back returns to it.
+- **Keys:** `/` puts the cursor in the page's search box. In a vendor box, type, then the arrow keys and Enter; Esc
+  closes the list. Esc also closes the account menu (your email, top right: Change password, Sign out).
+- **Dates** are shown as QuickBooks shows them, 11/06/2026, and times in the office's time zone.
+

@@ -1,45 +1,45 @@
 {% extends "base.html" %}
 {% from "_icons.html" import icon %}
+{% from "_table.html" import sort_th, pager, live_filters with context %}
 {% block title %}Vendors · {{ app_name }}{% endblock %}
 {% block content %}
 <div class="page-head">
   <h1>Vendors</h1>
-  <div class="actions"><a class="button" href="/vendors/import">{{ icon("upload") }}Import vendors</a></div>
+  <div class="actions">
+    <a class="button" href="/vendors/import">{{ icon("upload") }}Import vendors</a>
+    <a class="button primary" href="/vendors/new">{{ icon("plus") }}Add a vendor</a>
+  </div>
 </div>
 {% if error %}<p class="error" role="alert">{{ icon("alert") }}<span>{{ error }}</span></p>{% endif %}
-<div class="card">
-  <div class="card-head">{{ icon("plus") }}<h2>Add a vendor</h2></div>
-  <form method="post" action="/vendors/create">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-    <div class="form-row">
-      <div><label for="name">Name</label><input id="name" name="name" required maxlength="200" value="{{ form.name }}" autofocus></div>
-      <div><label for="domains">Email domains</label><input id="domains" name="domains" placeholder="acme.com, mail.acme.com" value="{{ form.domains }}"></div>
-    </div>
-    <div class="form-row">
-      <div><label for="contact_name">Contact name</label><input id="contact_name" name="contact_name" maxlength="200" value="{{ form.contact_name }}"></div>
-      <div><label for="contact_email">Contact email</label><input id="contact_email" name="contact_email" type="email" maxlength="254" value="{{ form.contact_email }}"></div>
-    </div>
-    <p class="form-actions"><button class="primary" type="submit">{{ icon("plus") }}Add vendor</button></p>
-  </form>
-  <p class="muted">The email domains are what a vendor's mail comes from. They are how the app will recognise a reply (a vendor is never guessed).</p>
-</div>
+<form method="get" action="/vendors" id="filters" class="filters card" role="search" {{ live_filters("/vendors") }}>
+  <div class="form-row">
+    <div class="wide"><label for="q">Search</label><input id="q" name="q" type="search" placeholder="Name, email domain or contact" value="{{ q }}" maxlength="100" autofocus data-search aria-keyshortcuts="/"></div>
+    <div class="shrink"><button class="primary js-hide" type="submit">{{ icon("search") }}Show</button> <a class="button" href="/vendors">Clear</a></div>
+  </div>
+</form>
+<div id="results">
+<input type="hidden" name="sort" value="{{ sorting.value }}" form="filters">
 {% if vendors %}
-<div class="table-wrap">
+<div class="table-wrap table-scroll">
 <table>
-  <thead><tr><th>Vendor</th><th>Email domains</th><th>Contact</th><th>POs</th></tr></thead>
+  <thead><tr>{{ sort_th("Vendor", "name", sorting) }}{{ sort_th("Email domains", "domains", sorting) }}{{ sort_th("Contact", "contact", sorting) }}{{ sort_th("POs", "pos", sorting, "num") }}</tr></thead>
   <tbody>
   {% for v in vendors %}
   <tr>
     <td><a href="/vendors/{{ v.id }}">{{ v.name }}</a></td>
-    <td>{{ (domains.get(v.id) or [])|join(", ") }}</td>
+    <td>{{ (domains.get(v.id) or [])|join(", ") }}{% if not domains.get(v.id) %}<span class="pill bad">{{ icon("alert") }}no domain: replies cannot be matched</span>{% endif %}</td>
     <td>{{ v.contact_name or "" }}{% if v.contact_email %} <span class="muted">{{ v.contact_email }}</span>{% endif %}</td>
-    <td>{{ orders.get(v.id, 0) }}</td>
+    <td class="num">{{ orders.get(v.id, 0) }}</td>
   </tr>
   {% endfor %}
   </tbody>
 </table>
 </div>
+{{ pager(page, "vendor") }}
+{% elif q %}
+<div class="card empty">{{ icon("search") }}<p><strong>No vendor matches "{{ q }}".</strong></p><p><a href="/vendors/new">Add a vendor</a> or <a href="/vendors">clear the search</a>.</p></div>
 {% else %}
-<div class="card empty">{{ icon("truck") }}<p><strong>No vendors yet.</strong></p><p>Add a vendor above, then enter or import its purchase orders.</p></div>
+<div class="card empty">{{ icon("truck") }}<p><strong>No vendors yet.</strong></p><p><a href="/vendors/new">Add a vendor</a>, or <a href="/vendors/import">import a file</a> of them.</p></div>
 {% endif %}
+</div>
 {% endblock %}

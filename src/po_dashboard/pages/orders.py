@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from datetime import date
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import APIRouter, Form, Query, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
@@ -18,9 +19,19 @@ from po_dashboard.ledger import vendors as vendor_rules
 from po_dashboard.ledger.errors import LedgerError
 from po_dashboard.ledger.expected import line_expectations
 from po_dashboard.ledger.status import LineState, line_states, po_state
+from po_dashboard.pages import tables
 from po_dashboard.pages.common import CurrentUser, Db, client_address, render
 
 router = APIRouter(prefix="/orders")
+ORDER_SORTS: dict[str, Callable[[listing.OrderRow], Any]] = {
+    "po": lambda row: row.order.po_number.lower(),
+    "vendor": lambda row: row.vendor_name.lower(),
+    "sent": lambda row: (row.order.date_sent, row.order.id) if row.order.date_sent else None,
+    "lines": lambda row: row.line_count,
+    "expected": lambda row: row.next_expected,
+    "late": lambda row: row.days_late if row.late_lines else None,
+    "status": lambda row: row.state.status.value,
+}
 FORM_ROWS = 10
 MAX_FORM_ROWS = 100  # six fields a row: the framework refuses a form of more than 1000 fields
 UPLOAD_SLACK = 64 * 1024
@@ -47,9 +58,12 @@ def order_list(request: Request, db: Db, user: CurrentUser,
                imported: int | None = Query(None, ge=0, le=100000),
                ignored: int = Query(0, ge=0, le=1000)) -> HTMLResponse:  # fmt: skip
     found, problems = listing.parse_filters({key: value for key, value in request.query_params.items()})
-    return render(request, "orders.html", user, orders=listing.list_orders(db, found, date.today()), f=found,
-                  problems=problems, vendor_name=vendor_rules.vendor_name_of(db, found.vendor_id),
-                  statuses=listing.STATUS_CHOICES,
+    rows, sorting = tables.sort_rows(listing.list_orders(db, found, date.today()), request.query_params.get("sort"),
+                                     ORDER_SORTS, "-sent")  # fmt: skip
+    shown = tables.page_of(rows, request.query_params.get("page"))
+    return render(request, "orders.html", user, orders=shown.rows, page=shown, sorting=sorting, f=found,
+                  filtered=found != listing.Filters(), problems=problems,
+                  vendor_name=vendor_rules.vendor_name_of(db, found.vendor_id), statuses=listing.STATUS_CHOICES,
                   raw=request.query_params, imported=imported, ignored=ignored)  # fmt: skip
 
 
@@ -151,8 +165,9 @@ async def import_file(request: Request, db: Db, user: CurrentUser) -> Response:
 
 
 def missing_order(request: Request, user: CurrentUser) -> HTMLResponse:
-    return render(request, "orders.html", user, 404, orders=[], f=listing.Filters(), problems=[], vendors=[],
-                  statuses=listing.STATUS_CHOICES, raw={}, imported=None, ignored=0,
+    return render(request, "orders.html", user, 404, orders=[], f=listing.Filters(), problems=[], vendor_name="",
+                  page=tables.page_of([], None), sorting=tables.Sorting("sent", True), statuses=listing.STATUS_CHOICES,
+                  raw={}, imported=None, ignored=0,
                   error="That purchase order was not found.")  # fmt: skip
 
 

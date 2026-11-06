@@ -64,7 +64,7 @@ flowchart LR
 | Layer | Choice | Status | Why |
 |---|---|---|---|
 | Language, tooling | Python 3.13, uv, Ruff, pytest | Assumed | DEC-02 |
-| Web | FastAPI, Uvicorn, Jinja2 templates, HTMX 2 (copied into `static/`) | Assumed | DEC-03: no build step, works offline |
+| Web | FastAPI, Uvicorn, Jinja2 templates, HTMX 2.0.11 (0BSD licence; copied into `static/` as `htmx-2.0.11.min.js`, checksum tested) | Decided | DEC-03, DEC-45: no build step, works offline |
 | Styling | Hand-written CSS with design tokens, light theme (DEC-35) | Assumed | DEC-03 |
 | Data | SQLite (WAL) through SQLAlchemy 2; Alembic migrations | Assumed | DEC-02, DEC-04 |
 | Scheduler | An asyncio task inside the app, one scan at a time, with a saved position per mail source | Assumed | Simple; no extra process |
@@ -276,6 +276,29 @@ not send it.
 
 Server-rendered pages; HTMX updates parts of a page (accept a document, snooze an alert) without a full reload.
 
+**How the pages behave (DEC-45, as built in PD-1.8).**
+
+- **Every link and form is boosted** (`hx-boost` on `<body>`): HTMX fetches the page and swaps the body, so nothing
+  reloads, and the server code is unchanged. Post/Redirect/Get still holds: a form posts, the server redirects, and the
+  address that is pushed is the page the redirect lands on, so Back and Reload never repeat an action. A form that is
+  refused (or a page answered straight from a POST) gets `HX-Push-Url: false` from the gate, so the form's own address
+  never enters the history. Without script every page still works as plain links and forms.
+- **Keeping a person's place.** When a form saves and comes back to the same page, or is refused, `app.js` swaps without
+  scrolling, does not move the cursor to the page's first box, and brings a refusal into view and focus. A page that is
+  new keeps the usual behaviour: top of the page, cursor in the first box.
+- **Lists** (POs, Open items, Vendors, People, Audit) sort by a click on a heading and show 50 rows a page, both kept in
+  the address (`sort`, `page`). Filters apply as a person chooses, after 400 ms; only the list part (`#results`) is
+  swapped and the address is updated, with empty filters left out. The helpers are in `pages/tables.py` and
+  `templates/_table.html`.
+- **Live counts.** Home (`#live`) and Open items (`#results`) ask for themselves every 60 seconds with the header
+  `X-Background: 1`. The gate does not count such a request as activity, so the 30-minute idle sign-out still works on a
+  page left open; when it signs the person out the next update sends the tab to the sign-in page. A turn is skipped
+  while the person is typing or the tab is hidden.
+- **Search boxes, not drop-downs,** for any list that can grow past about 15 entries: the vendor box calls
+  `GET /vendors/search` (name or domain, 8 matches); the audit's actions use a `<datalist>`.
+- **Dates and times** are shown MM/DD/YYYY and as 2:35 PM in the office's own time zone (`display.py`); stored values stay
+  ISO dates and UTC times, and a typed date may be either 12/31/2026 or 2026-12-31.
+
 | Screen | Purpose |
 |---|---|
 | Dashboard | the counts in REQ-DB-01, the alerts needing action today, a health strip (last scan, model reachable) |
@@ -386,7 +409,9 @@ or sits beside them is decided then. The gate, sessions, roles, CSRF checks and 
 
 - **Default deny.** A gate in front of every route refuses anything without a full session, except an exact list:
   `/sign-in` and its steps, `/health` and `/static/app.css`. A route added later is protected without anyone remembering
-  to. HTML requests go to the sign-in page; HTMX and API requests get a 401.
+  to. HTML requests go to the sign-in page; HTMX and API requests get a 401, and an HTMX request also gets
+  `HX-Redirect: /sign-in`, which sends the whole tab there. The script and HTMX files are not public; the sign-in page
+  loads no script at all.
 - **Admin routes** share one router with an admin check. The role comes from the database on every request, so a demotion
   applies at once.
 - **CSRF.** Every POST, PUT, PATCH and DELETE needs the session's token (a hidden form field, or an HTMX header) and an
@@ -398,7 +423,9 @@ or sits beside them is decided then. The gate, sessions, roles, CSRF checks and 
   script) sends an `X-CSRF-Token` header. A form body over 64 KB is refused unless it uses the header.
 - **Headers.** A Content-Security-Policy of `default-src 'self'; frame-ancestors 'none'; base-uri 'none'; object-src
   'none'; form-action 'self'`, so no inline script or style (the Phase 0 page's inline style moves to `app.css`, and HTMX
-  is set to `allowEval: false` and `includeIndicatorStyles: false`). `X-Content-Type-Options: nosniff`,
+  is set to `allowEval: false`, `allowScriptTags: false`, `includeIndicatorStyles: false` and `selfRequestsOnly: true`;
+  no `hx-on` or `js:` attributes are used, and a test checks every page for them). HTMX's history cache is off
+  (`historyCacheSize: 0`), so no copy of a page (prices, a temporary password) is kept in the browser's storage. `X-Content-Type-Options: nosniff`,
   `Referrer-Policy: same-origin` (not `no-referrer`: browsers then send `Origin: null` on form posts and the Origin check refuses a real sign-in), and `Cache-Control: no-store` on signed-in pages.
 - **`/health` says only up or down** to someone not signed in. Model and scan details are on signed-in pages, so the
   Phase 0 response shrinks. The API schema and docs routes are off.

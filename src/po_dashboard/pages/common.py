@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 
 from po_dashboard.auth.gate import SESSION_COOKIE
 from po_dashboard.config import Settings
+from po_dashboard.db.base import utcnow
 from po_dashboard.db.models import AppUser
 
 
@@ -46,7 +47,9 @@ Admin = Annotated[AppUser, Depends(require_admin)]
 
 def context(request: Request, **extra: Any) -> dict[str, Any]:
     state = request.scope.get("state", {})
-    return {"csrf_token": state.get("csrf_token"), "user": getattr(request.state, "user", None), **extra}
+    return {
+        "csrf_token": state.get("csrf_token"), "user": getattr(request.state, "user", None), "now": utcnow(), **extra
+    }  # fmt: skip
 
 
 def render(request: Request, name: str, user: AppUser, status: int = 200, **extra: Any) -> HTMLResponse:

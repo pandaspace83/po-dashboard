@@ -1,42 +1,51 @@
 {% extends "base.html" %}
 {% from "_icons.html" import icon %}
 {% from "_picker.html" import vendor_picker %}
+{% from "_table.html" import sort_th, pager, live_filters with context %}
 {% block title %}Open items · {{ app_name }}{% endblock %}
 {% block content %}
 <div class="page-head">
   <h1>Open items</h1>
   <div class="actions">
-    <a class="button" href="/reports/open-items.csv?show={{ show }}{% if vendor_id %}&vendor={{ vendor_id }}{% endif %}">{{ icon("download") }}Download CSV</a>
+    <a class="button" hx-boost="false" download href="/reports/open-items.csv{{ '?' ~ request.url.query if request.url.query }}">{{ icon("download") }}Download CSV</a>
   </div>
 </div>
-<form method="get" action="/reports/open-items" class="filters card">
+<form method="get" action="/reports/open-items" id="filters" class="filters card" {{ live_filters("/reports/open-items") }}>
   <div class="form-row">
     <div><label for="show">Show</label>
       <select id="show" name="show" autofocus>{% for key, label in shows.items() %}<option value="{{ key }}" {{ "selected" if show == key }}>{{ label }}</option>{% endfor %}</select></div>
-    <div>{{ vendor_picker("vendor", "Vendor", vendor_id, vendor_name, false, "Any vendor") }}</div>
-    <div class="shrink"><button class="primary" type="submit">{{ icon("search") }}Show</button></div>
+    <div>{{ vendor_picker("vendor", "Vendor", vendor_id, vendor_name, false, "Any vendor", search=true) }}</div>
+    <div class="shrink"><button class="primary js-hide" type="submit">{{ icon("search") }}Show</button> <a class="button" href="/reports/open-items">Clear</a></div>
   </div>
 </form>
+{#- The list updates itself every minute (DEC-45 item 9). Those updates do not count as activity, so the idle
+    sign-out still works; the attributes are not passed down to the links inside. -#}
+<div id="results" data-background hx-get="{{ with_query(request) }}" hx-trigger="every 60s" hx-target="this" hx-select="#results"
+     hx-swap="outerHTML show:none" hx-headers='{"X-Background": "1"}' hx-disinherit="*">
+<input type="hidden" name="sort" value="{{ sorting.value }}" form="filters">
 {% if items %}
-<div class="table-wrap"><table>
-  <thead><tr><th>PO</th><th>Vendor</th><th>#</th><th>Item</th><th class="num">Open</th><th>Status</th><th>Expected</th><th>Last vendor activity</th><th>Flags</th></tr></thead>
+<div class="table-wrap table-scroll"><table>
+  <thead><tr>{{ sort_th("PO", "po", sorting) }}{{ sort_th("Vendor", "vendor", sorting) }}<th scope="col">#</th>{{ sort_th("Item", "item", sorting) }}{{ sort_th("Open", "open", sorting, "num") }}{{ sort_th("Status", "status", sorting) }}{{ sort_th("Expected", "expected", sorting) }}{{ sort_th("Last vendor activity", "activity", sorting) }}{{ sort_th("Flags", "late", sorting) }}</tr></thead>
   <tbody>
   {% for i in items %}
   <tr>
-    <td><a href="/orders/{{ i.po_id }}">{{ i.po_number }}</a></td>
+    <td class="nowrap"><a href="/orders/{{ i.po_id }}">{{ i.po_number }}</a></td>
     <td>{{ i.vendor }}</td>
     <td>{{ i.line_no }}</td>
     <td>{{ i.item }}{% if i.description %}<br><span class="muted">{{ i.description }}</span>{% endif %}</td>
     <td class="num">{{ i.open_qty|quantity }} {{ i.unit }}</td>
     <td><span class="pill">{{ i.status }}</span></td>
-    <td>{{ i.expectation.expected or "" }}{% if i.expectation.expected %}<br><span class="muted">{{ "from the shipment" if i.expectation.source == "shipment" else "as promised" }}</span>{% endif %}</td>
-    <td>{{ i.last_activity.strftime("%Y-%m-%d") if i.last_activity else "none yet" }}</td>
+    <td>{{ i.expectation.expected|day }}{% if i.expectation.expected %}<br><span class="muted">{{ "from the shipment" if i.expectation.source == "shipment" else "as promised" }}</span>{% endif %}</td>
+    <td>{{ i.last_activity|day if i.last_activity else "none yet" }}</td>
     <td>{% for flag in i.flags %}<span class="pill bad">{{ icon("alert") }}{{ flag }}</span> {% endfor %}</td>
   </tr>
   {% endfor %}
   </tbody>
 </table></div>
+{{ pager(page, "line") }}
 {% else %}
-<div class="card empty">{{ icon("check-circle") }}<p><strong>Nothing to show.</strong></p><p>No open lines match this view.</p></div>
+<div class="card empty">{{ icon("check-circle") }}<p><strong>All clear.</strong></p><p>No open lines match this view.</p></div>
 {% endif %}
+<p class="muted small">Updated {{ now|moment }}. This list refreshes itself every minute.</p>
+</div>
 {% endblock %}

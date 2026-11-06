@@ -189,7 +189,8 @@ def test_a_po_needs_a_vendor_a_currency_a_line_and_a_new_number(db: Session, acm
         ("unit_price", "1.0000001", "nothing is rounded"),
         ("unit_price", "Infinity", "NaN or infinity"),
         ("requested_date", "2026-13-01", "not a real date"),
-        ("requested_date", "04/11/2026", "not a date"),
+        ("requested_date", "11.04.2026", "not a date"),
+        ("requested_date", "13/01/2026", "not a real date"),
         ("requested_date", "20261104", "not a date"),
         ("requested_date", "2026-W45-1", "not a date"),
         ("requested_date", "1850-01-01", "looks wrong"),
@@ -384,3 +385,24 @@ def test_a_report_with_other_column_names_is_refused_naming_what_is_missing(db: 
 def test_columns_the_import_does_not_use_are_skipped_and_counted(db: Session, acme: L.Vendor) -> None:
     result = import_csv(db, csv_of(row() + ",x", header=HEADER + ",qty"))
     assert result.po_numbers == ["PO-1"] and result.ignored_columns == ["qty"]
+
+
+def test_a_date_can_be_typed_the_quickbooks_way_or_the_iso_way() -> None:
+    from datetime import date
+
+    from po_dashboard.ledger.errors import when
+
+    assert when("04/11/2026", "Date") == date(2026, 4, 11)  # month/day/year, as QuickBooks writes it
+    assert when("4/1/2026", "Date") == date(2026, 4, 1)
+    assert when("2026-04-11", "Date") == date(2026, 4, 11)
+
+
+def test_dates_and_times_are_shown_the_quickbooks_way() -> None:
+    from datetime import UTC, date, datetime
+
+    from po_dashboard.display import day, moment
+
+    assert day(date(2026, 11, 6)) == "11/06/2026" and day(None) == "" and moment(None) == ""
+    shown = moment(datetime(2026, 11, 6, 19, 5, tzinfo=UTC))
+    local = datetime(2026, 11, 6, 19, 5, tzinfo=UTC).astimezone()
+    assert shown.endswith(("AM", "PM")) and f":{local.minute:02d} " in shown and day(local) in shown

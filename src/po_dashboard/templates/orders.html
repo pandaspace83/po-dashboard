@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% from "_icons.html" import icon %}
 {% from "_picker.html" import vendor_picker %}
+{% from "_table.html" import sort_th, pager, live_filters with context %}
 {% block title %}Purchase orders · {{ app_name }}{% endblock %}
 {% block content %}
 <div class="page-head">
@@ -12,10 +13,9 @@
 </div>
 {% if error %}<p class="error" role="alert">{{ icon("alert") }}<span>{{ error }}</span></p>{% endif %}
 {% if imported is not none %}<p class="notice" role="status">{{ icon("check-circle") }}<span>Imported {{ imported }} purchase order{{ "" if imported == 1 else "s" }}.{% if ignored %} {{ ignored }} column{{ "" if ignored == 1 else "s" }} in the file {{ "is" if ignored == 1 else "are" }} not used here and {{ "was" if ignored == 1 else "were" }} skipped.{% endif %}</span></p>{% endif %}
-{% if problems %}<div class="error" role="alert">{{ icon("alert") }}<div>{% for p in problems %}<div>{{ p }}</div>{% endfor %}</div></div>{% endif %}
-<form method="get" action="/orders" class="filters card" role="search">
+<form method="get" action="/orders" id="filters" class="filters card" role="search" {{ live_filters("/orders") }}>
   <div class="form-row">
-    <div class="wide"><label for="q">Search</label><input id="q" name="q" type="search" placeholder="PO number or vendor" value="{{ f.q }}" maxlength="100" autofocus></div>
+    <div class="wide"><label for="q">Search</label><input id="q" name="q" type="search" placeholder="PO number or vendor" value="{{ f.q }}" maxlength="100" autofocus data-search aria-keyshortcuts="/"></div>
     <div><label for="status">Status</label>
       <select id="status" name="status"><option value="">Any</option>
       {% for key, label in statuses.items() %}<option value="{{ key }}" {{ "selected" if f.status == key }}>{{ label }}</option>{% endfor %}</select></div>
@@ -27,33 +27,40 @@
     <div><label for="expected_from">Expected from</label><input id="expected_from" name="expected_from" type="date" value="{{ f.expected_from or '' }}"></div>
     <div><label for="expected_to">Expected to</label><input id="expected_to" name="expected_to" type="date" value="{{ f.expected_to or '' }}"></div>
     <div class="shrink"><label class="check"><input type="checkbox" name="late" value="1" {{ "checked" if f.late }}> Late only</label></div>
+    <div class="shrink"><button class="primary js-hide" type="submit">{{ icon("search") }}Show</button> <a class="button" href="/orders">Clear</a></div>
   </div>
-  <p class="form-actions"><button class="primary" type="submit">{{ icon("search") }}Show</button> <a class="button" href="/orders">Clear</a></p>
 </form>
+<div id="results">
+{#- The sort lives here, inside the part that is swapped, so the filter form always sends the current one. -#}
+<input type="hidden" name="sort" value="{{ sorting.value }}" form="filters">
+{% if problems %}<div class="error" role="alert">{{ icon("alert") }}<div>{% for p in problems %}<div>{{ p }}</div>{% endfor %}</div></div>{% endif %}
 {% if orders %}
-<div class="table-wrap">
+<div class="table-wrap table-scroll">
 <table>
-  <thead><tr><th>PO</th><th>Vendor</th><th>Date sent</th><th>Currency</th><th>Lines</th><th>Next expected</th><th>Status</th></tr></thead>
+  <thead><tr>{{ sort_th("PO", "po", sorting) }}{{ sort_th("Vendor", "vendor", sorting) }}{{ sort_th("Date sent", "sent", sorting) }}<th scope="col">Currency</th>{{ sort_th("Lines", "lines", sorting, "num") }}{{ sort_th("Next expected", "expected", sorting) }}{{ sort_th("Late", "late", sorting) }}{{ sort_th("Status", "status", sorting) }}</tr></thead>
   <tbody>
   {% for row in orders %}
   {% set o = row.order %}
   <tr>
-    <td><a href="/orders/{{ o.id }}">{{ o.po_number }}</a></td>
+    <td class="nowrap"><a href="/orders/{{ o.id }}">{{ o.po_number }}</a></td>
     <td>{{ row.vendor_name }}</td>
-    <td>{{ o.date_sent or "" }}</td>
+    <td>{{ o.date_sent|day }}</td>
     <td>{{ o.currency }}</td>
-    <td>{{ row.line_count }}</td>
-    <td>{{ row.next_expected or "" }}{% if row.late_lines %} <span class="pill bad">{{ icon("alert") }}{{ row.late_lines }} late, up to {{ row.days_late }} day{{ "" if row.days_late == 1 else "s" }}</span>{% endif %}</td>
+    <td class="num">{{ row.line_count }}</td>
+    <td>{{ row.next_expected|day }}</td>
+    <td>{% if row.late_lines %}<span class="pill bad">{{ icon("alert") }}{{ row.late_lines }} late, up to {{ row.days_late }} day{{ "" if row.days_late == 1 else "s" }}</span>{% endif %}</td>
     <td>{% if row.state.status.value == "Closed" %}<span class="pill ok">{{ icon("check-circle") }}Closed</span>{% else %}<span class="pill">{{ icon("clock") }}Open{% if row.state.partially_invoiced %}, partly invoiced{% endif %}</span>{% endif %}</td>
   </tr>
   {% endfor %}
   </tbody>
 </table>
 </div>
+{{ pager(page, "purchase order") }}
 {% else %}
 <div class="card empty">{{ icon("clipboard") }}
-  {% if raw and raw|length %}<p><strong>No purchase orders match these filters.</strong></p>
+  {% if filtered %}<p><strong>No purchase orders match these filters.</strong></p>
   {% else %}<p><strong>No purchase orders yet.</strong></p><p>Enter one by hand, or import a CSV file.</p>{% endif %}
 </div>
 {% endif %}
+</div>
 {% endblock %}
