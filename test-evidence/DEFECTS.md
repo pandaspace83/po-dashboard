@@ -30,7 +30,7 @@ Every failure is logged here the moment it is found, by whoever finds it: the ca
 
 **Cause:** The two upload buttons sit side by side with the same icon, and the import page only knew its own format.
 
-**Fix:** PD-1.10a.5: Import CSV or Excel recognises the QuickBooks report and shows the QuickBooks preview (nothing is created until Create); the app's own file on the QuickBooks page is refused with a link to Import. 3 new tests. Not committed yet.
+**Fix:** PD-1.10a.5: Import CSV or Excel recognises the QuickBooks report and shows the QuickBooks preview (nothing is created until Create); the app's own file on the QuickBooks page is refused with a link to Import. 3 new tests. Commit e0bdb3e.
 
 **Retest:** 11/07/2026, Claude in Chrome: pass (TC-PIMP-06, TC-QB-08). Owner's retest of step 4 and new steps 15 and 16: waiting.
 
@@ -58,7 +58,7 @@ Every failure is logged here the moment it is found, by whoever finds it: the ca
 
 **Cause:** Refusals raised as errors used the web framework's default answer, meant for scripts. The sign-in check of 11/04/2026 looked for the words Admins only, which the raw answer also contains.
 
-**Fix:** Refusals, missing pages and unreadable forms are now pages in the app's layout with a Go to Home button, for browsers and HTMX; a script that does not ask for HTML still gets the short JSON. 3 new tests; new case TC-WEB-06. Not committed yet.
+**Fix:** Refusals, missing pages and unreadable forms are now pages in the app's layout with a Go to Home button, for browsers and HTMX; a script that does not ask for HTML still gets the short JSON. 3 new tests; new case TC-WEB-06. Commit e0bdb3e.
 
 **Retest:** 11/07/2026, Claude in Chrome: pass (TC-SIGN-06, TC-WEB-06). Owner's retest: waiting.
 
