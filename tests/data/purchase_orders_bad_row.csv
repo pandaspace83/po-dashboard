@@ -1,0 +1,3 @@
+po_number,vendor,currency,line_no,item,quantity,unit,unit_price,date_sent,buyer,description,requested_date
+PO-2101,Acme Fasteners,USD,1,Hex nut M8,50,EA,0.10,2026-11-04,buyer@example.com,,
+PO-2101,Acme Fasteners,USD,2,Spring washer M8,abc,EA,0.05,2026-11-04,buyer@example.com,,

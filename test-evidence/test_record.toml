@@ -1,0 +1,1324 @@
+# The test record of PO Dashboard: every test case, every defect, and the user sign-off list.
+#
+# This file is the source. After changing it, run `uv run python scripts/test_record.py`: it rewrites TEST_CASES.md,
+# DEFECTS.md and SIGN_OFF.md beside it (a test fails if they are out of date), and with `--workbook` it also builds the
+# Excel workbook for a test cycle, which stays on this Mac (git-ignored).
+#
+# Rules (owner, 2026-11-07):
+# - IDs are never renumbered or reused. A case that no longer applies is marked retired, not deleted.
+# - A failure is recorded the moment it is found, as a [[defect]]: the case, the browser, what was seen, a screenshot,
+#   then the cause, the fix and its commit, and a retest with its own screenshot. Earlier failures (before 11/07/2026)
+#   are in docs/BUILD_HISTORY.md and are not repeated here.
+# - Made-up data only. No real names, prices, addresses or documents: the repository is public.
+# - kind: browser = a person does it in Safari and Chrome, and scripts/browser_evidence.py does it in Chrome with a
+#   screenshot; terminal = a person does it in Terminal; automated = covered by the pytest tests named; owner = only
+#   the owner can do it, with the company's own data, which stays on this Mac.
+
+[meta]
+product = "PO Dashboard (RaceSpec Internal Dashboard)"
+scope = "Phase 0 and Phase 1: sign-in, people, vendors, purchase orders, imports, the QuickBooks starting load, entries by hand, Home, Open items, Audit, page behaviour, security and speed."
+setup = [
+    "cd ~/Projects/po-dashboard",
+    "export PO_DASHBOARD_DATA=\"$HOME/Projects/po-dashboard-check-data\"   (a throwaway folder; never the real one)",
+    "uv run po-dashboard user create-admin boss@example.com   (choose a password, twice; nothing shows as you type)",
+    "uv run po-dashboard serve   (leave this window open), then open http://127.0.0.1:8000 and sign in",
+    "Made-up files to use, all in tests/data: vendors_sample.xlsx, vendors_problems.csv, purchase_orders_sample.csv, purchase_orders_bad_row.csv, quickbooks_open_pos_110526.csv",
+    "Run the cases in the order listed: later cases use what earlier ones created.",
+    "Clean up afterwards: Ctrl-C in the server window, then rm -r \"$HOME/Projects/po-dashboard-check-data\" and unset PO_DASHBOARD_DATA",
+]
+
+# ---------------------------------------------------------------------------------------------------------------------
+# Set-up and running
+
+[[case]]
+id = "TC-SET-01"
+area = "Set-up and running"
+title = "Set-up states the 9 GB model download and never starts it without a yes"
+priority = "High"
+kind = "terminal"
+refs = ["PD-0.3", "CLAUDE.md: Size"]
+steps = ["Run scripts/setup.sh on a Mac without the model.", "Answer anything but yes when it asks about the download."]
+expected = "It states the size (about 9 GB) before asking, and nothing is downloaded without a yes."
+tests = ["test_setup_script.py::test_states_the_size_and_does_not_pull_without_a_yes", "test_setup_script.py::test_no_answer_at_all_does_not_pull", "test_setup_script.py::test_pulls_on_a_yes"]
+
+[[case]]
+id = "TC-SET-02"
+area = "Set-up and running"
+title = "The first admin is made in Terminal with a hidden password prompt"
+priority = "High"
+kind = "terminal"
+refs = ["PD-1.9b"]
+steps = ["Run uv run po-dashboard user create-admin boss@example.com with a fresh data folder.", "Run it a second time."]
+expected = "The password is asked twice and never shown. There is no way to give it on the command line. The second run is refused because an account exists."
+tests = ["test_cli.py::test_create_admin_uses_a_hidden_prompt_and_signs_in", "test_cli.py::test_there_is_no_way_to_pass_a_password_on_the_command_line", "test_cli.py::test_create_admin_refuses_once_accounts_exist"]
+owner = "Pass 11/04/2026"
+
+[[case]]
+id = "TC-SET-03"
+area = "Set-up and running"
+title = "The app stays local: it refuses other host names and a model server off this Mac"
+priority = "Critical"
+kind = "automated"
+refs = ["DEC-01", "NFR local only"]
+steps = ["Covered by the tests named: a request with another host name, and a model server address that is not this Mac."]
+expected = "Both are refused. Health answers only 'up'. No API schema is served."
+tests = ["test_web.py::test_non_loopback_host_refused", "test_web.py::test_remote_model_server_refused", "test_web.py::test_health_says_only_up", "test_web.py::test_no_api_schema_is_served", "test_gate.py::test_an_unknown_host_name_is_refused"]
+
+[[case]]
+id = "TC-SET-04"
+area = "Set-up and running"
+title = "The commit guard refuses real documents and secrets outside tests/data"
+priority = "Critical"
+kind = "automated"
+refs = ["DEC-13", "PD-0.6"]
+steps = ["Covered by the tests named: staging a .pdf, .xlsx, .csv, .eml or .env outside tests/data, and a rename out of tests/data."]
+expected = "The commit is refused and names the file. Made-up files in tests/data and code pass."
+tests = ["test_precommit_guard.py::test_hook_refuses_staged_documents", "test_precommit_guard.py::test_hook_refuses_a_rename_out_of_tests_data", "test_precommit_guard.py::test_hook_allows_synthetic_files_and_code"]
+
+[[case]]
+id = "TC-SET-05"
+area = "Set-up and running"
+title = "The data folder and database are private to the Mac's user, and upgrades are safe to repeat"
+priority = "High"
+kind = "automated"
+refs = ["PD-1.1a", "ARCHITECTURE §11"]
+steps = ["Covered by the tests named."]
+expected = "The folder and database are owner-only, even if they were opened up. The database schema matches the code. Running the upgrade twice changes nothing."
+tests = ["test_database.py::test_data_folder_and_database_are_owner_only", "test_database.py::test_an_open_data_folder_is_tightened", "test_database.py::test_migration_matches_the_models", "test_database.py::test_upgrade_twice_is_harmless"]
+
+# ---------------------------------------------------------------------------------------------------------------------
+# Sign-in and accounts
+
+[[case]]
+id = "TC-SIGN-01"
+area = "Sign-in and accounts"
+title = "A signed-out visitor sees only the sign-in page"
+priority = "Critical"
+kind = "browser"
+refs = ["ARCHITECTURE §10.1", "PD-1.9c"]
+steps = ["Open http://127.0.0.1:8000 while signed out."]
+expected = "The sign-in page; the address changes to /sign-in. No account details are shown."
+tests = ["test_gate.py::test_every_route_refuses_a_request_with_no_session", "test_gate.py::test_a_browser_is_sent_to_the_sign_in_page_and_a_script_gets_401"]
+was = "Sign-in check #1"
+owner = "Pass 11/04/2026 (Safari, Chrome)"
+
+[[case]]
+id = "TC-SIGN-02"
+area = "Sign-in and accounts"
+title = "A wrong password and an unknown email get the same message"
+priority = "Critical"
+kind = "browser"
+refs = ["ARCHITECTURE §10.1"]
+steps = ["Sign in as boss@example.com with a wrong password.", "Sign in as nobody@example.com with any password."]
+expected = "Both say \"The email or password is not right.\" word for word, and you stay on the sign-in page."
+tests = ["test_auth.py::test_wrong_password_and_unknown_email_get_the_same_refusal", "test_gate.py::test_wrong_password_and_unknown_email_look_the_same"]
+was = "Sign-in check #2, #3"
+owner = "Pass 11/04/2026 (Safari, Chrome)"
+
+[[case]]
+id = "TC-SIGN-03"
+area = "Sign-in and accounts"
+title = "Signing in opens Home, with the account menu at the top right"
+priority = "High"
+kind = "browser"
+refs = ["PD-1.9c", "DEC-45"]
+steps = ["Sign in as boss@example.com with the right password.", "Click the person icon at the top right; press Esc; open it again and click elsewhere."]
+expected = "Home opens. The menu shows the email, Change password and Sign out. Esc closes it, and so does a click elsewhere."
+tests = ["test_gate.py::test_sign_in_sets_a_locked_down_cookie_and_opens_the_home_page"]
+was = "Sign-in check #4, #5; Design check #2"
+owner = "Pass 11/06/2026"
+
+[[case]]
+id = "TC-SIGN-04"
+area = "Sign-in and accounts"
+title = "An admin adds a person and sees the temporary password once"
+priority = "Critical"
+kind = "browser"
+refs = ["PD-1.9b", "ARCHITECTURE §10.1"]
+steps = ["As boss, open People.", "Add buyer@example.com as a buyer.", "Click People again."]
+expected = "A 20-character temporary password is shown once. After clicking People again it is gone and cannot be shown again. Reload repeats nothing."
+tests = ["test_gate.py::test_admin_adds_a_person_and_sees_the_temporary_password_once", "test_gate.py::test_a_reload_after_adding_a_person_repeats_nothing", "test_gate.py::test_the_shown_password_expires_and_belongs_to_one_admin"]
+was = "Sign-in check #6, #7"
+owner = "Pass 11/04/2026 (Safari, Chrome)"
+
+[[case]]
+id = "TC-SIGN-05"
+area = "Sign-in and accounts"
+title = "A temporary password leads only to Change password, which refuses a weak password"
+priority = "Critical"
+kind = "browser"
+refs = ["PD-1.9b"]
+steps = ["Sign out, then sign in as buyer@example.com with the temporary password.", "Click Home.", "Try the new password abc.", "Choose a good new password of 12 or more characters."]
+expected = "Change password opens, and Home sends you back to it. abc is refused with a reason (the browser asks for 12 or more characters before anything is sent). The good password opens Home, and a buyer has no People link."
+tests = ["test_gate.py::test_a_temporary_password_can_reach_nothing_until_it_is_changed", "test_auth.py::test_weak_passwords_are_refused", "test_auth.py::test_changing_the_password_ends_other_sessions_and_clears_the_flag"]
+was = "Sign-in check #8, #9, #10"
+owner = "Pass 11/04/2026 (Safari, Chrome)"
+
+[[case]]
+id = "TC-SIGN-06"
+area = "Sign-in and accounts"
+title = "A buyer cannot open the admin screens"
+priority = "Critical"
+kind = "browser"
+refs = ["ARCHITECTURE §10.1"]
+steps = ["As a buyer, type /admin/users in the address bar.", "Type /admin/audit."]
+expected = "Both are refused with a page headed \"Admins only\" and a Go to Home button (never raw code). The top bar shows no People or Audit link to a buyer."
+tests = ["test_gate.py::test_a_buyer_gets_403_on_the_admin_screens", "test_gate.py::test_a_refusal_in_the_browser_is_a_page_not_raw_json", "test_audit_screen.py::test_a_buyer_and_a_stranger_cannot_see_it"]
+was = "Sign-in check #11; PO check #44"
+owner = "Pass 11/05/2026 (Safari, Chrome), before DEF-002 was found: retest needed"
+
+[[case]]
+id = "TC-SIGN-07"
+area = "Sign-in and accounts"
+title = "A disabled person is cut off and gets the ordinary refusal"
+priority = "Critical"
+kind = "browser"
+refs = ["PD-1.9b"]
+steps = ["As boss, on People, press Disable for the buyer.", "Try to sign in as the buyer with the right password.", "As boss, press Enable."]
+expected = "The buyer gets \"The email or password is not right.\" After Enable the buyer can sign in again."
+tests = ["test_auth.py::test_a_disabled_account_gets_the_ordinary_refusal", "test_gate.py::test_a_disabled_person_is_cut_off_at_once"]
+was = "Sign-in check #12"
+owner = "Pass 11/04/2026 (Safari, Chrome)"
+
+[[case]]
+id = "TC-SIGN-08"
+area = "Sign-in and accounts"
+title = "Five wrong passwords lock the account, even against the right one, until 15 minutes pass or an admin unlocks it"
+priority = "Critical"
+kind = "browser"
+refs = ["ARCHITECTURE §10.1"]
+steps = ["Sign in as the buyer with a wrong password 5 times.", "Then use the right password.", "As boss, press Unlock for the buyer; sign in as the buyer."]
+expected = "\"Too many wrong attempts. Try again in 15 minutes.\" The right password is still refused while locked. After Unlock the buyer signs in."
+tests = ["test_auth.py::test_five_failures_lock_the_account_even_for_the_right_password", "test_gate.py::test_five_wrong_passwords_lock_the_account_in_the_browser_too"]
+was = "Sign-in check #13, #14"
+owner = "Pass 11/04/2026 (Safari, Chrome)"
+
+[[case]]
+id = "TC-SIGN-09"
+area = "Sign-in and accounts"
+title = "30 idle minutes sign a person out, even with a page that updates itself left open"
+priority = "High"
+kind = "automated"
+refs = ["ARCHITECTURE §10.1", "DEC-45"]
+steps = ["Optional by hand: leave Home open and untouched for 31 minutes.", "Covered by the tests named."]
+expected = "The tab moves to the sign-in page by itself. The page's own updates do not count as activity."
+tests = ["test_auth.py::test_idle_and_absolute_expiry", "test_web_standards.py::test_a_background_update_does_not_count_as_activity", "test_web_standards.py::test_a_page_left_open_is_still_signed_out_after_30_idle_minutes"]
+was = "Sign-in check #15; Design check #17 (optional, not yet done by hand)"
+
+[[case]]
+id = "TC-SIGN-10"
+area = "Sign-in and accounts"
+title = "The session cookie is locked down, and the last admin cannot be removed"
+priority = "Critical"
+kind = "automated"
+refs = ["ARCHITECTURE §10.1"]
+steps = ["Covered by the tests named. By hand: in the browser's developer tools, the po_session cookie."]
+expected = "po_session is HttpOnly and SameSite Strict (Secure comes with HTTPS in Phase 6). The token changes at each stage. The last admin cannot be disabled or demoted, and an admin cannot disable themselves."
+tests = ["test_gate.py::test_sign_in_sets_a_locked_down_cookie_and_opens_the_home_page", "test_gate.py::test_the_session_token_changes_at_each_stage", "test_auth.py::test_the_last_admin_cannot_be_disabled_or_demoted", "test_auth.py::test_an_admin_cannot_disable_themselves"]
+was = "Sign-in check, things to look at"
+owner = "Pass 11/04/2026 (Safari, Chrome)"
+
+[[case]]
+id = "TC-SIGN-11"
+area = "Sign-in and accounts"
+title = "Sign out, then sign in again, with no security-token error"
+priority = "Medium"
+kind = "browser"
+refs = ["DEC-45"]
+steps = ["Person icon, Sign out.", "Sign in again."]
+expected = "The sign-in page, then Home. No \"security token\" error."
+tests = ["test_gate.py::test_sign_out_ends_the_session", "test_gate.py::test_a_new_sign_in_never_reuses_a_token"]
+was = "Design check #22"
+owner = "Pass 11/06/2026"
+
+# ---------------------------------------------------------------------------------------------------------------------
+# Vendor import
+
+[[case]]
+id = "TC-VIMP-01"
+area = "Vendor import"
+title = "A vendor file (Excel or CSV) creates the vendors with their domains"
+priority = "High"
+kind = "browser"
+refs = ["DEC-44", "DEC-47", "PD-1.11"]
+steps = ["Vendors, Import vendors.", "Choose tests/data/vendors_sample.xlsx and press Import."]
+expected = "The cursor starts on the file chooser. In place, with no page reload: \"Done. 3 created\" (Acme Fasteners, Northwind Metals, Initech Tools), and the Vendors page lists them with the domains of their emails."
+tests = ["test_vendor_import.py::test_a_new_vendor_is_created_with_its_domains_and_the_domain_of_its_contact_email", "test_sheets.py::test_vendors_can_be_uploaded_as_an_excel_file", "test_vendor_import.py::test_the_page_opens_with_the_cursor_on_the_file_chooser_and_offers_a_template"]
+was = "PO check #45, #46; QuickBooks check #1"
+owner = "Pass 11/06/2026 (CSV); the .xlsx file: no problem reported 11/07/2026"
+
+[[case]]
+id = "TC-VIMP-02"
+area = "Vendor import"
+title = "Uploading the same vendor file again changes nothing"
+priority = "Critical"
+kind = "browser"
+refs = ["DEC-44"]
+steps = ["Upload tests/data/vendors_sample.xlsx again."]
+expected = "\"0 created, 0 updated, 3 already up to date\". Nothing is duplicated."
+tests = ["test_vendor_import.py::test_uploading_the_same_file_again_changes_nothing"]
+was = "PO check #47"
+owner = "Pass 11/06/2026"
+
+[[case]]
+id = "TC-VIMP-03"
+area = "Vendor import"
+title = "Each vendor row needs an email, and an email or domain held by another vendor skips only that row"
+priority = "Critical"
+kind = "browser"
+refs = ["DEC-44", "OPEN-19"]
+steps = ["Upload tests/data/vendors_problems.csv: one row with no contact_email, one whose email is Acme's contact email, one whose email_domains is Northwind's domain, and one good new vendor (Umbrella Freight)."]
+expected = "The first three are listed with their reasons (\"Contact email is required\", \"already the contact email of ...\", \"already belongs to ...\") and skipped. Umbrella Freight is created."
+tests = ["test_vendor_import.py::test_the_vendor_name_and_an_email_are_required", "test_vendor_import.py::test_an_email_already_the_contact_of_another_vendor_is_refused", "test_vendor_import.py::test_a_domain_owned_by_another_vendor_skips_only_that_row"]
+was = "PO check #49, #50, #51"
+owner = "Pass 11/06/2026"
+
+[[case]]
+id = "TC-VIMP-04"
+area = "Vendor import"
+title = "An existing vendor with a new email gets the new domain, and its other details are kept"
+priority = "High"
+kind = "automated"
+refs = ["DEC-44"]
+steps = ["Covered by the tests named. By hand: a row for an existing vendor with an email at a new domain."]
+expected = "The vendor is updated, not refused: the new domain is added; existing details are not overwritten."
+tests = ["test_vendor_import.py::test_an_existing_vendor_with_a_new_email_gets_the_new_domain_added", "test_vendor_import.py::test_blank_contact_details_are_filled_but_existing_ones_are_not_overwritten"]
+was = "PO check #48"
+owner = "Pass 11/06/2026"
+
+[[case]]
+id = "TC-VIMP-05"
+area = "Vendor import"
+title = "An old Excel file (.xls) is refused with what to do"
+priority = "Medium"
+kind = "browser"
+refs = ["DEC-47"]
+steps = ["Upload a file saved in the old .xls format."]
+expected = "\"This is the old Excel format (.xls) ... Save it as .xlsx or CSV.\" Nothing changes."
+tests = ["test_sheets.py::test_files_that_are_not_readable_spreadsheets_are_refused"]
+was = "QuickBooks check #2"
+owner = "No problem reported 11/07/2026 (QuickBooks check step 2)"
+
+# ---------------------------------------------------------------------------------------------------------------------
+# Vendors
+
+[[case]]
+id = "TC-VEN-01"
+area = "Vendors"
+title = "A vendor is added on its own page and lands on its vendor page"
+priority = "High"
+kind = "browser"
+refs = ["REQ-PO-01", "PD-1.2", "DEC-45"]
+steps = ["Vendors, Add a vendor.", "Name Contoso Bearings, domains contoso.example, mail.contoso.example; Add vendor."]
+expected = "The cursor starts in Name. You land on the vendor page showing both domains."
+tests = ["test_orders_web.py::test_a_vendor_is_added_and_listed_with_its_domains", "test_orders_web.py::test_each_new_form_page_has_the_cursor_ready_in_one_box"]
+was = "PO check #1, #2; Design check #3"
+owner = "Pass 11/05/2026 (Safari, Chrome)"
+
+[[case]]
+id = "TC-VEN-02"
+area = "Vendors"
+title = "A vendor name that already exists, in any case, is refused and the boxes keep what was typed"
+priority = "High"
+kind = "browser"
+refs = ["PD-1.2"]
+steps = ["Add a vendor named contoso bearings (other case)."]
+expected = "\"A vendor with that name already exists\", and every box keeps what you typed."
+tests = ["test_orders.py::test_a_vendor_name_is_unique_ignoring_case", "test_orders_web.py::test_a_refused_vendor_keeps_what_was_typed_and_says_why"]
+was = "PO check #3"
+owner = "Pass 11/05/2026 (Safari, Chrome)"
+
+[[case]]
+id = "TC-VEN-03"
+area = "Vendors"
+title = "A domain belongs to one vendor only, so a reply can never match the wrong vendor"
+priority = "Critical"
+kind = "browser"
+refs = ["REQ-ACK-05", "PD-1.2"]
+steps = ["On Contoso Bearings' page, add the domain northwind.example (Northwind Metals' domain, from the vendor file)."]
+expected = "A red message says it already belongs to Northwind Metals, shown in view. Nothing is added."
+tests = ["test_orders.py::test_a_domain_belongs_to_one_vendor", "test_orders_web.py::test_adding_a_domain_already_held_in_any_case_says_so"]
+was = "Design check #9"
+owner = "Pass 11/06/2026"
+
+[[case]]
+id = "TC-VEN-04"
+area = "Vendors"
+title = "Domains are checked, added and removed on the vendor page"
+priority = "Medium"
+kind = "browser"
+refs = ["PD-1.2"]
+steps = ["On Contoso Bearings' page add the domain not a domain.", "Add contoso.co.uk, then press it to remove it.", "Add CONTOSO.example (other case)."]
+expected = "not a domain is refused with a reason. contoso.co.uk appears, then goes. CONTOSO.example says \"contoso.example is already added to this vendor\"."
+tests = ["test_orders.py::test_a_domain_must_look_like_one", "test_orders_web.py::test_domains_are_added_and_removed_from_the_vendor_page"]
+was = "PO check #4, #4b"
+owner = "Pass 11/05/2026 (Safari, Chrome)"
+
+[[case]]
+id = "TC-VEN-05"
+area = "Vendors"
+title = "Saving a vendor shows a Saved note and the page does not jump"
+priority = "Medium"
+kind = "browser"
+refs = ["DEC-45"]
+steps = ["On Contoso Bearings' page, change Notes and press Save."]
+expected = "A green Saved note that fades after about 3 seconds. The page stays where it was. The change is in the audit trail."
+tests = ["test_orders_web.py::test_a_save_shows_a_fixed_saved_note_that_cannot_be_forged", "test_orders_web.py::test_a_vendor_can_be_edited_and_the_change_is_audited_with_who_and_where"]
+was = "PO check #4b; Design check #8"
+owner = "Pass 11/06/2026"
+
+[[case]]
+id = "TC-VEN-06"
+area = "Vendors"
+title = "A vendor with no domain is marked, because its replies cannot be matched"
+priority = "High"
+kind = "browser"
+refs = ["REQ-ACK-05"]
+steps = ["Add a vendor Hooli Plastics with no domains and no email.", "Look at the Vendors list."]
+expected = "It is listed, marked \"no domain: replies cannot be matched\"."
+tests = ["test_orders_web.py::test_a_vendor_is_added_and_listed_with_its_domains"]
+was = "PO check #5"
+owner = "Pass 11/05/2026 (Safari, Chrome)"
+
+[[case]]
+id = "TC-VEN-07"
+area = "Vendors"
+title = "The vendor list searches as you type, sorts by heading, and / jumps to search"
+priority = "Medium"
+kind = "browser"
+refs = ["DEC-45"]
+steps = ["On Vendors type north in the search box and wait.", "Press Back.", "Click a blank part of the page and press /.", "Click the Vendor heading twice."]
+expected = "Only Northwind shows and the address has ?q=north; Back shows the full list. / puts the cursor in search. The heading shows ▲ then ▼ and the order reverses."
+tests = ["test_vendor_import.py::test_vendor_search_finds_by_name_or_domain_and_treats_wildcards_as_text", "test_web_standards.py::test_a_heading_sorts_and_a_second_click_reverses"]
+was = "Design check #5, #6, #7"
+owner = "Pass 11/06/2026"
+
+[[case]]
+id = "TC-VEN-08"
+area = "Vendors"
+title = "Markup typed into a vendor name is shown as text, never run"
+priority = "Critical"
+kind = "browser"
+refs = ["Security"]
+steps = ["Add a vendor named <b>Bold</b>.", "Look at the vendor list and the vendor page."]
+expected = "The name shows literally as <b>Bold</b>, not in bold."
+tests = ["test_vendor_import.py::test_markup_in_a_vendor_name_is_shown_as_text", "test_orders_web.py::test_what_people_type_is_escaped_everywhere_it_is_shown"]
+was = "PO check #16"
+owner = "Pass 11/05/2026 (Safari, Chrome)"
+
+# ---------------------------------------------------------------------------------------------------------------------
+# Purchase orders
+
+[[case]]
+id = "TC-PO-01"
+area = "Purchase orders"
+title = "A PO entered by hand keeps exact numbers and starts as Sent"
+priority = "Critical"
+kind = "browser"
+refs = ["REQ-PO-02", "PD-1.2"]
+steps = ["Purchase orders, New purchase order.", "PO number PO-1001, vendor Acme (pick it from the list), currency usd, date sent a few days ago, line 1: Bolt, quantity 10.5, unit EA, price 2.5. Create."]
+expected = "The cursor starts in PO number; Buyer is your email. The PO page shows PO PO-1001, currency USD, the line as 10.5 EA at 2.50 USD, status Sent."
+tests = ["test_orders_web.py::test_a_po_is_entered_and_its_page_shows_lines_in_exact_numbers", "test_orders.py::test_a_po_is_created_with_its_lines_in_order"]
+was = "PO check #6, #8"
+owner = "Pass 11/05/2026 (Safari, Chrome)"
+
+[[case]]
+id = "TC-PO-02"
+area = "Purchase orders"
+title = "Reload after creating a PO never creates a second one"
+priority = "Critical"
+kind = "browser"
+refs = ["DEC-45"]
+steps = ["On the new PO's page press Reload a few times.", "Open Purchase orders and search PO-1001."]
+expected = "The page just reloads. There is exactly one PO-1001."
+tests = ["test_orders_web.py::test_reloading_after_creating_a_po_does_not_create_another"]
+was = "PO check #9; Design check #13"
+owner = "Pass 11/06/2026"
+
+[[case]]
+id = "TC-PO-03"
+area = "Purchase orders"
+title = "A wrong line value is refused naming the line and field, and every box keeps what was typed"
+priority = "High"
+kind = "browser"
+refs = ["PD-1.2", "DEC-45"]
+steps = ["New purchase order PO-1002, vendor Acme, line 1 with quantity 0. Create."]
+expected = "\"Line 1: Quantity must be more than zero\" at the top, with the cursor on it. Every box keeps its value. Back and Forward give no 'page not found'."
+tests = ["test_orders_web.py::test_a_refused_po_keeps_every_box_and_lists_every_problem", "test_orders.py::test_a_bad_line_value_is_refused_naming_the_line_and_field"]
+was = "PO check #7, #27; Design check #14"
+owner = "Pass 11/06/2026"
+
+[[case]]
+id = "TC-PO-04"
+area = "Purchase orders"
+title = "More than 4 decimal places is refused; nothing is ever rounded"
+priority = "Critical"
+kind = "browser"
+refs = ["ARCHITECTURE §4 (exact numbers)"]
+steps = ["New purchase order with a quantity of 1.00001. Create."]
+expected = "Refused: at most 4 decimal places are kept; nothing is rounded."
+tests = ["test_ledger.py::test_too_many_decimal_places_are_refused_not_rounded", "test_ledger.py::test_floats_and_other_inexact_values_are_refused", "test_orders.py::test_the_numbers_in_a_file_are_exact"]
+was = "PO check #10"
+owner = "Pass 11/05/2026 (Safari, Chrome)"
+
+[[case]]
+id = "TC-PO-05"
+area = "Purchase orders"
+title = "The vendor box searches as you type, and a name not picked from the list is refused"
+priority = "High"
+kind = "browser"
+refs = ["PD-1.12"]
+steps = ["New purchase order: type acm in Vendor; press the down arrow and Enter.", "Then type Acme without picking it, and press Create."]
+expected = "A short list appears under the box and Enter picks Acme Fasteners. Unpicked, the box says \"Pick a vendor from the list.\""
+tests = ["test_vendor_import.py::test_the_po_form_and_filters_use_the_search_box_not_a_long_list"]
+was = "PO check #52, #53; Design check #12, #13"
+owner = "Pass 11/06/2026"
+
+[[case]]
+id = "TC-PO-06"
+area = "Purchase orders"
+title = "An existing PO number is refused in any case"
+priority = "Critical"
+kind = "automated"
+refs = ["REQ-PO-02"]
+steps = ["Covered by the tests named. By hand: a new PO with the number po-1001."]
+expected = "Refused; the existing PO is not touched."
+tests = ["test_orders_web.py::test_an_existing_po_number_is_refused_in_any_case", "test_ledger.py::test_a_po_number_is_unique"]
+
+[[case]]
+id = "TC-PO-07"
+area = "Purchase orders"
+title = "The PO list filters as you choose, reads dates as MM/DD/YYYY, and Clear resets it"
+priority = "High"
+kind = "browser"
+refs = ["DEC-45", "PD-1.5"]
+steps = ["Purchase orders: type 1001 in Search; choose a Status; pick a Sent from date from the calendar.", "Press Clear.", "Search for %."]
+expected = "The cursor starts in Search. The list follows each choice with no Show button. Dates read like 11/04/2026. Clear resets. % finds nothing (\"No purchase orders match\")."
+tests = ["test_web_standards.py::test_filters_update_the_list_in_place_and_keep_the_sort", "test_orders_web.py::test_the_list_shows_open_and_closed_pos_and_searches_literally", "test_expected.py::test_sent_dates_filter_and_a_wrong_value_is_reported_not_trusted"]
+was = "PO check #15, #28, #29; Design check #11"
+owner = "Pass 11/06/2026"
+
+[[case]]
+id = "TC-PO-08"
+area = "Purchase orders"
+title = "The PO list shows 50 a page and sorts by any heading"
+priority = "Medium"
+kind = "automated"
+refs = ["DEC-45"]
+steps = ["Covered by the tests named; by hand with more than 50 POs."]
+expected = "\"1–50 of N\"; Next and Back move between pages; a heading sorts and a second click reverses; empty values sort last."
+tests = ["test_web_standards.py::test_the_po_list_shows_50_a_page_and_says_how_many", "test_web_standards.py::test_a_heading_sorts_and_a_second_click_reverses", "test_web_standards.py::test_empty_values_sort_last_whichever_way"]
+
+[[case]]
+id = "TC-PO-09"
+area = "Purchase orders"
+title = "A buyer, not only an admin, can use Vendors and Purchase orders"
+priority = "High"
+kind = "browser"
+refs = ["ARCHITECTURE §10.1"]
+steps = ["Sign in as a buyer; open Vendors, Purchase orders and New purchase order."]
+expected = "Every page opens and works for the buyer."
+tests = ["test_orders_web.py::test_a_buyer_not_only_an_admin_can_use_them"]
+was = "PO check #17"
+owner = "Pass 11/05/2026 (Safari, Chrome)"
+
+# ---------------------------------------------------------------------------------------------------------------------
+# Purchase order import
+
+[[case]]
+id = "TC-PIMP-01"
+area = "Purchase order import"
+title = "A PO file imports every PO and line, and the template downloads"
+priority = "High"
+kind = "browser"
+refs = ["REQ-PO-04", "DEC-47"]
+steps = ["Purchase orders, Import CSV or Excel. Press Download a template.", "Choose tests/data/purchase_orders_sample.csv and press Import."]
+expected = "The cursor is on the file chooser; the template downloads as a .csv file. You land on the PO list with \"Imported 2 purchase orders\" (PO-2001 and PO-2002)."
+tests = ["test_orders_web.py::test_a_csv_file_is_uploaded_and_the_person_lands_on_the_list", "test_orders.py::test_the_sample_file_imports_every_po_and_line", "test_orders_web.py::test_the_template_downloads_as_csv_and_names_every_column"]
+was = "PO check #11, #12; Design check #10"
+owner = "Pass 11/06/2026"
+
+[[case]]
+id = "TC-PIMP-02"
+area = "Purchase order import"
+title = "Importing the same file again adds nothing and overwrites nothing"
+priority = "Critical"
+kind = "browser"
+refs = ["REQ-PO-04"]
+steps = ["Import tests/data/purchase_orders_sample.csv again."]
+expected = "The page stays on Import and lists \"PO number PO-2001 already exists. Nothing is overwritten.\" Nothing is added."
+tests = ["test_orders.py::test_an_existing_po_number_is_never_overwritten"]
+was = "PO check #13; Design check #10"
+owner = "Pass 11/06/2026"
+
+[[case]]
+id = "TC-PIMP-03"
+area = "Purchase order import"
+title = "One bad row rejects the whole file, naming the row"
+priority = "Critical"
+kind = "browser"
+refs = ["REQ-PO-04"]
+steps = ["Import tests/data/purchase_orders_bad_row.csv (a made-up file whose row 3 has the quantity abc)."]
+expected = "\"Row 3: Quantity: 'abc' is not a number\" (the row named), and nothing is imported."
+tests = ["test_orders.py::test_one_bad_row_rejects_the_whole_file_and_every_problem_is_listed", "test_orders.py::test_a_file_that_fails_midway_leaves_nothing_behind", "test_orders_web.py::test_a_bad_file_imports_nothing_and_the_page_lists_the_rows"]
+was = "PO check #14"
+owner = "Pass 11/05/2026 (Safari, Chrome)"
+
+[[case]]
+id = "TC-PIMP-04"
+area = "Purchase order import"
+title = "A vendor not in the app is refused, never guessed or created"
+priority = "Critical"
+kind = "automated"
+refs = ["DEC-09: never guess"]
+steps = ["Covered by the tests named. By hand: a row whose vendor is not in the app."]
+expected = "The row is listed as an unknown vendor; nothing is imported and no vendor is created."
+tests = ["test_orders.py::test_an_unknown_vendor_is_refused_not_guessed_or_created"]
+
+[[case]]
+id = "TC-PIMP-05"
+area = "Purchase order import"
+title = "Excel files with real date cells, Windows-1252 accents and formulas are read safely"
+priority = "High"
+kind = "automated"
+refs = ["DEC-47"]
+steps = ["Covered by the tests named."]
+expected = "Dates in Excel cells read correctly; accents from QuickBooks or older Excel are kept; a formula is stored as text and never run."
+tests = ["test_sheets.py::test_purchase_orders_can_be_uploaded_as_an_excel_file_with_real_date_cells", "test_orders.py::test_a_file_saved_by_quickbooks_or_old_excel_in_windows_1252_is_read_as_it_is", "test_orders.py::test_a_spreadsheet_formula_is_stored_as_text_and_never_run"]
+
+[[case]]
+id = "TC-PIMP-06"
+area = "Purchase order import"
+title = "The QuickBooks report uploaded on Import CSV or Excel becomes the QuickBooks preview"
+priority = "High"
+kind = "browser"
+refs = ["DEC-46", "PD-1.10a.5", "DEF-001"]
+steps = ["Purchase orders, Import CSV or Excel (the button beside Load from QuickBooks).", "Choose tests/data/quickbooks_open_pos_110526.csv and press Import."]
+expected = "No list of missing columns. The QuickBooks preview, headed \"This file is the QuickBooks Open POs report, so it is read here ...\", with nothing changed yet and the cursor on Create."
+tests = ["test_quickbooks.py::test_the_report_uploaded_on_the_import_page_becomes_the_quickbooks_preview", "test_quickbooks.py::test_a_file_that_is_neither_still_gets_the_import_pages_own_message"]
+was = "QuickBooks check #15 (added after DEF-001)"
+owner = "Not yet run"
+
+# ---------------------------------------------------------------------------------------------------------------------
+# QuickBooks starting load
+
+[[case]]
+id = "TC-QB-01"
+area = "QuickBooks starting load"
+title = "The preview shows what the file would do and changes nothing"
+priority = "Critical"
+kind = "browser"
+refs = ["DEC-46"]
+steps = ["Purchase orders, Load from QuickBooks.", "Choose tests/data/quickbooks_open_pos_110526.csv and press Show what it would do.", "In another tab, open Purchase orders."]
+expected = "\"Nothing has changed yet\". 3 purchase orders with 6 lines to create; 1 waiting for a vendor (Globex Wire); 1 line partly received; 1 price rounded (10.00 ÷ 3 = 3.3333); export date 11/05/2026 from the file name; the cursor on Create 3 purchase orders. The other tab shows no new POs."
+tests = ["test_quickbooks.py::test_the_page_previews_then_creates_and_reload_cannot_repeat_it", "test_quickbooks.py::test_the_plan_reads_lines_and_skips_headings_and_totals"]
+was = "QuickBooks check #3, #4, #5"
+owner = "Step 4 failed 11/07/2026: DEF-001"
+
+[[case]]
+id = "TC-QB-02"
+area = "QuickBooks starting load"
+title = "Create loads all of them or none, and lands on the PO list"
+priority = "Critical"
+kind = "browser"
+refs = ["DEC-46"]
+steps = ["On the preview press Create 3 purchase orders."]
+expected = "\"Loaded 3 purchase orders from QuickBooks. 1 is waiting for its vendor ...\"; 5001, 5002 and 5004 are listed."
+tests = ["test_quickbooks.py::test_the_load_creates_the_pos_as_the_owner_decided", "test_quickbooks.py::test_a_failure_part_way_creates_nothing"]
+was = "QuickBooks check #6"
+owner = "Not yet run"
+
+[[case]]
+id = "TC-QB-03"
+area = "QuickBooks starting load"
+title = "Back and Create again can never load the file twice"
+priority = "Critical"
+kind = "browser"
+refs = ["DEC-46"]
+steps = ["After Create, press the browser's Back, then Create again if it shows."]
+expected = "\"That preview has expired or was already used.\" Still three POs, never six."
+tests = ["test_quickbooks.py::test_the_page_previews_then_creates_and_reload_cannot_repeat_it", "test_quickbooks.py::test_one_persons_preview_cannot_be_used_by_another", "test_quickbooks.py::test_a_preview_expires_after_15_minutes"]
+was = "QuickBooks check #7"
+owner = "Not yet run"
+
+[[case]]
+id = "TC-QB-04"
+area = "QuickBooks starting load"
+title = "A loaded PO keeps the QuickBooks date, the customer, and what was already received"
+priority = "High"
+kind = "browser"
+refs = ["DEC-46"]
+steps = ["Open PO 5002."]
+expected = "Date sent: not set; PO date (QuickBooks): 10/22/2026. The line reads \"Sheet:Alu 2mm · for Café Racing\" (accent right), status Partially shipped. History has \"Received per QuickBooks export of 11/05/2026\"."
+tests = ["test_quickbooks.py::test_the_po_page_shows_the_quickbooks_date_the_customer_and_the_history"]
+was = "QuickBooks check #8"
+owner = "Not yet run"
+
+[[case]]
+id = "TC-QB-05"
+area = "QuickBooks starting load"
+title = "A unit price that cannot be exact is rounded to 4 places, and the line's history says so"
+priority = "Critical"
+kind = "browser"
+refs = ["DEC-46"]
+steps = ["Open PO 5001, Timeline by line, line 2."]
+expected = "\"Unit price 3.3333 worked out from the QuickBooks total 10.00 ÷ 3, rounded (export of 11/05/2026)\". The lines are Bolts, Nuts, Washers in file order, unit EA."
+tests = ["test_quickbooks.py::test_a_unit_price_is_exact_or_rounded_to_four_places"]
+was = "QuickBooks check #9"
+owner = "Not yet run"
+
+[[case]]
+id = "TC-QB-06"
+area = "QuickBooks starting load"
+title = "Loaded POs are not flagged for an acknowledgement the app never had the chance to see"
+priority = "High"
+kind = "browser"
+refs = ["DEC-46"]
+steps = ["Go Home after the load."]
+expected = "The loaded POs are not listed as waiting for an acknowledgement."
+tests = ["test_quickbooks.py::test_loaded_pos_are_not_flagged_for_an_acknowledgement_the_app_never_saw"]
+was = "QuickBooks check #10"
+owner = "Not yet run"
+
+[[case]]
+id = "TC-QB-07"
+area = "QuickBooks starting load"
+title = "Loading the same file again creates nothing; adding the waiting vendor lets its PO in"
+priority = "Critical"
+kind = "browser"
+refs = ["DEC-46"]
+steps = ["Load the same file again.", "Add the vendor Globex Wire (any email), load the file again and Create."]
+expected = "First: \"Nothing new to create\", 3 already in the app, Globex still waiting, no Create button. Then: 1 to create (5003); after Create there are four POs."
+tests = ["test_quickbooks.py::test_loading_again_changes_nothing_and_a_new_vendor_lets_a_waiting_po_in", "test_quickbooks.py::test_a_po_number_already_in_the_app_is_never_changed"]
+was = "QuickBooks check #11, #12"
+owner = "Not yet run"
+
+[[case]]
+id = "TC-QB-08"
+area = "QuickBooks starting load"
+title = "A file that is not the report is refused naming what is missing; the app's own file is pointed to Import"
+priority = "Medium"
+kind = "browser"
+refs = ["DEC-46", "PD-1.10a.5"]
+steps = ["On Load from QuickBooks upload the vendor file.", "Upload the PO template (Import CSV or Excel, Download a template)."]
+expected = "First: \"This does not look like the QuickBooks Open POs report: it has no 'date', 'num', ... column.\" Second: \"This is a purchase order file in the app's own import format ...\" with a Go to Import CSV or Excel button that opens that page."
+tests = ["test_quickbooks.py::test_a_file_that_is_not_the_report_is_refused_naming_what_is_missing", "test_quickbooks.py::test_the_apps_own_import_file_on_the_quickbooks_page_says_where_it_goes", "test_quickbooks.py::test_a_hostile_or_wrong_file_is_a_clear_message"]
+was = "QuickBooks check #13, #16"
+owner = "Not yet run"
+
+[[case]]
+id = "TC-QB-09"
+area = "QuickBooks starting load"
+title = "The company's real export previews with counts that match QuickBooks"
+priority = "Critical"
+kind = "owner"
+refs = ["DEC-46", "DEC-13"]
+steps = ["With the company's own export (it stays in real-docs/ on this Mac), Load from QuickBooks, Show what it would do.", "Compare the counts with QuickBooks. Press Cancel unless this is the go-live load."]
+expected = "The counts of POs, lines, partly received lines and rounded prices match QuickBooks; 0 problems. Write no names or figures anywhere in the repository."
+tests = []
+was = "QuickBooks check #14"
+owner = "Not yet run (Claude's dry run 11/06/2026: 0 problems; counts only)"
+
+# ---------------------------------------------------------------------------------------------------------------------
+# Entries by hand: acknowledgements, shipments, invoices, settling
+
+[[case]]
+id = "TC-EVT-01"
+area = "Entries by hand"
+title = "A short confirmation at another price is recorded and the purchaser is told to update the PO"
+priority = "Critical"
+kind = "browser"
+refs = ["REQ-ACK", "DEC-36", "PD-1.4"]
+steps = ["Open PO-1001 (10.5 ordered at 2.50), Record acknowledgement.", "Confirmed quantity 6, price 2.75, promised date in the future. Record."]
+expected = "The cursor starts in the first Confirmed quantity. Back on the PO page the line shows Acknowledged and the promised date, \"The vendor's price 2.75 differs from the PO price 2.5\", and \"confirmed 6, not 10.5. Update the original purchase order\"."
+tests = ["test_entries_web.py::test_a_short_confirmation_tells_the_purchaser_to_update_the_original_po", "test_events.py::test_a_different_price_is_flagged_next_to_the_line", "test_status.py::test_a_line_confirmed_short_never_closes_by_itself"]
+was = "PO check #18, #19"
+owner = "Pass 11/05/2026 (Safari, Chrome)"
+
+[[case]]
+id = "TC-EVT-02"
+area = "Entries by hand"
+title = "A later promised date is shown as a slip"
+priority = "High"
+kind = "browser"
+refs = ["DEC-36"]
+steps = ["Record a second acknowledgement on PO-1001 with a later promised date."]
+expected = "Both dates are shown, joined by an arrow, with a red slipped label on the later one."
+tests = ["test_entries_web.py::test_a_later_promised_date_is_shown_as_a_slip", "test_events.py::test_promised_dates_are_kept_and_a_later_date_is_a_slip"]
+was = "PO check #20"
+owner = "Pass 11/05/2026 (Safari, Chrome)"
+
+[[case]]
+id = "TC-EVT-03"
+area = "Entries by hand"
+title = "Shipments move a line from Partially shipped to Shipped, with who entered them"
+priority = "Critical"
+kind = "browser"
+refs = ["DEC-36", "PD-1.4"]
+steps = ["Record shipment on PO-1001: carrier UPS, tracking 1Z999AA10123456784, quantity 3.", "Record another shipment of 3."]
+expected = "First the status is Partially shipped, then Shipped. History lists each shipment with who entered it, and Track with the carrier opens UPS's own page in a new tab."
+tests = ["test_events.py::test_a_partial_then_full_shipment_moves_the_line", "test_expected.py::test_known_carriers_get_a_link_to_their_own_page", "test_entries_web.py::test_a_po_goes_from_sent_to_closed_through_the_pages"]
+was = "PO check #21, #22, #31"
+owner = "Pass 11/05/2026 (Safari, Chrome)"
+
+[[case]]
+id = "TC-EVT-04"
+area = "Entries by hand"
+title = "An invoice starts at the PO price; a short-confirmed line stays open until someone settles it"
+priority = "Critical"
+kind = "browser"
+refs = ["DEC-36"]
+steps = ["Record invoice on PO-1001: number INV-1, quantity 6. Record."]
+expected = "The price box starts at the PO price. The line still shows Shipped with 4.5 open, because it was confirmed short; the update-the-PO note stays."
+tests = ["test_entries_web.py::test_the_invoice_form_starts_with_the_price_on_the_po", "test_status.py::test_a_line_confirmed_short_never_closes_by_itself", "test_events.py::test_a_partial_invoice_closes_only_what_it_covers"]
+was = "PO check #23"
+owner = "Pass 11/05/2026 (Safari, Chrome)"
+
+[[case]]
+id = "TC-EVT-05"
+area = "Entries by hand"
+title = "Over-billing and a price above the PO are flagged and still recorded"
+priority = "Critical"
+kind = "browser"
+refs = ["DEC-36"]
+steps = ["Record invoice INV-2 for quantity 20 at price 3."]
+expected = "Recorded, with \"Invoiced ... more than the 10.5 ordered\" and \"above the PO price\". The line becomes Closed."
+tests = ["test_entries_web.py::test_a_different_price_and_over_billing_are_flagged_and_still_recorded", "test_events.py::test_over_billing_is_flagged_but_still_recorded"]
+was = "PO check #24"
+owner = "Pass 11/05/2026 (Safari, Chrome)"
+
+[[case]]
+id = "TC-EVT-06"
+area = "Entries by hand"
+title = "Removing an entry needs a reason and undoes its effect"
+priority = "High"
+kind = "browser"
+refs = ["NFR-03"]
+steps = ["In History, press Remove on INV-2 with the reason empty.", "Give a reason and press Remove."]
+expected = "Without a reason the browser asks for one. With one, INV-2 goes, its notes clear and the line returns to Shipped. The removal is audited."
+tests = ["test_entries_web.py::test_an_entry_is_removed_with_a_reason_and_its_effect_goes", "test_events.py::test_removal_is_audited_with_what_the_entry_said_and_why"]
+was = "PO check #25"
+owner = "Pass 11/05/2026 (Safari, Chrome)"
+
+[[case]]
+id = "TC-EVT-07"
+area = "Entries by hand"
+title = "Reload after recording or removing anything repeats nothing"
+priority = "Critical"
+kind = "automated"
+refs = ["DEC-45"]
+steps = ["Covered by the tests named. By hand: press Reload after each entry above."]
+expected = "Nothing is recorded or removed a second time."
+tests = ["test_entries_web.py::test_recording_then_reloading_repeats_nothing", "test_web_standards.py::test_a_refused_form_sent_by_htmx_is_kept_out_of_the_history"]
+was = "PO check #26"
+owner = "Pass 11/05/2026 (Safari, Chrome)"
+
+[[case]]
+id = "TC-EVT-08"
+area = "Entries by hand"
+title = "A promised date in the past makes the line late, on the PO, in the list and in Late only"
+priority = "High"
+kind = "browser"
+refs = ["REQ-DB", "DEC-36"]
+steps = ["On PO-2001, record an acknowledgement promising a date in the past.", "Open Purchase orders and tick Late only."]
+expected = "The PO page shows the line as N days late in red; the list says \"1 late, up to N days\"; Late only finds the PO."
+tests = ["test_expected.py::test_a_late_line_is_flagged_on_the_po_page_and_the_list_and_a_filter_finds_it", "test_expected.py::test_a_line_is_late_the_day_after_its_date_and_not_on_the_day"]
+was = "PO check #30"
+owner = "Pass 11/05/2026 (Safari, Chrome)"
+
+[[case]]
+id = "TC-EVT-09"
+area = "Entries by hand"
+title = "Settling by hand needs a reason, stays in place, and can be reopened with a reason"
+priority = "High"
+kind = "browser"
+refs = ["PD-1.5", "DEC-45"]
+steps = ["On PO-2002, open Settle lines by hand; choose Cancelled for a line; press Settle with no reason, then with a reason.", "Press Reopen on that line with a reason."]
+expected = "Without a reason the browser asks for one. With one, the button shows it is working, the line shows Cancelled with \"Settled by hand\", and the page stays where it was. Reopen returns the line to its earlier status."
+tests = ["test_closing.py::test_a_reason_is_required_and_a_choice_too", "test_closing.py::test_reopening_needs_a_reason_and_puts_the_line_back", "test_closing.py::test_a_closed_line_cannot_be_settled_again_and_is_not_offered"]
+was = "PO check #32, #33, #34; Design check #15"
+owner = "Pass 11/06/2026"
+
+[[case]]
+id = "TC-EVT-10"
+area = "Entries by hand"
+title = "A line's timeline keeps everything that happened, including what was taken back"
+priority = "High"
+kind = "browser"
+refs = ["NFR-03"]
+steps = ["On PO-1001, open Timeline by line and the line's heading."]
+expected = "In time order: Ordered, Vendor acknowledged, Shipped, Invoiced, and \"Entry taken back\" for INV-2. Times read like 11/06/2026 2:35 PM."
+tests = ["test_closing.py::test_the_timeline_lists_what_happened_to_a_line_in_order", "test_closing.py::test_the_timeline_keeps_an_entry_that_was_taken_back"]
+was = "PO check #35; Design check #15"
+owner = "Pass 11/06/2026"
+
+[[case]]
+id = "TC-EVT-11"
+area = "Entries by hand"
+title = "The status of every line follows the agreed table in every combination"
+priority = "Critical"
+kind = "automated"
+refs = ["DEC-36", "ARCHITECTURE §5"]
+steps = ["Covered by the tests named (one per row of the status table, and every combination)."]
+expected = "Every row of the status table holds; a PO closes only when every line has; open quantity is never negative; one PO's facts never touch another."
+tests = ["test_status.py::test_each_row_of_the_table", "test_status.py::test_rules_hold_across_every_combination", "test_status.py::test_a_po_closes_only_when_every_line_has", "test_status.py::test_one_pos_facts_never_touch_another"]
+
+# ---------------------------------------------------------------------------------------------------------------------
+# Home and Open items
+
+[[case]]
+id = "TC-HOME-01"
+area = "Home and Open items"
+title = "Home shows the six counts and a Needs attention list with the next step"
+priority = "High"
+kind = "browser"
+refs = ["REQ-DB-01", "DEC-42"]
+steps = ["Go Home after the entries above."]
+expected = "Six tiles (open purchase orders, open lines, late lines, waiting for an acknowledgement, promised date slipped, original PO needs updating) whose numbers match what was entered, and Needs attention with a next step such as \"Ask the vendor for a new date\"."
+tests = ["test_reports.py::test_the_dashboard_shows_the_counts_and_links_to_the_report", "test_reports.py::test_the_to_do_list_puts_the_most_urgent_first_and_says_what_to_do"]
+was = "PO check #36; Design check #1, #16"
+owner = "Pass 11/06/2026"
+
+[[case]]
+id = "TC-HOME-02"
+area = "Home and Open items"
+title = "Home updates itself within a minute"
+priority = "High"
+kind = "browser"
+refs = ["DEC-45"]
+steps = ["Leave Home open. In a second tab, record a past promised date on another PO.", "Wait about a minute without touching Home."]
+expected = "Home's counts and Needs attention include the new late line without a reload."
+tests = ["test_web_standards.py::test_a_background_update_does_not_count_as_activity"]
+was = "Design check #16"
+owner = "Pass 11/06/2026"
+
+[[case]]
+id = "TC-HOME-03"
+area = "Home and Open items"
+title = "Open items filters as you choose, and a late tile opens it filtered"
+priority = "Medium"
+kind = "browser"
+refs = ["REQ-DB-03"]
+steps = ["On Home click the Late lines tile.", "On Open items change Show and Vendor."]
+expected = "Open items shows only late lines, each with a red \"N days late\", most late first. The list follows each choice; an empty view says \"All clear\"."
+tests = ["test_reports.py::test_the_report_page_filters_and_downloads", "test_reports.py::test_late_slipped_and_update_flags_are_counted_from_the_same_list"]
+was = "PO check #37, #38; Design check #18"
+owner = "Pass 11/06/2026"
+
+[[case]]
+id = "TC-HOME-04"
+area = "Home and Open items"
+title = "The Open items CSV downloads as a file and a formula in a cell stays plain text"
+priority = "Critical"
+kind = "browser"
+refs = ["REQ-DB-03", "Security: CSV injection"]
+steps = ["Enter a PO PO-1003 for Acme Fasteners whose line item is =1+1.", "On Open items press Download CSV and open it in Excel or Numbers."]
+expected = "A file open-items-<date>.csv downloads (not shown in the page) with dates like 11/06/2026 and accents right. The cell shows '=1+1 as text, never 2."
+tests = ["test_reports.py::test_the_csv_has_the_columns_and_neutralises_formulas", "test_reports.py::test_a_cell_that_would_run_as_a_formula_is_made_plain_text", "test_web_standards.py::test_downloads_are_plain_links_not_page_swaps"]
+was = "PO check #39, #40; Design check #18"
+owner = "Pass 11/06/2026"
+
+[[case]]
+id = "TC-HOME-05"
+area = "Home and Open items"
+title = "A PO sent with no acknowledgement is flagged only after two working days"
+priority = "High"
+kind = "automated"
+refs = ["DEC-37", "DEC-42"]
+steps = ["Covered by the tests named."]
+expected = "Weekends are skipped; the flag appears after two working days, not before; closed or cancelled lines are never open items."
+tests = ["test_reports.py::test_a_sent_po_with_no_acknowledgement_is_flagged_only_after_two_working_days", "test_reports.py::test_business_days_skip_weekends", "test_reports.py::test_a_closed_or_cancelled_line_is_not_an_open_item"]
+
+# ---------------------------------------------------------------------------------------------------------------------
+# Audit
+
+[[case]]
+id = "TC-AUD-01"
+area = "Audit"
+title = "An admin sees every change, newest first, and can narrow it"
+priority = "High"
+kind = "browser"
+refs = ["NFR-03", "PD-1.7"]
+steps = ["As boss, click Audit.", "Type line.close in Action; pick a person; press Clear.", "The From box is a calendar, so a wrong date can only come in the address: open /admin/audit?date_from=soon."]
+expected = "A table, newest first: time, person, address, action, what it was about, before and after; the cursor starts in Action. The list narrows and Clear brings everything back. soon is reported as not a date and the list still shows."
+tests = ["test_audit_screen.py::test_an_admin_sees_the_trail_and_the_cursor_starts_in_the_first_box", "test_audit_screen.py::test_filters_narrow_the_list_and_a_wrong_date_is_reported", "test_audit_screen.py::test_the_screen_only_reads"]
+was = "PO check #41, #42, #43; Design check #19"
+owner = "Pass 11/06/2026"
+
+[[case]]
+id = "TC-AUD-02"
+area = "Audit"
+title = "Every change to the ledger writes an audit record with who and where, and nothing secret"
+priority = "Critical"
+kind = "automated"
+refs = ["NFR-03"]
+steps = ["Covered by the tests named."]
+expected = "Every create, change, removal and settle writes a record with the person and address. No password or token is ever in it."
+tests = ["test_audit_screen.py::test_every_change_to_the_ledger_writes_an_audit_record", "test_events.py::test_every_recording_is_audited", "test_auth.py::test_nothing_secret_reaches_the_audit_trail"]
+
+# ---------------------------------------------------------------------------------------------------------------------
+# Page behaviour
+
+[[case]]
+id = "TC-WEB-01"
+area = "Page behaviour"
+title = "Pages change without a white flash, and Back and Forward work"
+priority = "Medium"
+kind = "browser"
+refs = ["DEC-45"]
+steps = ["Click between Home, Purchase orders, Vendors and a PO.", "Use the browser's Back and Forward."]
+expected = "Only the page body changes; the browser tab title follows. Back and Forward show the right pages, never \"page not found\"."
+tests = ["test_web_standards.py::test_signed_in_pages_load_htmx_from_this_site_with_the_safe_settings", "test_web_standards.py::test_a_refused_form_sent_by_htmx_is_kept_out_of_the_history"]
+was = "Design check #4, #14"
+owner = "Pass 11/06/2026"
+
+[[case]]
+id = "TC-WEB-02"
+area = "Page behaviour"
+title = "At phone width the page never scrolls sideways"
+priority = "High"
+kind = "browser"
+refs = ["DEC-45", "NFR-12"]
+steps = ["Make the window phone width (or use a phone on the office network). Visit Home, Purchase orders, a PO, Vendors, Open items, People, Audit."]
+expected = "No sideways scrolling of the page. The top bar scrolls sideways; tables scroll inside their box; buttons are easy to tap."
+tests = []
+was = "Design check #20; Sign-in check, things to look at"
+owner = "Pass 11/06/2026"
+
+[[case]]
+id = "TC-WEB-03"
+area = "Page behaviour"
+title = "Everything can be reached with the keyboard"
+priority = "Medium"
+kind = "browser"
+refs = ["DEC-45", "NFR-12"]
+steps = ["Reload any page and press Tab once.", "Keep pressing Tab through the sign-in page and the New purchase order form."]
+expected = "A Skip to the page link appears at the top left; Enter moves past the top bar. Every control shows a blue outline when Tab reaches it, in a sensible order."
+tests = ["test_gate.py::test_the_cursor_is_ready_in_the_first_box_of_every_form_page"]
+was = "Design check #21; Sign-in check, things to look at"
+owner = "Pass 11/06/2026"
+
+[[case]]
+id = "TC-WEB-04"
+area = "Page behaviour"
+title = "Dark mode on the Mac leaves the app light and readable"
+priority = "Medium"
+kind = "browser"
+refs = ["DEC-35"]
+steps = ["Switch macOS to dark mode and reload."]
+expected = "The app stays in its one light theme and is readable."
+tests = []
+was = "Sign-in check, things to look at"
+owner = "Pass 11/04/2026 (Safari, Chrome)"
+
+[[case]]
+id = "TC-WEB-05"
+area = "Page behaviour"
+title = "Every page answers within 0.3 seconds with a year's worth of data"
+priority = "High"
+kind = "automated"
+refs = ["DEC-45", "NFR speed"]
+steps = ["Covered by the test named: 300 vendors, 1,000 POs and 5,000 lines."]
+expected = "Every page answers within 0.3 seconds."
+tests = ["test_speed.py::test_each_page_answers_within_the_limit", "test_status.py::test_the_number_of_queries_does_not_grow_with_the_lines"]
+
+[[case]]
+id = "TC-WEB-06"
+area = "Page behaviour"
+title = "A mistyped address or an unreadable form shows a page a person can read"
+priority = "Medium"
+kind = "browser"
+refs = ["DEC-45", "DEF-002"]
+steps = ["Signed in, open http://127.0.0.1:8000/no-such-page."]
+expected = "A page headed \"Page not found\" in the app's own layout, with a Go to Home button. Never raw code such as {\"detail\": ...}."
+tests = ["test_gate.py::test_a_mistyped_address_and_an_unreadable_form_are_pages_too", "test_gate.py::test_a_script_still_gets_the_short_json_answer"]
+owner = "Not yet run"
+
+# ---------------------------------------------------------------------------------------------------------------------
+# Security and data safety
+
+[[case]]
+id = "TC-SEC-01"
+area = "Security and data safety"
+title = "Every change needs the session's token and must come from the app's own pages"
+priority = "Critical"
+kind = "automated"
+refs = ["ARCHITECTURE §10.1 (CSRF, Origin)"]
+steps = ["Covered by the tests named."]
+expected = "A change without the token, or from another site, is refused. A GET never changes anything. A forged cookie is no session."
+tests = ["test_gate.py::test_a_signed_in_write_needs_the_session_token", "test_gate.py::test_sign_in_needs_its_token_and_a_local_origin", "test_gate.py::test_a_get_never_changes_anything", "test_gate.py::test_a_forged_or_malformed_session_cookie_is_just_no_session", "test_orders_web.py::test_an_upload_from_another_site_is_refused"]
+
+[[case]]
+id = "TC-SEC-02"
+area = "Security and data safety"
+title = "Pages carry the security headers, are not cached, and run no inline script or style"
+priority = "High"
+kind = "automated"
+refs = ["ARCHITECTURE §10.1 (headers, CSP)"]
+steps = ["Covered by the tests named."]
+expected = "Content-Security-Policy and the other headers are on every response; signed-in pages are not cached; no page has inline script or style; the pinned HTMX file is exactly the published one."
+tests = ["test_gate.py::test_security_headers_are_on_public_responses", "test_gate.py::test_signed_in_pages_are_not_cached_and_refusals_carry_headers", "test_web_standards.py::test_no_page_has_inline_script_style_or_script_attributes", "test_web_standards.py::test_the_pinned_htmx_file_is_exactly_the_published_one"]
+
+[[case]]
+id = "TC-SEC-03"
+area = "Security and data safety"
+title = "Hostile spreadsheets are refused: macros, zip bombs, entity tricks, huge sheets, links to files"
+priority = "Critical"
+kind = "automated"
+refs = ["DEC-47"]
+steps = ["Covered by the tests named."]
+expected = "Each is refused quickly with a plain message and nothing is written."
+tests = ["test_sheets.py::test_a_workbook_with_macros_is_refused_whatever_its_name", "test_sheets.py::test_a_zip_bomb_is_refused_from_its_declared_size", "test_sheets.py::test_an_entity_bomb_is_refused_quickly", "test_sheets.py::test_a_workbook_cannot_read_files_from_the_mac", "test_sheets.py::test_a_sheet_that_claims_to_be_huge_is_cut_off_quickly", "test_sheets.py::test_without_the_safe_parser_excel_files_are_refused"]
+
+[[case]]
+id = "TC-SEC-04"
+area = "Security and data safety"
+title = "Uploads over 2 MB, or that do not state their size, are refused before they are read"
+priority = "High"
+kind = "automated"
+refs = ["DEC-47"]
+steps = ["Covered by the tests named."]
+expected = "Refused with the limit named; the server never holds the whole oversized file."
+tests = ["test_orders_web.py::test_an_oversized_upload_is_refused_before_it_is_read", "test_orders_web.py::test_an_upload_that_does_not_state_its_size_is_refused", "test_gate.py::test_an_oversized_form_is_refused_not_buffered_forever"]
+
+[[case]]
+id = "TC-SEC-05"
+area = "Security and data safety"
+title = "Passwords are stored only as argon2id hashes; no secret is in the database file or the logs"
+priority = "Critical"
+kind = "automated"
+refs = ["ARCHITECTURE §10.1"]
+steps = ["Covered by the tests named."]
+expected = "Only hashes are stored; session tokens are stored as hashes; nothing secret is in the database file, the logs or the audit trail."
+tests = ["test_auth.py::test_the_password_is_stored_as_an_argon2id_hash_only", "test_auth.py::test_sign_in_starts_a_full_session_and_stores_only_the_token_hash", "test_gate.py::test_no_secret_is_in_the_database_file_or_the_logs"]
+
+[[case]]
+id = "TC-SEC-06"
+area = "Security and data safety"
+title = "Quantities and money are exact everywhere"
+priority = "Critical"
+kind = "automated"
+refs = ["ARCHITECTURE §4"]
+steps = ["Covered by the tests named."]
+expected = "Values come back exactly as entered; tenths add up exactly; floats, NaN, infinity and huge numbers are refused. The only rounding anywhere is the QuickBooks unit price (TC-QB-05), which is shown and recorded."
+tests = ["test_ledger.py::test_quantities_and_prices_come_back_exactly", "test_ledger.py::test_tenths_add_up_exactly_in_sql", "test_ledger.py::test_nan_infinity_and_huge_numbers_are_refused", "test_status.py::test_shipments_add_up_exactly"]
+
+# =====================================================================================================================
+# Defects. Logged the moment they are found (owner, 2026-11-07).
+
+[[defect]]
+id = "DEF-001"
+found = "11/07/2026"
+found_by = "Owner, QuickBooks check step 4"
+case = "TC-QB-01"
+browser = "Not stated"
+severity = "Medium"
+title = "The QuickBooks report uploaded on Import CSV or Excel was refused with a list of missing columns"
+steps = ["Purchase orders, Import CSV or Excel (instead of Load from QuickBooks, the button beside it).", "Choose tests/data/quickbooks_open_pos_110526.csv and press Import."]
+expected = "The QuickBooks preview, or at least a message saying which button to use."
+actual = "\"Nothing was imported. Fix these and try again: Row 1: Missing column: po_number, vendor, currency, line_no, quantity, unit, unit_price ...\" followed by the file's columns."
+failure_evidence = "screenshots/DEF-001-before.png (recreated by Claude on commit 7f2d081)"
+cause = "The two upload buttons sit side by side with the same icon, and the import page only knew its own format."
+fix = "PD-1.10a.5: Import CSV or Excel recognises the QuickBooks report and shows the QuickBooks preview (nothing is created until Create); the app's own file on the QuickBooks page is refused with a link to Import. 3 new tests."
+fix_commit = ""
+retest = "11/07/2026, Claude in Chrome: pass (TC-PIMP-06, TC-QB-08). Owner's retest of step 4 and new steps 15 and 16: waiting."
+retest_evidence = "screenshots/TC-PIMP-06.png"
+status = "Fixed, waiting for the owner's retest"
+
+[[defect]]
+id = "DEF-002"
+found = "11/07/2026"
+found_by = "Claude, browser evidence run in Chrome"
+case = "TC-SIGN-06"
+browser = "Google Chrome 156.0.8078.81 (scripts/browser_evidence.py)"
+severity = "Low"
+title = "A buyer opening an admin address saw raw code instead of a page"
+steps = ["Sign in as a buyer.", "Type /admin/users or /admin/audit in the address bar."]
+expected = "A refusal page saying Admins only, in the app's own layout."
+actual = "The access was refused (status 403), but the browser showed the raw answer {\"detail\":\"Admins only.\"} on a blank page. A mistyped address (404) and an unreadable form (422) did the same."
+failure_evidence = "screenshots/DEF-002-before.png"
+cause = "Refusals raised as errors used the web framework's default answer, meant for scripts. The sign-in check of 11/04/2026 looked for the words Admins only, which the raw answer also contains."
+fix = "Refusals, missing pages and unreadable forms are now pages in the app's layout with a Go to Home button, for browsers and HTMX; a script that does not ask for HTML still gets the short JSON. 3 new tests; new case TC-WEB-06."
+fix_commit = ""
+retest = "11/07/2026, Claude in Chrome: pass (TC-SIGN-06, TC-WEB-06). Owner's retest: waiting."
+retest_evidence = "screenshots/TC-SIGN-06.png"
+status = "Fixed, waiting for the owner's retest"
+
+# =====================================================================================================================
+# User sign-off: the checks that matter most before go-live. "Ready" items can be tested now; "Not built" items are
+# required before go-live and are tested when their phase is done.
+
+[[signoff]]
+id = "SO-01"
+check = "Only signed-in people reach anything; a wrong password and an unknown email look the same; five wrong tries lock the account."
+why = "The app holds every PO, price and vendor contact."
+cases = ["TC-SIGN-01", "TC-SIGN-02", "TC-SIGN-08"]
+status = "Ready"
+
+[[signoff]]
+id = "SO-02"
+check = "Buyers cannot reach People or Audit; a disabled person is cut off at once; a temporary password is shown once and must be changed."
+why = "Access must follow the person's role on the day, not last week's."
+cases = ["TC-SIGN-04", "TC-SIGN-05", "TC-SIGN-06", "TC-SIGN-07"]
+status = "Ready"
+
+[[signoff]]
+id = "SO-03"
+check = "Nothing is ever created twice: Reload, Back, a second press of Create, the same file again."
+why = "A doubled PO or shipment gives wrong counts and wrong follow-ups."
+cases = ["TC-PO-02", "TC-PIMP-02", "TC-QB-03", "TC-QB-07", "TC-VIMP-02", "TC-EVT-07"]
+status = "Ready"
+
+[[signoff]]
+id = "SO-04"
+check = "Every import is all or nothing, and a bad row is named."
+why = "Half a file loaded is worse than none: nobody knows which half."
+cases = ["TC-PIMP-03", "TC-PIMP-04", "TC-QB-02"]
+status = "Ready"
+
+[[signoff]]
+id = "SO-05"
+check = "Quantities and prices are exact; the only rounding is a QuickBooks unit price, which is shown and recorded."
+why = "Money and quantities decide what is owed and what is still to come."
+cases = ["TC-PO-01", "TC-PO-04", "TC-QB-05", "TC-SEC-06"]
+status = "Ready"
+
+[[signoff]]
+id = "SO-06"
+check = "The go-live load: the company's QuickBooks export previews with counts that match QuickBooks, every waiting vendor is added, then Create."
+why = "This is the starting point every later alert is measured from."
+cases = ["TC-QB-01", "TC-QB-04", "TC-QB-07", "TC-QB-09"]
+status = "Ready"
+
+[[signoff]]
+id = "SO-07"
+check = "Every vendor has an email; a domain belongs to one vendor only; vendors without a domain are marked."
+why = "Replies are matched to vendors by their address. A wrong match puts a vendor's answer on the wrong PO."
+cases = ["TC-VEN-03", "TC-VEN-06", "TC-VIMP-01", "TC-VIMP-03"]
+status = "Ready"
+
+[[signoff]]
+id = "SO-08"
+check = "A line's status is right through a whole life: confirmed short, shipped in parts, invoiced, over-billed, settled by hand, reopened."
+why = "Status drives every count and every follow-up."
+cases = ["TC-EVT-01", "TC-EVT-03", "TC-EVT-04", "TC-EVT-05", "TC-EVT-09", "TC-EVT-11"]
+status = "Ready"
+
+[[signoff]]
+id = "SO-09"
+check = "Late, slipped and waiting-for-acknowledgement lines are flagged, and Home's counts agree with Open items."
+why = "This is the early warning the app exists for."
+cases = ["TC-EVT-08", "TC-HOME-01", "TC-HOME-03", "TC-HOME-05"]
+status = "Ready"
+
+[[signoff]]
+id = "SO-10"
+check = "The Open items CSV opens correctly in Excel, and a formula in a cell stays plain text."
+why = "The file goes to other people; a formula could run on their machine."
+cases = ["TC-HOME-04"]
+status = "Ready"
+
+[[signoff]]
+id = "SO-11"
+check = "Every change is in the audit trail with who and where; only admins can read it."
+why = "When a number is questioned, the trail is the answer."
+cases = ["TC-AUD-01", "TC-AUD-02", "TC-SIGN-06"]
+status = "Ready"
+
+[[signoff]]
+id = "SO-12"
+check = "Wrong or hostile files are refused with a plain message: old .xls, macros, oversize, the wrong report."
+why = "Files come from outside the company."
+cases = ["TC-VIMP-05", "TC-SEC-03", "TC-SEC-04", "TC-QB-08", "TC-PIMP-06"]
+status = "Ready"
+
+[[signoff]]
+id = "SO-13"
+check = "Works in Safari and Chrome on the office laptops, at phone width, and from the keyboard."
+why = "Everyone uses it, on whatever they have."
+cases = ["TC-WEB-01", "TC-WEB-02", "TC-WEB-03"]
+status = "Ready"
+
+[[signoff]]
+id = "SO-14"
+check = "Every page answers within 0.3 seconds with a year's worth of data."
+why = "A slow page gets skipped."
+cases = ["TC-WEB-05"]
+status = "Ready"
+
+[[signoff]]
+id = "SO-15"
+check = "Local only: the app refuses other host names and model servers off this Mac; no real document or secret is in the repository."
+why = "Company data never leaves the Mac (DEC-01, DEC-13); the repository is public."
+cases = ["TC-SET-03", "TC-SET-04", "TC-SEC-05"]
+status = "Ready"
+
+[[signoff]]
+id = "SO-16"
+check = "Mail is read-only: the app cannot send, move, flag or delete, and is refused on any mailbox it was not given."
+why = "DEC-07. A tool that can delete mail must never be pointed at the purchasing mailbox."
+cases = []
+status = "Not built: PD-3.5, PD-6.2"
+
+[[signoff]]
+id = "SO-17"
+check = "A person accepts every extracted document before it changes anything; a PO is never guessed; document text never acts as an instruction."
+why = "DEC-08, DEC-09. The model reads vendor documents; a person decides."
+cases = []
+status = "Not built: Phase 4 (PD-4.4 to PD-4.6)"
+
+[[signoff]]
+id = "SO-18"
+check = "Extraction accuracy on the golden set meets the agreed score, and the whole pipeline is re-scored."
+why = "The score is the evidence that the model can be trusted with real replies."
+cases = []
+status = "Not built: PD-2.5, PD-4.7"
+
+[[signoff]]
+id = "SO-19"
+check = "A reply that matches no vendor or PO is held in Unmatched, never dropped."
+why = "A lost reply is a missed delivery date."
+cases = []
+status = "Not built: PD-4.3"
+
+[[signoff]]
+id = "SO-20"
+check = "Follow-up alerts fire for the agreed rules, and clear when the vendor answers."
+why = "The alerts are the point of the app."
+cases = []
+status = "Not built: Phase 5"
+
+[[signoff]]
+id = "SO-21"
+check = "Nightly backups, 35 days kept, a restore tested on a copy, and a backup before every upgrade."
+why = "Today there are no automatic backups: until PD-6.5, copy the data folder by hand before every upgrade."
+cases = []
+status = "Not built: PD-6.5"
+
+[[signoff]]
+id = "SO-22"
+check = "Runs as a service on the office Mac: restarts after a crash or power cut, catches up on mail missed while it was down; a 24-hour soak test with a restart."
+why = "Nobody watches it; it must look after itself."
+cases = []
+status = "Not built: PD-3.4, PD-6.4, PD-6.6"
+
+[[signoff]]
+id = "SO-23"
+check = "Office-network access over HTTPS, with a second factor, and the session cookie marked Secure."
+why = "Other laptops reach the app over the network only once this is in place (DEC-28, DEC-34)."
+cases = []
+status = "Not built: PD-6.3a"
+
+[[signoff]]
+id = "SO-24"
+check = "The weekly comparison with QuickBooks closes lines that QuickBooks has closed."
+why = "Without it, lines received in QuickBooks stay open in the app."
+cases = []
+status = "Waiting for OPEN-20; PD-1.10"
+
+[[signoff]]
+id = "SO-25"
+check = "The release gate passes: every test, the golden set against its baseline, a scan for secrets and real documents."
+why = "One command that says the build is fit to release."
+cases = []
+status = "Not built: PD-0.5, PD-7.3"

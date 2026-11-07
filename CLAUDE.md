@@ -28,6 +28,11 @@ and status: [docs/PLAN.md](docs/PLAN.md). Audit: [docs/AUDIT.md](docs/AUDIT.md).
 - **Git.** Commit or push only when asked. Run `git status` first and stage files by name, never `git add -A` or
   `git add .`, and not a folder or a wildcard either. A laptop-only file created in the repo goes into `.gitignore`. The
   repository is public (DEC-19) and the licence is chosen (DEC-23), but a push still needs the owner to ask for it.
+- **Test record (owner, 2026-11-07).** Every test case lives in `test-evidence/test_record.toml`; IDs are never
+  renumbered. A failure found by anyone is logged as a `DEF-nnn` the moment it is found: the case, the browser, what
+  was seen and a screenshot, then the cause, the fix and its commit, then a retest with its own screenshot. New work
+  gets its cases (and, for a browser case, a `@case` in `scripts/browser_evidence.py`) before its task is ticked.
+  Rebuild the pages with `uv run python scripts/test_record.py`; the workbook it builds stays on this Mac.
 - **Models.** Say once, with the reason, before a step that suits a different model (Opus for design, scoring design
   and security review; Sonnet for following the plan).
 
@@ -36,6 +41,8 @@ and status: [docs/PLAN.md](docs/PLAN.md). Audit: [docs/AUDIT.md](docs/AUDIT.md).
 - Set up: `scripts/setup.sh` (asks before the 9 GB model pull; installs the pre-commit guard)
 - Run: `uv run po-dashboard serve` (http://127.0.0.1:8000)
 - Check: `uv run ruff check . && uv run mypy && uv run pytest`
+- Chrome evidence: `uv run --with playwright==1.64.1 python scripts/browser_evidence.py` (about 6 minutes; then
+  `uv run python scripts/test_record.py`, and `--workbook` for a test cycle)
 
 ## Things learned the hard way
 

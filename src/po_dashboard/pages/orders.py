@@ -15,10 +15,12 @@ from starlette.datastructures import UploadFile
 from po_dashboard.db.ledger import POLine, PurchaseOrder, Vendor
 from po_dashboard.ledger import closing, events, listing
 from po_dashboard.ledger import orders as rules
+from po_dashboard.ledger import quickbooks as qb
 from po_dashboard.ledger import vendors as vendor_rules
 from po_dashboard.ledger.errors import LedgerError
 from po_dashboard.ledger.expected import line_expectations
 from po_dashboard.ledger.status import LineState, line_states, po_state
+from po_dashboard.pages import quickbooks as qb_page
 from po_dashboard.pages import tables
 from po_dashboard.pages.common import CurrentUser, Db, client_address, render
 
@@ -162,6 +164,9 @@ async def import_file(request: Request, db: Db, user: CurrentUser) -> Response:
     try:
         count, skipped = await run_in_threadpool(work)
     except rules.ImportRejected as problem:
+        # The QuickBooks report, sent to this button instead of the one beside it: show its preview, not a refusal.
+        if await run_in_threadpool(qb.is_report, raw, upload.filename):
+            return await qb_page.show_plan(request, db, user, raw, upload.filename or "", handed_over=True)
         return page(problem, None, 400)
     extra = f"&ignored={skipped}" if skipped else ""
     return RedirectResponse(f"/orders?imported={count}{extra}", status_code=303)

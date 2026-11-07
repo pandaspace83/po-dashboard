@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block title %}{{ title }} · {{ app_name }}{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="card-head">{{ icon("alert") }}<h1>{{ title }}</h1></div>
+  <p>{{ message }}</p>
+  <p class="form-actions"><a class="button primary" href="/">{{ icon("home") }}Go to Home</a></p>
+</div>
+{% endblock %}

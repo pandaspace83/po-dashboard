@@ -149,6 +149,10 @@ Once, at go-live; after that, POs come from the emails.
    any already in the app (left alone), partly received lines and any price it had to round.
 4. **Create.** Check the export date and press **Create N purchase orders**. All are created, or none.
 
+The report uploaded on **Import CSV or Excel** by mistake is recognised and shows this same preview; nothing is created
+until Create is pressed. The app's own import file uploaded on **Load from QuickBooks** is refused with a link to
+**Import CSV or Excel**.
+
 What it does: currency USD, unit EA; the QuickBooks date is kept as the **PO date (QuickBooks)** and the date sent is left
 empty, so the app does not flag a missing acknowledgement it never had the chance to see; a customer named on a line is
 shown as "· for <customer>"; a line partly received gets "received N per QuickBooks export of <date>". What it never

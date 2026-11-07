@@ -1,0 +1,5 @@
+vendor_name,contact_email,contact_name,email_domains,notes
+Stark Supplies,,Ann Example,,Made-up: no contact email
+Wayne Parts,sales@acme.example,Bo Example,,Made-up: Acme's contact email
+Tyrell Castings,tyrell@tyrell.example,Cy Example,northwind.example,Made-up: Northwind's domain
+Umbrella Freight,ops@umbrella.example,Di Example,,Made-up: a good row

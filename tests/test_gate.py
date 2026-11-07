@@ -230,6 +230,41 @@ def test_a_buyer_gets_403_on_the_admin_screens(env) -> None:  # noqa: ANN001
     assert "People" not in client.get("/").text
 
 
+BROWSER = {"Accept": "text/html,application/xhtml+xml,*/*;q=0.8"}
+
+
+def test_a_refusal_in_the_browser_is_a_page_not_raw_json(env) -> None:  # noqa: ANN001
+    """DEF-002: a buyer typing an admin address saw {"detail":"Admins only."}."""
+    client = new_client(env[0])
+    sign_in(client, "buyer@example.com")
+    for path in ("/admin/users", "/admin/audit"):
+        page = client.get(path, headers=BROWSER)
+        assert page.status_code == 403 and page.headers["content-type"].startswith("text/html")
+        assert "<h1>Admins only</h1>" in page.text and "Go to Home" in page.text and '{"detail"' not in page.text
+        assert 'href="/orders"' in page.text and 'href="/admin/users"' not in page.text  # the buyer's own top bar
+    htmx = client.get("/admin/users", headers={"HX-Request": "true"})
+    assert htmx.status_code == 403 and "<h1>Admins only</h1>" in htmx.text
+
+
+def test_a_script_still_gets_the_short_json_answer(env) -> None:  # noqa: ANN001
+    client = new_client(env[0])
+    sign_in(client, "buyer@example.com")
+    answer = client.get("/admin/users", headers={"Accept": "application/json"})
+    assert answer.status_code == 403 and answer.json() == {"detail": "Admins only."}
+
+
+def test_a_mistyped_address_and_an_unreadable_form_are_pages_too(env) -> None:  # noqa: ANN001
+    client = new_client(env[0])
+    sign_in(client, "buyer@example.com")
+    missing = client.get("/no-such-page", headers=BROWSER)
+    assert missing.status_code == 404 and "<h1>Page not found</h1>" in missing.text
+    token = token_in(client.get("/vendors/new").text)
+    unreadable = client.post("/vendors/create", headers={**ORIGIN, **BROWSER}, data={"csrf_token": token})
+    assert unreadable.status_code == 422 and "<h1>The form could not be read</h1>" in unreadable.text
+    wrong_method = client.put("/vendors", headers={**ORIGIN, **BROWSER, "X-CSRF-Token": token})
+    assert wrong_method.status_code == 405 and "<h1>That cannot be done here</h1>" in wrong_method.text
+
+
 def test_a_demotion_applies_on_the_very_next_request(env, admin_client: TestClient) -> None:  # noqa: ANN001
     app, engine, _ = env
     second = new_client(app)

@@ -81,6 +81,7 @@ The rest is following this plan, which suits Sonnet. I will say before each swit
   - [x] PD-1.10a.2 (2026-11-06) Migration 0003: `purchase_order.po_date`, `po_line.customer`. The PO page shows "PO date (QuickBooks)" and "· for <customer>"; Open items and the CSV show the customer.
   - [x] PD-1.10a.3 (2026-11-06) The QuickBooks reader (headings, totals, export date from the name), the preview (to create, waiting for a vendor, already in the app, rounded prices, partly received) held in memory for 15 minutes, and the all-or-nothing create with "received per QuickBooks" entries and audit.
   - [ ] PD-1.10a.4 Tests on a made-up report with the same shape as the owner's (headings, totals, spread lines, partly received, a price that cannot be exact, a missing vendor); Claude drives it in Chrome; browser-check steps for the owner. **Done 2026-11-06 except the owner's check:** 50 new tests (28 on the reader, many hostile files); 14 Chrome checks of the load and 51 of the earlier screens pass; the owner's real report read in a dry run with 0 problems (38 POs, 114 lines; counts only). **Waiting for:** [BROWSER_CHECK_QUICKBOOKS.md](../test-evidence/BROWSER_CHECK_QUICKBOOKS.md).
+  - [x] PD-1.10a.5 (2026-11-07) Found in the owner's check, step 4: the report sent to **Import CSV or Excel** (the button beside **Load from QuickBooks**) was refused with a list of missing columns. That page now recognises the report and shows the QuickBooks preview; the app's own file on the QuickBooks page is refused with a link to Import. 3 tests; 7 Chrome checks; checklist steps 15 and 16 added.
   - Not in PD-1.10a: closing lines missing from the report (OPEN-20) and the weekly comparison (PD-1.10).
 - [x] PD-1.12 Vendor search box (2026-11-06): the vendor drop-down on the New PO form, the PO list filter and the Open items filter is a type-to-search box (`GET /vendors/search`, matches name or email domain), so hundreds of vendors stay quick and the page is not reloaded. Vendor upload now requires an email. Steps 50 to 53 of the browser check.
 - [x] PD-1.8 The design pass for every screen, to the web standards in DEC-45. *Opus for 1.8a (the standards); Sonnet for the rest.*
@@ -90,6 +91,21 @@ The rest is following this plan, which suits Sonnet. I will say before each swit
   - [x] PD-1.8d In place (2026-11-06): fading Saved notes on every form, errors next to their box, filters as you choose, the `/` key, messages read out by screen readers.
   - [x] PD-1.8e (2026-11-06) Home as the exceptions list with "All clear", and the 60-second live counts on Home and Open items.
   - [x] PD-1.8f Phone width and accessibility sweep, one date and time format, the large-data speed test, and the owner's own list of tweaks. Browser check in Safari and Chrome. **Built 2026-11-06 except the owner's tweak list:** Claude ran 51 checks in real Chrome (desktop and phone width, all pass, no script errors or policy violations) and the speed test (slowest page 137 ms on 300 vendors, 1,000 POs, 5,000 lines). **Browser-checked by the owner 2026-11-06** ([BROWSER_CHECK_DESIGN.md](../test-evidence/BROWSER_CHECK_DESIGN.md)): "we are good with all tests". One idea came out of it and is parked below.
+
+- [ ] PD-1.13 The test record and user sign-off (owner, 2026-11-07: "a full test cases document ... for production
+  sign off"). *Opus for what the sign-off must cover; Sonnet to keep it up.* **Built 2026-11-07:**
+  [test_record.toml](../test-evidence/test_record.toml) holds every test case (83: steps, expected result, the
+  automated tests that cover it, the owner's last result), the defect log, and 25 sign-off checks (15 ready now, 10
+  waiting for later phases). `scripts/test_record.py` builds [TEST_CASES.md](../test-evidence/TEST_CASES.md),
+  [DEFECTS.md](../test-evidence/DEFECTS.md) and [SIGN_OFF.md](../test-evidence/SIGN_OFF.md) from it, and with
+  `--workbook` an Excel workbook for a test cycle (Read me, Test cases, Evidence, Defects & retests, Sign-off), which
+  stays on this Mac. `scripts/browser_evidence.py` drives Chrome through every browser case from an empty throwaway
+  database and saves a screenshot of each result. Its first runs found DEF-002 (a buyer opening an admin address saw
+  raw code), fixed the same day. A test keeps the record true. From now on a failure is logged the moment it is found
+  (DEC-25 still applies before each phase). **Waiting for:** the owner's first cycle with the workbook. PD-7.2's
+  checklist becomes the Sign-off tab.
+- [x] PD-1.13a (2026-11-07) Refusals, missing pages and unreadable forms are pages a person can read (DEF-002), not raw
+  JSON; a script still gets JSON. 3 tests; TC-WEB-06.
 
 **Parked (owner, 2026-11-06: helpful, not needed now):**
 
@@ -189,7 +205,7 @@ signs in over the office network. It survives a restart, and the health page say
 - [ ] PD-7.0 Documentation pass (DEC-25).
 - [ ] PD-7.1 Rehearse the install on a clean machine (or a fresh user account) from Git, following README only
   (NFR-07). Fix every gap.
-- [ ] PD-7.2 `test-evidence/HUMAN_TEST_CHECKLIST.md` for a person to follow, and run it.
+- [ ] PD-7.2 The human test: the Sign-off tab of the test record (PD-1.13) with every row ready, followed by a person.
 - [ ] PD-7.3 `scripts/release_gate.sh`: suites, golden set against the baseline, a repository scan for secrets and
   real documents.
 - [ ] PD-7.4 Complete [AUDIT.md](AUDIT.md): every requirement Met, Partly or Not met, with its evidence.

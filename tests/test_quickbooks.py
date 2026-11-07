@@ -20,7 +20,7 @@ from sqlalchemy.orm import Session
 
 from po_dashboard.db import ledger as L
 from po_dashboard.db.models import AuditLog
-from po_dashboard.ledger import events, reports
+from po_dashboard.ledger import events, orders, reports
 from po_dashboard.ledger import quickbooks as qb
 from po_dashboard.ledger.errors import LedgerError
 from po_dashboard.ledger.sheets import read_table
@@ -281,6 +281,31 @@ def test_a_hostile_or_wrong_file_is_a_clear_message(vendors: TestClient) -> None
     assert "does not look like the QuickBooks Open POs report" in _preview(vendors, b"a,b\n1,2\n", "x.csv").text
     assert "macros" in _preview(vendors, b"x", "book.xlsm").text
     assert "larger than 2 MB" in _preview(vendors, b"x" * (2 * 1024 * 1024 + 10), "big.csv").text
+
+
+def test_the_report_uploaded_on_the_import_page_becomes_the_quickbooks_preview(vendors: TestClient) -> None:
+    """The two upload buttons sit side by side; the report sent to the wrong one is recognised, not refused."""
+    headers = {**ORIGIN, "X-CSRF-Token": token_in(vendors.get("/orders/import").text)}
+    page = vendors.post("/orders/import", files={"file": (NAME, raw(), "text/csv")}, headers=headers)
+    text = page.text
+    assert page.status_code == 200 and "Missing column" not in text
+    assert "This file is the QuickBooks Open POs report" in text and "Nothing has changed yet" in text
+    assert "Create 3 purchase orders" in text and text.count(" autofocus") == 1
+    assert vendors.get("/orders").text.count('<a href="/orders/') == 0  # still only a preview
+    done = _create(vendors, text)
+    assert done.status_code == 303 and done.headers["location"] == "/orders?imported=3&waiting=1&source=quickbooks"
+
+
+def test_a_file_that_is_neither_still_gets_the_import_pages_own_message(vendors: TestClient) -> None:
+    headers = {**ORIGIN, "X-CSRF-Token": token_in(vendors.get("/orders/import").text)}
+    page = vendors.post("/orders/import", files={"file": ("x.csv", b"a,b\n1,2\n", "text/csv")}, headers=headers)
+    assert page.status_code == 400 and "Missing column" in page.text and "QuickBooks Open POs report" not in page.text
+
+
+def test_the_apps_own_import_file_on_the_quickbooks_page_says_where_it_goes(vendors: TestClient) -> None:
+    page = _preview(vendors, orders.TEMPLATE.encode(), "pos.csv")
+    assert page.status_code == 400 and "app&#39;s own import format, not the QuickBooks report" in page.text
+    assert '<a class="button" href="/orders/import">' in page.text
 
 
 def test_the_load_needs_a_sign_in(env) -> None:  # noqa: ANN001

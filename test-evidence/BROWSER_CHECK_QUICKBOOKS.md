@@ -36,6 +36,8 @@ Open http://127.0.0.1:8000 and sign in. If a page looks old, reload it once with
 | 12 | Add the vendor `Globex Wire` (with any email), then load the file again. | 1 purchase order to create (5003). Create it: four POs now. | | |
 | 13 | Upload a file that is not the report (for example the vendor .xlsx from step 1). | "This does not look like the QuickBooks Open POs report: it has no 'date', 'num', ... column." | | |
 | 14 | *(Optional, your own data, stays on this Mac.)* Upload your real export from `real-docs/`. | The preview counts match what QuickBooks shows (38 POs, 114 lines in the 11/05 export; most wait until their vendors are imported). Press Cancel unless you want them in this throwaway folder. Do not write any names or figures here. | | |
+| 15 | **Purchase orders → Import CSV or Excel** (the other button), and upload `tests/data/quickbooks_open_pos_110526.csv`. | No column list. The preview from step 4, with "This file is the QuickBooks Open POs report, so it is read here …". Press Cancel. *(Added 2026-11-07: the owner's step 4 sent the file to this button.)* | | |
+| 16 | On **Load from QuickBooks**, upload the app's own template (**Import CSV or Excel → Download a template**). | "This is a purchase order file in the app's own import format …", with a **Go to Import CSV or Excel** button that opens that page. | | |
 
 ## Clean up
 

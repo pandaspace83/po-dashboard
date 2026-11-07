@@ -15,6 +15,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
+from sqlalchemy.orm import Session
 from starlette.concurrency import run_in_threadpool
 from starlette.datastructures import UploadFile
 
@@ -77,12 +78,20 @@ async def preview(request: Request, db: Db, user: CurrentUser) -> HTMLResponse:
         typed = when(str(form.get("export_date") or ""), "Export date")
     except LedgerError as problem:
         return _page(request, user, 400, error=str(problem))
+    return await show_plan(request, db, user, raw, filename, typed)
+
+
+async def show_plan(request: Request, db: Session, user: AppUser, raw: bytes, filename: str,
+                    typed: date | None = None, *, handed_over: bool = False) -> HTMLResponse:  # fmt: skip
+    """The preview of what the file would do, holding the file for Create. Import CSV or Excel uses it too, with
+    handed_over, when the file it was given is this report."""
+    filename = filename[:200]
     try:
         plan = await run_in_threadpool(qb.plan_load, db, raw, filename, typed)
     except qb.QuickBooksRejected as problem:
-        return _page(request, user, 400, error=str(problem))
+        return _page(request, user, 400, error=str(problem), own_format=problem.own_format)
     token = _hold(user, raw, filename) if plan.ready else ""
-    return _page(request, user, plan=plan, token=token, filename=filename)
+    return _page(request, user, plan=plan, token=token, filename=filename, handed_over=handed_over)
 
 
 @router.post("/create", response_class=HTMLResponse, response_model=None)

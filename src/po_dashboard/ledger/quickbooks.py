@@ -43,7 +43,22 @@ MAX_SHOWN = 200
 
 
 class QuickBooksRejected(ValueError):
-    """The file cannot be used at all. The message says why."""
+    """The file cannot be used at all. The message says why; own_format means it belongs on Import CSV or Excel."""
+
+    def __init__(self, message: str, *, own_format: bool = False) -> None:
+        super().__init__(message)
+        self.own_format = own_format
+
+
+def is_report(raw: bytes, filename: str | None) -> bool:
+    """Whether the file is the QuickBooks Open POs report rather than the app's own import format, so a report
+    uploaded on Import CSV or Excel can be shown as the QuickBooks load instead of being refused."""
+    try:
+        table = read_table(raw, filename)
+    except SheetRejected:
+        return False
+    header = {cell.strip().lower() for cell in (table[0] if table else [])}
+    return header.issuperset(REQUIRED) and not header.issuperset(rules.REQUIRED)
 
 
 @dataclass
@@ -143,6 +158,12 @@ def plan_load(db: Session, raw: bytes, filename: str | None, export_date: date |
         raise QuickBooksRejected(str(problem)) from None
     header = [cell.strip().lower() for cell in (table[0] if table else [])]
     missing = [name for name in REQUIRED if name not in header]
+    if missing and set(rules.REQUIRED).issubset(header):
+        raise QuickBooksRejected(
+            "This is a purchase order file in the app's own import format, not the QuickBooks report. "
+            "Nothing was read. Import it on Import CSV or Excel.",
+            own_format=True,
+        )
     if missing:
         raise QuickBooksRejected(
             "This does not look like the QuickBooks Open POs report: it has no "

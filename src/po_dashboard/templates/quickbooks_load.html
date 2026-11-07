@@ -4,11 +4,13 @@
 {% block content %}
 <p class="muted"><a href="/orders">Purchase orders</a> /</p>
 <h1>Load open POs from QuickBooks</h1>
-{% if error %}<p class="error" role="alert">{{ icon("alert") }}<span>{{ error }}</span></p>{% endif %}
+{% if error %}<p class="error" role="alert">{{ icon("alert") }}<span>{{ error }}</span></p>
+{% if own_format %}<p><a class="button" href="/orders/import">{{ icon("upload") }}Go to Import CSV or Excel</a></p>{% endif %}{% endif %}
 
 {% if plan %}
 <div class="card">
   <div class="card-head">{{ icon("clipboard") }}<h2>What this file would do</h2></div>
+  {% if handed_over %}<p class="notice" role="status">{{ icon("check-circle") }}<span>This file is the QuickBooks Open POs report, so it is read here, as a load from QuickBooks, rather than as an import.</span></p>{% endif %}
   <p class="muted">From <strong>{{ filename }}</strong>{% if plan.export_date %}, exported {{ plan.export_date|day }}{% endif %}. Nothing has changed yet.</p>
   {% if plan.problems %}
   <div class="error" role="alert">{{ icon("alert") }}<div>Nothing can be created until these are fixed in QuickBooks or the file:

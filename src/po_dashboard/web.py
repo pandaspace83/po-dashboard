@@ -5,17 +5,19 @@ from __future__ import annotations
 from pathlib import Path
 
 from fastapi import FastAPI
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import Engine
+from starlette.exceptions import HTTPException
 
 from po_dashboard import __version__
 from po_dashboard.auth.gate import Gate
 from po_dashboard.config import Settings
 from po_dashboard.db.migrate import upgrade
 from po_dashboard.display import day, moment
-from po_dashboard.pages import account, admin, audit, entries, orders, quickbooks, reports, vendors
+from po_dashboard.pages import account, admin, audit, entries, errors, orders, quickbooks, reports, vendors
 from po_dashboard.pages.formats import money, quantity
 from po_dashboard.pages.tables import with_query
 
@@ -51,6 +53,8 @@ def create_app(settings: Settings | None = None, engine: Engine | None = None) -
     app.include_router(orders.router)
     app.include_router(entries.router)
     app.include_router(reports.router)
+    app.add_exception_handler(HTTPException, errors.http_error)
+    app.add_exception_handler(RequestValidationError, errors.validation_error)
     app.mount("/static", StaticFiles(directory=HERE / "static"), name="static")
     app.add_middleware(Gate, settings=settings, engine=engine)
     return app

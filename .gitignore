@@ -54,6 +54,9 @@ inbox-samples/
 *.zip
 scratch/
 
+# Test-cycle workbooks hold a tester's results and signature; they stay on this Mac (owner, 2026-11-07)
+test-evidence/workbooks/
+
 # Laptop-only notes
 LEARNING_JOURNAL.md
 
