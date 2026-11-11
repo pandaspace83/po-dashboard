@@ -1,0 +1,23 @@
+From: Rita Chen <rita@umbrella-seals.test>
+To: purchasing@example-buyer.test
+Subject: Invoice INV-44234 for PO 4515409
+Date: Sun, 22 Nov 2026 09:36:00 +0000
+
+From: Umbrella Seals
+Invoice No: INV-44234
+Invoice date: 11/22/26
+PO Number: 4515409
+Our order: 665301
+
+Payment terms: Net 30.
+
+PO Line  Part No    Description         Qty  Unit Price  Amount
+1        BLT-M8x40  Hex bolt M8x40      10   $14.90      149.00
+2        PLT-AL3    Aluminum plate 3mm  25   $27.60      690.00
+3        MTR-075    Motor 0.75kW        100  $212.00     21,200.00
+4        CPL-3/4    Coupling 3/4 in     100  $9.35       935.00
+Total due USD                                            22,974.00
+
+Regards,
+Rita Chen
+Umbrella Seals

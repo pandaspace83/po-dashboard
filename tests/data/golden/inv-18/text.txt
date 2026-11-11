@@ -1,0 +1,19 @@
+INVOICE
+
+From: Initech Tools
+Invoice No: INV-74687
+Invoice date: 11/02/26
+Customer PO: P.O. 4510542
+Sales order: AB-53892
+
+Payment terms: Net 30.
+
+Line Part No Description Qty Unit Price Amount
+1 CPL-3/4 Coupling 3/4 in 100 $9.35 935.00
+2 WID-100 Widget 100 60 $5.00 300.00
+3 BLT-M8x40 Hex bolt M8x40 200 $14.90 2,980.00
+Total due USD 4,215.00
+
+Regards,
+Priya Nair
+Initech Tools

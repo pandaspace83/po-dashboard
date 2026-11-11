@@ -1,0 +1,18 @@
+From: Tom Becker <tom@contoso-bearings.test>
+To: purchasing@example-buyer.test
+Subject: RE: PO 4569586
+Date: Wed, 04 Nov 2026 09:36:00 +0000
+
+From: Contoso Bearings
+Date: 11/04/2026
+Customer PO: P.O. 4569586
+Order ref: SO-94895
+
+We are pleased to acknowledge your purchase order.
+
+Line 1: 200 BOX BLT-M8x40 (Hex bolt M8x40) at $14.90 each, promised for 12/03/2026.
+Line 2: 150 EA SEAL-22 (Oil seal 22mm) at $1.10 each, promised for 12/03/2026.
+
+Regards,
+Tom Becker
+Contoso Bearings

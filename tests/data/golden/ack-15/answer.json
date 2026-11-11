@@ -1,0 +1,81 @@
+{
+  "id": "ack-15",
+  "kind": "ack",
+  "format": "pdf",
+  "tags": [
+    "no_lineno",
+    "per_line"
+  ],
+  "schema_version": 1,
+  "answer": {
+    "doc_type": "order_acknowledgement",
+    "po_number": "4537895",
+    "vendor_order_number": "SO-88884",
+    "invoice_number": null,
+    "invoice_date": null,
+    "carrier": null,
+    "tracking_numbers": [],
+    "ship_date": null,
+    "arrival_date": null,
+    "lines": [
+      {
+        "line_no": null,
+        "item": "MTR-075",
+        "qty": 80,
+        "unit": "EA",
+        "unit_price": 212.0,
+        "promised_date": "2026-12-10",
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": null,
+        "item": "FLG-DN50",
+        "qty": 100,
+        "unit": "EA",
+        "unit_price": 18.4,
+        "promised_date": "2026-12-24",
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": null,
+        "item": "NUT-M8",
+        "qty": 100,
+        "unit": "BOX",
+        "unit_price": 6.75,
+        "promised_date": "2027-01-07",
+        "arrival_date": null,
+        "requested_date": null
+      }
+    ],
+    "charges": [],
+    "total": null
+  },
+  "tell_tales": [],
+  "po_context": {
+    "po_number": "4537895",
+    "vendor": "Umbrella Seals",
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "MTR-075",
+        "qty": 80,
+        "unit_price": 212.0
+      },
+      {
+        "line_no": 2,
+        "item": "FLG-DN50",
+        "qty": 100,
+        "unit_price": 18.4
+      },
+      {
+        "line_no": 3,
+        "item": "NUT-M8",
+        "qty": 100,
+        "unit_price": 6.75
+      }
+    ]
+  },
+  "expected_flags": []
+}

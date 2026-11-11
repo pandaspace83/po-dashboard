@@ -1,0 +1,13 @@
+From: Rita Chen <rita@umbrella-seals.test>
+To: purchasing@example-buyer.test
+Subject: Automatic reply: Out of office
+Date: Tue, 17 Nov 2026 09:38:00 +0000
+
+Hello, I am out of the office until November 11, 2026 with limited access to email.
+For urgent matters please contact our main desk.
+
+Rita Chen, Umbrella Seals
+
+Regards,
+Rita Chen
+Umbrella Seals

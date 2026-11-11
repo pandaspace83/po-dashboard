@@ -1,0 +1,18 @@
+INVOICE
+
+From: Globex Hydraulics
+Invoice No: INV-98789
+Invoice date: November 17, 2026
+Buyer PO: P.O. 4525915
+Sales order: AB-80363
+
+Payment terms: Net 30.
+
+PO Line  Part No   Description  Qty  Unit Price  Amount
+1        WID-400   Widget 400   500  $12.50      6,250.00
+2        FLG-DN50  Flange DN50  10   $18.40      184.00
+Total due USD                                    6,434.00
+
+Regards,
+Sam Okafor
+Globex Hydraulics

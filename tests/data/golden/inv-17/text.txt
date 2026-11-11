@@ -1,0 +1,20 @@
+INVOICE
+
+From: Stark Fittings
+Invoice No: INV-65655
+Invoice date: 11/17/2026
+PO Number: P.O. 4550693
+Sales order: AB-81259
+
+Payment terms: Net 30.
+
+Item  Part No  Description         Qty  Unit Price  Amount
+10    PLT-AL3  Aluminum plate 3mm  80   $27.60      2,208.00
+20    WID-100  Widget 100          200  $5.00       1,000.00
+Total due USD                                       3,208.00
+
+Items not listed here are not invoiced yet.
+
+Regards,
+Jon Harlow
+Stark Fittings

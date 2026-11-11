@@ -1,0 +1,64 @@
+{
+  "id": "inv-23",
+  "kind": "inv",
+  "format": "xlsx",
+  "tags": [
+    "full"
+  ],
+  "schema_version": 1,
+  "answer": {
+    "doc_type": "invoice",
+    "po_number": "4519305",
+    "vendor_order_number": "SO-94307",
+    "invoice_number": "INV-43614",
+    "invoice_date": "2026-11-14",
+    "carrier": null,
+    "tracking_numbers": [],
+    "ship_date": null,
+    "arrival_date": null,
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "WID-400",
+        "qty": 40,
+        "unit": null,
+        "unit_price": 12.5,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 2,
+        "item": "GSK-G9",
+        "qty": 100,
+        "unit": null,
+        "unit_price": 0.85,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      }
+    ],
+    "charges": [],
+    "total": 585.0
+  },
+  "tell_tales": [],
+  "po_context": {
+    "po_number": "4519305",
+    "vendor": "Contoso Bearings",
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "WID-400",
+        "qty": 40,
+        "unit_price": 12.5
+      },
+      {
+        "line_no": 2,
+        "item": "GSK-G9",
+        "qty": 100,
+        "unit_price": 0.85
+      }
+    ]
+  },
+  "expected_flags": []
+}

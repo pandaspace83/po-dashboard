@@ -6,7 +6,7 @@ closed, and raises in-app alerts for lines that need a vendor follow-up. Python 
 pages with HTMX, Ollama with `qwen2.5:14b-instruct`.
 
 Requirements: [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md). Decisions and open questions (`DEC-nn`, never
-renumbered): [docs/DECISIONS.md](docs/DECISIONS.md). Design: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Build order
+renumbered): [docs/DECISIONS.md](docs/DECISIONS.md). Design: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Scoring the model: [docs/SCORING.md](docs/SCORING.md). Build order
 and status: [docs/PLAN.md](docs/PLAN.md). Audit: [docs/AUDIT.md](docs/AUDIT.md). Runbook: [docs/OPERATIONS.md](docs/OPERATIONS.md).
 
 ## Rules that always apply

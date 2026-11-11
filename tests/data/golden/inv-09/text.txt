@@ -1,0 +1,20 @@
+INVOICE
+
+From: Initech Tools
+Invoice No: INV-85442
+Invoice date: November 7th, 2026
+Customer PO: PO 4515457
+Sales order: SO-54877
+
+Payment terms: Net 30.
+
+Line  Part No  Description      Qty  Unit Price  Amount
+1     CPL-3/4  Coupling 3/4 in  25   $9.35       233.75
+2     SEAL-22  Oil seal 22mm    50   $1.10       55.00
+3     WID-100  Widget 100       500  $5.00       2,500.00
+4     NUT-M8   Hex nut M8       10   $6.75       67.50
+Total due USD                                    2,856.25
+
+Regards,
+Priya Nair
+Initech Tools

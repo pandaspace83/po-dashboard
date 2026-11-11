@@ -1,0 +1,13 @@
+Sheet: Document
+ORDER ACKNOWLEDGEMENT
+From	Umbrella Seals
+Date	November 7th, 2026
+Buyer PO	P.O. 4556980
+Order ref	405530
+
+We are pleased to acknowledge your purchase order.
+
+Line	Part No	Description	Qty	UoM	Unit Price	Ship date
+1	FLT-OIL7	Oil filter 7	150	EA	$11.80	December 1st, 2026
+2	PIN-D6	Dowel pin 6mm	12	BOX	$8.10	December 1st, 2026
+3	CPL-3/4	Coupling 3/4 in	60	EA	$9.35	December 1st, 2026

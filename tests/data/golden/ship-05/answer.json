@@ -1,0 +1,82 @@
+{
+  "id": "ship-05",
+  "kind": "ship",
+  "format": "email",
+  "tags": [
+    "line_dates"
+  ],
+  "schema_version": 1,
+  "answer": {
+    "doc_type": "shipment_notice",
+    "po_number": "4523551",
+    "vendor_order_number": "AB-10387",
+    "invoice_number": null,
+    "invoice_date": null,
+    "carrier": "DHL",
+    "tracking_numbers": [
+      "5958405408"
+    ],
+    "ship_date": "2026-11-02",
+    "arrival_date": null,
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "FLG-DN50",
+        "qty": 200,
+        "unit": null,
+        "unit_price": null,
+        "promised_date": null,
+        "arrival_date": "2026-11-08",
+        "requested_date": null
+      },
+      {
+        "line_no": 2,
+        "item": "SEAL-22",
+        "qty": 100,
+        "unit": null,
+        "unit_price": null,
+        "promised_date": null,
+        "arrival_date": "2026-11-10",
+        "requested_date": null
+      },
+      {
+        "line_no": 3,
+        "item": "WID-400",
+        "qty": 80,
+        "unit": null,
+        "unit_price": null,
+        "promised_date": null,
+        "arrival_date": "2026-11-12",
+        "requested_date": null
+      }
+    ],
+    "charges": [],
+    "total": null
+  },
+  "tell_tales": [],
+  "po_context": {
+    "po_number": "4523551",
+    "vendor": "Stark Fittings",
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "FLG-DN50",
+        "qty": 200,
+        "unit_price": 18.4
+      },
+      {
+        "line_no": 2,
+        "item": "SEAL-22",
+        "qty": 100,
+        "unit_price": 1.1
+      },
+      {
+        "line_no": 3,
+        "item": "WID-400",
+        "qty": 80,
+        "unit_price": 12.5
+      }
+    ]
+  },
+  "expected_flags": []
+}

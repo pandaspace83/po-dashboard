@@ -1,0 +1,21 @@
+ORDER ACKNOWLEDGEMENT
+
+From: Contoso Bearings
+Date: November 21, 2026
+Buyer PO: PO 4513226
+Order ref: SO-41591
+
+Please find our order acknowledgement below.
+
+PO Line  Part No    Description          Qty  UoM  Unit Price  Ship date
+1        NUT-M8     Hex nut M8           60   BOX  $6.75       TBA
+2        HSE-12     Hydraulic hose 12mm  80   FT   $4.20       TBA
+3        SEAL-22    Oil seal 22mm        12   EA   $1.10       TBA
+4        CPL-3/4    Coupling 3/4 in      500  EA   $9.35       TBA
+5        BLT-M8x40  Hex bolt M8x40       40   BOX  $14.90      TBA
+
+Delivery date to be advised.
+
+Regards,
+Tom Becker
+Contoso Bearings

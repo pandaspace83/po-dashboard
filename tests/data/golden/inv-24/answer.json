@@ -1,0 +1,112 @@
+{
+  "id": "inv-24",
+  "kind": "inv",
+  "format": "xlsx",
+  "tags": [
+    "freight",
+    "partial"
+  ],
+  "schema_version": 1,
+  "answer": {
+    "doc_type": "invoice",
+    "po_number": "4512194",
+    "vendor_order_number": "AB-73068",
+    "invoice_number": "INV-63340",
+    "invoice_date": "2026-11-12",
+    "carrier": null,
+    "tracking_numbers": [],
+    "ship_date": null,
+    "arrival_date": null,
+    "lines": [
+      {
+        "line_no": 2,
+        "item": "WID-100",
+        "qty": 10,
+        "unit": null,
+        "unit_price": 5.0,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 3,
+        "item": "WID-400",
+        "qty": 12,
+        "unit": null,
+        "unit_price": 12.5,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 4,
+        "item": "FLG-DN50",
+        "qty": 25,
+        "unit": null,
+        "unit_price": 18.4,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 5,
+        "item": "PLT-AL3",
+        "qty": 5,
+        "unit": null,
+        "unit_price": 27.6,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      }
+    ],
+    "charges": [
+      {
+        "kind": "freight",
+        "label": "Freight",
+        "amount": 38.5
+      }
+    ],
+    "total": 836.5
+  },
+  "tell_tales": [],
+  "po_context": {
+    "po_number": "4512194",
+    "vendor": "Northwind Metals",
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "FLT-OIL7",
+        "qty": 40,
+        "unit_price": 11.8
+      },
+      {
+        "line_no": 2,
+        "item": "WID-100",
+        "qty": 10,
+        "unit_price": 5.0
+      },
+      {
+        "line_no": 3,
+        "item": "WID-400",
+        "qty": 12,
+        "unit_price": 12.5
+      },
+      {
+        "line_no": 4,
+        "item": "FLG-DN50",
+        "qty": 25,
+        "unit_price": 18.4
+      },
+      {
+        "line_no": 5,
+        "item": "PLT-AL3",
+        "qty": 5,
+        "unit_price": 27.6
+      }
+    ]
+  },
+  "expected_flags": [
+    "charge_present",
+    "lines_not_covered"
+  ]
+}

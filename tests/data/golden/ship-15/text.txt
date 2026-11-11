@@ -1,0 +1,19 @@
+Sheet: Document
+SHIPPING NOTICE
+From	Northwind Metals
+Date	11/12/26
+Buyer PO	P.O. 4574507
+Sales order	866630
+Carrier	FedEx
+Tracking	440501801094
+Ship date	11/12/26
+ETA	11/17/26
+
+The following items left our dock today.
+
+Line	Part No	Description	Qty
+1	SEAL-22	Oil seal 22mm	150
+2	WID-400	Widget 400	40
+3	GRS-400	Grease cartridge 400g	80
+4	FLT-OIL7	Oil filter 7	80
+5	BRG-6204	Ball bearing 6204	10

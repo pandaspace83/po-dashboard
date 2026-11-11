@@ -1,0 +1,15 @@
+Sheet: Document
+PURCHASE ORDER
+From	Example Buyer Inc.
+PO Number	4599863
+Date	2026-11-10
+Vendor	Umbrella Seals
+
+Please supply the items below to Example Buyer Inc.. Confirm receipt of this order.
+
+Line	Part No	Description	Qty	UoM	Unit Price	Need by
+1	NUT-M8	Hex nut M8	200	BOX	$6.75	2026-11-29
+2	FLT-OIL7	Oil filter 7	500	EA	$11.80	2026-11-24
+3	FLG-DN50	Flange DN50	25	EA	$18.40	2026-12-21
+4	BLT-M8x40	Hex bolt M8x40	200	BOX	$14.90	2026-12-24
+5	GRS-400	Grease cartridge 400g	150	EA	$3.95	2026-12-30

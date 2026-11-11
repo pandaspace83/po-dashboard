@@ -1,0 +1,16 @@
+ORDER ACKNOWLEDGEMENT
+
+From: Contoso Bearings
+Date: 2026-11-09
+PO Number: PO 4594771
+Sales order: 544643
+
+Please find our order acknowledgement below.
+
+Pos  Part No  Description    Qty  UoM  Unit Price  Ship date
+10   GSK-G9   Gasket G-9     12   EA   $0.85       2026-12-03
+20   SEAL-22  Oil seal 22mm  80   EA   $1.10       2026-12-17
+
+Regards,
+Tom Becker
+Contoso Bearings

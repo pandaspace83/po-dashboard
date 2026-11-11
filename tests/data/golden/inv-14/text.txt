@@ -1,0 +1,20 @@
+INVOICE
+
+From: Stark Fittings
+Invoice No: INV-63685
+Invoice date: November 10th, 2026
+Buyer PO: 4582415
+Order ref: SO-90459
+
+Payment terms: Net 30.
+
+Part No   Description        Qty  Unit Price  Amount
+FLG-DN50  Flange DN50        5    $18.40      92.00
+CPL-3/4   Coupling 3/4 in    500  $10.35      5,175.00
+BRG-6204  Ball bearing 6204  80   $3.15       252.00
+GSK-G9    Gasket G-9         25   $0.85       21.25
+Total due USD                                 5,540.25
+
+Regards,
+Jon Harlow
+Stark Fittings

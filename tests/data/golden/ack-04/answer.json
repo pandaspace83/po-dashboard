@@ -1,0 +1,98 @@
+{
+  "id": "ack-04",
+  "kind": "ack",
+  "format": "email",
+  "tags": [
+    "no_date"
+  ],
+  "schema_version": 1,
+  "answer": {
+    "doc_type": "order_acknowledgement",
+    "po_number": "4590634",
+    "vendor_order_number": "662007",
+    "invoice_number": null,
+    "invoice_date": null,
+    "carrier": null,
+    "tracking_numbers": [],
+    "ship_date": null,
+    "arrival_date": null,
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "MTR-075",
+        "qty": 200,
+        "unit": "EA",
+        "unit_price": 212.0,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 2,
+        "item": "NUT-M8",
+        "qty": 5,
+        "unit": "BOX",
+        "unit_price": 6.75,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 3,
+        "item": "PLT-AL3",
+        "qty": 200,
+        "unit": "EA",
+        "unit_price": 27.6,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 4,
+        "item": "BRG-6204",
+        "qty": 40,
+        "unit": "EA",
+        "unit_price": 3.15,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      }
+    ],
+    "charges": [],
+    "total": null
+  },
+  "tell_tales": [],
+  "po_context": {
+    "po_number": "4590634",
+    "vendor": "Globex Hydraulics",
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "MTR-075",
+        "qty": 200,
+        "unit_price": 212.0
+      },
+      {
+        "line_no": 2,
+        "item": "NUT-M8",
+        "qty": 5,
+        "unit_price": 6.75
+      },
+      {
+        "line_no": 3,
+        "item": "PLT-AL3",
+        "qty": 200,
+        "unit_price": 27.6
+      },
+      {
+        "line_no": 4,
+        "item": "BRG-6204",
+        "qty": 40,
+        "unit_price": 3.15
+      }
+    ]
+  },
+  "expected_flags": [
+    "no_promised_date"
+  ]
+}

@@ -1,0 +1,32 @@
+From: Sam Okafor <sam@globex-hydraulics.test>
+To: purchasing@example-buyer.test
+Subject: Shipping Notice - PO 4520670
+Date: Mon, 09 Nov 2026 09:37:00 +0000
+Message-ID: <ship-06@golden.test>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+MIME-Version: 1.0
+
+From: Globex Hydraulics
+Date: 11/09/2026
+Sales order: 165140
+Carrier: DHL
+Tracking: 1199341168
+Ship date: 11/09/2026
+Arrives: 11/12/2026
+
+The following items left our dock today.
+
+Line 1: 7 EA PLT-AL3 (Aluminum plate 3mm).
+Line 2: 200 EA MTR-075 (Motor 0.75kW).
+
+Remaining items are on backorder and will ship separately.
+
+
+Regards,
+Sam Okafor
+Globex Hydraulics
+-----Original Message-----
+From: Example Buyer Inc. Purchasing
+Subject: Status on PO 4521524
+Also, did PO 4521524 ever ship? It was for 80 units due 11/02/2026.

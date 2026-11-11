@@ -77,6 +77,7 @@ appear in the open-items report.
 | REQ-INV-03 | A PO closes when all its lines are closed. | Must |
 | REQ-INV-04 | Manual actions on a line, each with a reason: mark received, close short, cancel. | Must |
 | REQ-INV-05 | Flag an invoice that bills more quantity or a higher price than the PO. | Should |
+| REQ-INV-06 | Read charges that are not goods (freight, tariff, tax, other) apart from the lines, as printed; check that the lines plus the charges equal the total; never work out a tax or tariff rate (DEC-48). | Must |
 
 ### Dashboard and reports (DB)
 

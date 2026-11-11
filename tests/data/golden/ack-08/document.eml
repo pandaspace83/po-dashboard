@@ -1,0 +1,23 @@
+From: Sam Okafor <sam@globex-hydraulics.test>
+To: purchasing@example-buyer.test
+Subject: Order Acknowledgement AB-19477 for your PO 4593435
+Date: Tue, 03 Nov 2026 09:36:00 +0000
+Message-ID: <ack-08@golden.test>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+MIME-Version: 1.0
+
+From: Globex Hydraulics
+Date: 2026-11-03
+Customer PO: P.O. 4593435
+Our order: AB-19477
+
+Please find our order acknowledgement below.
+
+Line 1: 60 BOX NUT-M8 (Hex nut M8) at $6.75 each, promised for 2026-11-26.
+Line 2: 500 EA SEAL-22 (Oil seal 22mm) at $1.10 each, promised for 2026-11-26.
+Freight (estimated): $85.00.
+
+Regards,
+Sam Okafor
+Globex Hydraulics

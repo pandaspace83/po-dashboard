@@ -1,0 +1,15 @@
+Sheet: Document
+PURCHASE ORDER
+From	Example Buyer Inc.
+PO Number	PO# 4538894
+Date	2026-11-08
+Vendor	Umbrella Seals
+
+Please supply the items below to Example Buyer Inc.. Confirm receipt of this order.
+
+PO Line	Part No	Description	Qty	UoM	Unit Price	Need by
+1	PIN-D6	Dowel pin 6mm	5	BOX	$8.10	2027-01-04
+2	HSE-12	Hydraulic hose 12mm	100	FT	$4.20	2026-11-28
+3	PLT-AL3	Aluminum plate 3mm	5	EA	$27.60	2026-11-23
+4	WID-100	Widget 100	60	EA	$5.00	2026-12-06
+5	GRS-400	Grease cartridge 400g	25	EA	$3.95	2026-12-06

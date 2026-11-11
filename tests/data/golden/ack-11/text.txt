@@ -1,0 +1,18 @@
+ORDER ACKNOWLEDGEMENT
+
+From: Umbrella Seals
+Date: November 22nd, 2026
+PO Number: P.O. 4556087
+Our order: SO-51106
+
+Please find our order acknowledgement below.
+
+Line  Part No   Description   Qty  UoM  Unit Price  Delivery
+1     WID-100   Widget 100    60   EA   $5.00       December 20th, 2026
+2     GSK-G9    Gasket G-9    150  EA   $0.85       December 20th, 2026
+3     FLG-DN50  Flange DN50   12   EA   $18.40      December 20th, 2026
+4     FLT-OIL7  Oil filter 7  40   EA   $11.80      December 20th, 2026
+
+Regards,
+Rita Chen
+Umbrella Seals

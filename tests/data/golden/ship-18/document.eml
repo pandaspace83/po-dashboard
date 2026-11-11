@@ -1,0 +1,49 @@
+From: Tom Becker <tom@contoso-bearings.test>
+To: purchasing@example-buyer.test
+Subject: Shipment notice for PO 4532416
+Date: Fri, 13 Nov 2026 09:37:00 +0000
+Message-ID: <ship-18@golden.test>
+MIME-Version: 1.0
+Content-Type: multipart/alternative; boundary="golden-boundary"
+
+--golden-boundary
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+From: Contoso Bearings
+Date: November 13, 2026
+PO Number: 4532416
+Our order: SO-33041
+Carrier: FedEx
+Tracking: 968451396240
+Ship date: November 13, 2026
+Expected arrival: November 18, 2026
+
+The following items left our dock today.
+
+Line 1: 100 EA BRG-6204 (Ball bearing 6204).
+Line 2: 10 EA CPL-3/4 (Coupling 3/4 in).
+Line 3: 5 EA FLT-OIL7 (Oil filter 7).
+Line 4: 100 EA SEAL-22 (Oil seal 22mm).
+Line 5: 60 EA MTR-075 (Motor 0.75kW).
+
+Regards,
+Tom Becker
+Contoso Bearings
+
+--golden-boundary
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+<html><body><p>From: Contoso Bearings</p><p>Date: November 13, 2026</p><p>PO =
+Number: 4532416</p><p>Our order: SO-33041</p><p>Carrier: FedEx</p><p>Tracking=
+: 968451396240</p><p>Ship date: November 13, 2026</p><p>Expected arrival: Nov=
+ember 18, 2026</p><p>&nbsp;</p><p>The following items left our dock today.</p=
+><p>&nbsp;</p><p>Line 1: 100 EA BRG-6204 (Ball bearing 6204).</p><p>Line 2: 1=
+0 EA CPL-3/4 (Coupling 3/4 in).</p><p>Line 3: 5 EA FLT-OIL7 (Oil filter 7).</=
+p><p>Line 4: 100 EA SEAL-22 (Oil seal 22mm).</p><p>Line 5: 60 EA MTR-075 (Mot=
+or 0.75kW).</p><p>&nbsp;</p><p>Regards,</p><p>Tom Becker</p><p>Contoso Bearin=
+gs</p></body></html>
+
+--golden-boundary--

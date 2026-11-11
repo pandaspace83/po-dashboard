@@ -1,0 +1,22 @@
+INVOICE
+
+From: Acme Fasteners
+Invoice No: INV-79796
+Invoice date: 11/03/2026
+Customer PO: PO 4531725
+Sales order: 128483
+
+Payment terms: Net 30.
+
+Line  Part No   Description          Qty  Unit Price  Amount
+1     FLG-DN50  Flange DN50          60   $18.40      1,104.00
+2     WID-100   Widget 100           40   $5.00       200.00
+3     MTR-075   Motor 0.75kW         150  $212.00     31,800.00
+4     HSE-12    Hydraulic hose 12mm  5    $4.20       21.00
+Sales tax (6%)                                         1,987.50
+Discount (2%)                                           -662.50
+Total due USD                                         34,450.00
+
+Regards,
+Dana Whitfield
+Acme Fasteners

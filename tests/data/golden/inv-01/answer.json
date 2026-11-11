@@ -1,0 +1,96 @@
+{
+  "id": "inv-01",
+  "kind": "inv",
+  "format": "email",
+  "tags": [
+    "full"
+  ],
+  "schema_version": 1,
+  "answer": {
+    "doc_type": "invoice",
+    "po_number": "4515409",
+    "vendor_order_number": "665301",
+    "invoice_number": "INV-44234",
+    "invoice_date": "2026-11-22",
+    "carrier": null,
+    "tracking_numbers": [],
+    "ship_date": null,
+    "arrival_date": null,
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "BLT-M8x40",
+        "qty": 10,
+        "unit": null,
+        "unit_price": 14.9,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 2,
+        "item": "PLT-AL3",
+        "qty": 25,
+        "unit": null,
+        "unit_price": 27.6,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 3,
+        "item": "MTR-075",
+        "qty": 100,
+        "unit": null,
+        "unit_price": 212.0,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 4,
+        "item": "CPL-3/4",
+        "qty": 100,
+        "unit": null,
+        "unit_price": 9.35,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      }
+    ],
+    "charges": [],
+    "total": 22974.0
+  },
+  "tell_tales": [],
+  "po_context": {
+    "po_number": "4515409",
+    "vendor": "Umbrella Seals",
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "BLT-M8x40",
+        "qty": 10,
+        "unit_price": 14.9
+      },
+      {
+        "line_no": 2,
+        "item": "PLT-AL3",
+        "qty": 25,
+        "unit_price": 27.6
+      },
+      {
+        "line_no": 3,
+        "item": "MTR-075",
+        "qty": 100,
+        "unit_price": 212.0
+      },
+      {
+        "line_no": 4,
+        "item": "CPL-3/4",
+        "qty": 100,
+        "unit_price": 9.35
+      }
+    ]
+  },
+  "expected_flags": []
+}

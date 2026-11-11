@@ -1,0 +1,84 @@
+{
+  "id": "ship-03",
+  "kind": "ship",
+  "format": "email",
+  "tags": [
+    "multi_track"
+  ],
+  "schema_version": 1,
+  "answer": {
+    "doc_type": "shipment_notice",
+    "po_number": "4584372",
+    "vendor_order_number": "784990",
+    "invoice_number": null,
+    "invoice_date": null,
+    "carrier": "USPS",
+    "tracking_numbers": [
+      "9467407662631885884862",
+      "9411963003618274178447",
+      "9441969873552345616385"
+    ],
+    "ship_date": "2026-11-13",
+    "arrival_date": "2026-11-19",
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "GSK-G9",
+        "qty": 60,
+        "unit": null,
+        "unit_price": null,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 2,
+        "item": "MTR-075",
+        "qty": 40,
+        "unit": null,
+        "unit_price": null,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 3,
+        "item": "BLT-M8x40",
+        "qty": 10,
+        "unit": null,
+        "unit_price": null,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      }
+    ],
+    "charges": [],
+    "total": null
+  },
+  "tell_tales": [],
+  "po_context": {
+    "po_number": "4584372",
+    "vendor": "Northwind Metals",
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "GSK-G9",
+        "qty": 60,
+        "unit_price": 0.85
+      },
+      {
+        "line_no": 2,
+        "item": "MTR-075",
+        "qty": 40,
+        "unit_price": 212.0
+      },
+      {
+        "line_no": 3,
+        "item": "BLT-M8x40",
+        "qty": 10,
+        "unit_price": 14.9
+      }
+    ]
+  },
+  "expected_flags": []
+}

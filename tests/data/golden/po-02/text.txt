@@ -1,0 +1,19 @@
+From: Example Buyer Inc. Purchasing <purchasing@example-buyer.test>
+To: tom@contoso-bearings.test
+Subject: PO 4573834 sent to Contoso Bearings
+Date: Mon, 09 Nov 2026 09:35:00 +0000
+Cc: purchasing@example-buyer.test
+
+From: Example Buyer Inc.
+PO Number: PO 4573834
+Date: November 9th, 2026
+Vendor: Contoso Bearings
+
+Please supply the items below to Example Buyer Inc.. Confirm receipt of this order.
+
+Line  Part No   Description   Qty  UoM  Unit Price  Required
+1     FLT-OIL7  Oil filter 7  60   EA   $11.80      December 25th, 2026
+2     GSK-G9    Gasket G-9    40   EA   $0.85       December 14th, 2026
+
+Purchasing
+Example Buyer Inc.

@@ -1,0 +1,16 @@
+From: Rita Chen <rita@umbrella-seals.test>
+To: purchasing@example-buyer.test
+Subject: Umbrella Seals news: new catalog and holiday hours
+Date: Fri, 06 Nov 2026 09:38:00 +0000
+
+Umbrella Seals Newsletter
+
+Our 2027 catalog is now available online.
+Holiday hours: closed Thursday November 26th and Friday November 27th.
+Winter sale: 10% off selected hydraulic fittings through December 15.
+
+To stop receiving this newsletter, click unsubscribe.
+
+Regards,
+Rita Chen
+Umbrella Seals

@@ -1,0 +1,69 @@
+{
+  "id": "ship-22",
+  "kind": "ship",
+  "format": "auto",
+  "tags": [
+    "duplicate_of:ship-01"
+  ],
+  "schema_version": 1,
+  "answer": {
+    "doc_type": "shipment_notice",
+    "po_number": "4528464",
+    "vendor_order_number": "AB-72139",
+    "invoice_number": null,
+    "invoice_date": null,
+    "carrier": "DHL",
+    "tracking_numbers": [
+      "9711177624"
+    ],
+    "ship_date": "2026-11-17",
+    "arrival_date": "2026-11-25",
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "CPL-3/4",
+        "qty": 6,
+        "unit": null,
+        "unit_price": null,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 2,
+        "item": "BLT-M8x40",
+        "qty": 12,
+        "unit": null,
+        "unit_price": null,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      }
+    ],
+    "charges": [],
+    "total": null
+  },
+  "tell_tales": [],
+  "po_context": {
+    "po_number": "4528464",
+    "vendor": "Acme Fasteners",
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "CPL-3/4",
+        "qty": 10,
+        "unit_price": 9.35
+      },
+      {
+        "line_no": 2,
+        "item": "BLT-M8x40",
+        "qty": 12,
+        "unit_price": 14.9
+      }
+    ]
+  },
+  "expected_flags": [
+    "duplicate",
+    "qty_below_order"
+  ]
+}

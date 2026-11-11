@@ -1,0 +1,14 @@
+Sheet: Document
+INVOICE
+From	Contoso Bearings
+Invoice No	INV-43614
+Invoice date	November 14th, 2026
+Your PO	P.O. 4519305
+Order ref	SO-94307
+
+Payment terms: Net 30.
+
+Line	Part No	Description	Qty	Unit Price	Amount
+1	WID-400	Widget 400	40	$12.50	500.00
+2	GSK-G9	Gasket G-9	100	$0.85	85.00
+				Total due USD	585.00

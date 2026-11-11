@@ -1,0 +1,17 @@
+ORDER ACKNOWLEDGEMENT
+
+From: Globex Hydraulics
+Date: 11/11/2026
+PO Number: PO 4584891
+Order ref: SO-94222
+
+Please find our order acknowledgement below.
+
+PO Line  Part No  Description         Qty  UoM  Unit Price  Promised
+1        PLT-AL3  Aluminum plate 3mm  500  EA   $28.10      12/01/2026
+2        WID-100  Widget 100          10   EA   $5.00       12/01/2026
+3        SEAL-22  Oil seal 22mm       500  EA   $1.10       12/01/2026
+
+Regards,
+Sam Okafor
+Globex Hydraulics

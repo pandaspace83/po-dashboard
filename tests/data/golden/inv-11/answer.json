@@ -1,0 +1,72 @@
+{
+  "id": "inv-11",
+  "kind": "inv",
+  "format": "pdf",
+  "tags": [
+    "tariff_line"
+  ],
+  "schema_version": 1,
+  "answer": {
+    "doc_type": "invoice",
+    "po_number": "4531067",
+    "vendor_order_number": "197757",
+    "invoice_number": "INV-77346",
+    "invoice_date": "2026-11-20",
+    "carrier": null,
+    "tracking_numbers": [],
+    "ship_date": null,
+    "arrival_date": null,
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "PIN-D6",
+        "qty": 10,
+        "unit": null,
+        "unit_price": 8.1,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 2,
+        "item": "NUT-M8",
+        "qty": 12,
+        "unit": null,
+        "unit_price": 6.75,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      }
+    ],
+    "charges": [
+      {
+        "kind": "tariff",
+        "label": "Tariff surcharge (10%)",
+        "amount": 16.2
+      }
+    ],
+    "total": 178.2
+  },
+  "tell_tales": [],
+  "po_context": {
+    "po_number": "4531067",
+    "vendor": "Globex Hydraulics",
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "PIN-D6",
+        "qty": 10,
+        "unit_price": 8.1
+      },
+      {
+        "line_no": 2,
+        "item": "NUT-M8",
+        "qty": 12,
+        "unit_price": 6.75
+      }
+    ]
+  },
+  "expected_flags": [
+    "charge_present"
+  ]
+}

@@ -1,0 +1,20 @@
+From: Example Buyer Inc. Purchasing <purchasing@example-buyer.test>
+To: alicia@hooli-plastics.test
+Subject: Purchase order 4536688
+Date: Wed, 11 Nov 2026 09:35:00 +0000
+
+From: Example Buyer Inc.
+PO Number: PO 4536688
+Date: Nov 11, 2026
+Vendor: Hooli Plastics
+
+Please supply the items below to Example Buyer Inc.. Confirm receipt of this order.
+
+500 EA BRG-6204 (Ball bearing 6204) at $3.15 each, needed by Dec 23, 2026.
+10 EA GSK-G9 (Gasket G-9) at $0.85 each, needed by Jan 8, 2027.
+80 BOX NUT-M8 (Hex nut M8) at $6.75 each, needed by Jan 7, 2027.
+150 EA GRS-400 (Grease cartridge 400g) at $3.95 each, needed by Dec 26, 2026.
+40 EA PLT-AL3 (Aluminum plate 3mm) at $27.60 each, needed by Dec 7, 2026.
+
+Purchasing
+Example Buyer Inc.

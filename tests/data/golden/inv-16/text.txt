@@ -1,0 +1,19 @@
+INVOICE
+
+From: Hooli Plastics
+Invoice No: INV-47066
+Invoice date: November 11th, 2026
+PO Number: P.O. 4559584
+Order ref: 4559657
+
+Payment terms: Net 30.
+
+PO Line  Part No   Description        Qty  Unit Price  Amount
+1        FLG-DN50  Flange DN50        12   $18.40      220.80
+2        WID-400   Widget 400         10   $12.50      125.00
+3        BRG-6204  Ball bearing 6204  25   $3.15       78.75
+Total due USD                                          424.55
+
+Regards,
+Alicia Moreno
+Hooli Plastics

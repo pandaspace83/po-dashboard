@@ -1,0 +1,20 @@
+INVOICE
+
+From: Initech Tools
+Invoice No: INV-85940
+Inv0ice date: 11/06/26
+Your PO: P.O. 4589263
+Sales order: AB-19186
+
+Payment terms : Net 30.
+
+Line 1 : 100 EA WID-400 (Widget 400) at $12.50 each.
+Line 2: 60 EA BRG-6204 (Ball bearing 6204) at $3.15 each.
+Line 3 : 25 EA FLG-DN50 (Flange DN50) at $18.40 each.
+4. Tariff surcharge (10%): $189.90.
+Freight: $62.00.
+T0tal due USD: $2,150.90.
+
+Regards,
+Priya Nair
+Initech T0ols

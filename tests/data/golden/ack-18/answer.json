@@ -1,0 +1,66 @@
+{
+  "id": "ack-18",
+  "kind": "ack",
+  "format": "pdf",
+  "tags": [
+    "revised"
+  ],
+  "schema_version": 1,
+  "answer": {
+    "doc_type": "order_acknowledgement",
+    "po_number": "4594444",
+    "vendor_order_number": "887892",
+    "invoice_number": null,
+    "invoice_date": null,
+    "carrier": null,
+    "tracking_numbers": [],
+    "ship_date": null,
+    "arrival_date": null,
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "GRS-400",
+        "qty": 5,
+        "unit": "EA",
+        "unit_price": 3.95,
+        "promised_date": "2026-12-26",
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 2,
+        "item": "PIN-D6",
+        "qty": 500,
+        "unit": "BOX",
+        "unit_price": 8.1,
+        "promised_date": "2026-12-21",
+        "arrival_date": null,
+        "requested_date": null
+      }
+    ],
+    "charges": [],
+    "total": null
+  },
+  "tell_tales": [],
+  "po_context": {
+    "po_number": "4594444",
+    "vendor": "Hooli Plastics",
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "GRS-400",
+        "qty": 5,
+        "unit_price": 3.95
+      },
+      {
+        "line_no": 2,
+        "item": "PIN-D6",
+        "qty": 500,
+        "unit_price": 8.1
+      }
+    ]
+  },
+  "expected_flags": [
+    "date_changed"
+  ]
+}

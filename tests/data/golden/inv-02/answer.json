@@ -1,0 +1,88 @@
+{
+  "id": "inv-02",
+  "kind": "inv",
+  "format": "email",
+  "tags": [
+    "partial"
+  ],
+  "schema_version": 1,
+  "answer": {
+    "doc_type": "invoice",
+    "po_number": "4561084",
+    "vendor_order_number": "658054",
+    "invoice_number": "INV-43601",
+    "invoice_date": "2026-11-21",
+    "carrier": null,
+    "tracking_numbers": [],
+    "ship_date": null,
+    "arrival_date": null,
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "PLT-AL3",
+        "qty": 10,
+        "unit": "EA",
+        "unit_price": 27.6,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 2,
+        "item": "CPL-3/4",
+        "qty": 40,
+        "unit": "EA",
+        "unit_price": 9.35,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 3,
+        "item": "NUT-M8",
+        "qty": 80,
+        "unit": "BOX",
+        "unit_price": 6.75,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      }
+    ],
+    "charges": [],
+    "total": 1190.0
+  },
+  "tell_tales": [],
+  "po_context": {
+    "po_number": "4561084",
+    "vendor": "Initech Tools",
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "PLT-AL3",
+        "qty": 10,
+        "unit_price": 27.6
+      },
+      {
+        "line_no": 2,
+        "item": "CPL-3/4",
+        "qty": 40,
+        "unit_price": 9.35
+      },
+      {
+        "line_no": 3,
+        "item": "NUT-M8",
+        "qty": 80,
+        "unit_price": 6.75
+      },
+      {
+        "line_no": 4,
+        "item": "GSK-G9",
+        "qty": 500,
+        "unit_price": 0.85
+      }
+    ]
+  },
+  "expected_flags": [
+    "lines_not_covered"
+  ]
+}

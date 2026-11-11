@@ -1,0 +1,26 @@
+{
+  "id": "other-05",
+  "kind": "other",
+  "format": "email",
+  "tags": [
+    "ooo"
+  ],
+  "schema_version": 1,
+  "answer": {
+    "doc_type": "other",
+    "po_number": null,
+    "vendor_order_number": null,
+    "invoice_number": null,
+    "invoice_date": null,
+    "carrier": null,
+    "tracking_numbers": [],
+    "ship_date": null,
+    "arrival_date": null,
+    "lines": [],
+    "charges": [],
+    "total": null
+  },
+  "tell_tales": [],
+  "po_context": null,
+  "expected_flags": []
+}

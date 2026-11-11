@@ -1,0 +1,18 @@
+Sheet: Document
+INVOICE
+From	Northwind Metals
+Invoice No	INV-63340
+Invoice date	2026-11-12
+Customer PO	4512194
+Our order	AB-73068
+
+Payment terms: Net 30.
+
+PO Line	Part No	Description	Qty	Unit Price	Amount
+2	WID-100	Widget 100	10	$5.00	50.00
+3	WID-400	Widget 400	12	$12.50	150.00
+4	FLG-DN50	Flange DN50	25	$18.40	460.00
+5	PLT-AL3	Aluminum plate 3mm	5	$27.60	138.00
+				Freight	38.50
+				Total due USD	836.50
+Items not listed here are not invoiced yet.

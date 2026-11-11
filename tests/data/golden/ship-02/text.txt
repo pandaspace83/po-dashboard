@@ -1,0 +1,25 @@
+From: Rita Chen <rita@umbrella-seals.test>
+To: purchasing@example-buyer.test
+Subject: Shipment notice for PO 4551146
+Date: Mon, 09 Nov 2026 09:37:00 +0000
+
+From: Umbrella Seals
+Date: November 9, 2026
+Your PO: PO 4551146
+Order ref: SO-82607
+Carrier: DHL
+Tracking: 5241445591
+Ship date: November 9, 2026
+ETA: November 17, 2026
+
+The following items left our dock today.
+
+PO Line  Part No   Description      Qty
+1        VLV-V12   Ball valve V-12  12
+2        WID-100   Widget 100       100
+3        SEAL-22   Oil seal 22mm    150
+4        FLT-OIL7  Oil filter 7     5
+
+Regards,
+Rita Chen
+Umbrella Seals

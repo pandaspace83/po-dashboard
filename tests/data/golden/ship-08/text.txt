@@ -1,0 +1,23 @@
+ADVANCE SHIP NOTICE
+
+From: Umbrella Seals
+Date: November 14, 2026
+PO Number: 4535864
+Sales order: 178295
+Carrier: DHL
+Tracking: 6340814355
+Ship date: November 14, 2026
+Arrives: November 22, 2026
+
+Your order has shipped.
+
+Line  Part No   Description      Qty
+1     MTR-075   Motor 0.75kW     80
+2     WID-100   Widget 100       40
+3     FLG-DN50  Flange DN50      500
+4     VLV-V12   Ball valve V-12  100
+5     WID-400   Widget 400       100
+
+Regards,
+Rita Chen
+Umbrella Seals

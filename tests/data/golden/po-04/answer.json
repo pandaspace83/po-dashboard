@@ -1,0 +1,77 @@
+{
+  "id": "po-04",
+  "kind": "po",
+  "format": "pdf",
+  "tags": [
+    "full"
+  ],
+  "schema_version": 1,
+  "answer": {
+    "doc_type": "purchase_order",
+    "po_number": "4537071",
+    "vendor_order_number": null,
+    "invoice_number": null,
+    "invoice_date": null,
+    "carrier": null,
+    "tracking_numbers": [],
+    "ship_date": null,
+    "arrival_date": null,
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "NUT-M8",
+        "qty": 12,
+        "unit": "BOX",
+        "unit_price": 6.75,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": "2027-01-10"
+      },
+      {
+        "line_no": 2,
+        "item": "BLT-M8x40",
+        "qty": 10,
+        "unit": "BOX",
+        "unit_price": 14.9,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": "2026-12-11"
+      },
+      {
+        "line_no": 3,
+        "item": "FLT-OIL7",
+        "qty": 10,
+        "unit": "EA",
+        "unit_price": 11.8,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": "2026-12-30"
+      },
+      {
+        "line_no": 4,
+        "item": "FLG-DN50",
+        "qty": 5,
+        "unit": "EA",
+        "unit_price": 18.4,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": "2026-12-12"
+      },
+      {
+        "line_no": 5,
+        "item": "WID-400",
+        "qty": 12,
+        "unit": "EA",
+        "unit_price": 12.5,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": "2026-12-07"
+      }
+    ],
+    "charges": [],
+    "total": null
+  },
+  "tell_tales": [],
+  "po_context": null,
+  "expected_flags": []
+}

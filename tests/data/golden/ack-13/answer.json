@@ -1,0 +1,112 @@
+{
+  "id": "ack-13",
+  "kind": "ack",
+  "format": "pdf",
+  "tags": [
+    "per_line"
+  ],
+  "schema_version": 1,
+  "answer": {
+    "doc_type": "order_acknowledgement",
+    "po_number": "4591834",
+    "vendor_order_number": "422585",
+    "invoice_number": null,
+    "invoice_date": null,
+    "carrier": null,
+    "tracking_numbers": [],
+    "ship_date": null,
+    "arrival_date": null,
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "GSK-G9",
+        "qty": 40,
+        "unit": "EA",
+        "unit_price": 0.85,
+        "promised_date": "2026-11-30",
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 2,
+        "item": "BRG-6204",
+        "qty": 12,
+        "unit": "EA",
+        "unit_price": 3.15,
+        "promised_date": "2026-12-14",
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 3,
+        "item": "BLT-M8x40",
+        "qty": 200,
+        "unit": "BOX",
+        "unit_price": 14.9,
+        "promised_date": "2026-12-28",
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 4,
+        "item": "CPL-3/4",
+        "qty": 100,
+        "unit": "EA",
+        "unit_price": 9.35,
+        "promised_date": "2027-01-11",
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 5,
+        "item": "PLT-AL3",
+        "qty": 100,
+        "unit": "EA",
+        "unit_price": 27.6,
+        "promised_date": "2027-01-25",
+        "arrival_date": null,
+        "requested_date": null
+      }
+    ],
+    "charges": [],
+    "total": null
+  },
+  "tell_tales": [],
+  "po_context": {
+    "po_number": "4591834",
+    "vendor": "Contoso Bearings",
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "GSK-G9",
+        "qty": 40,
+        "unit_price": 0.85
+      },
+      {
+        "line_no": 2,
+        "item": "BRG-6204",
+        "qty": 12,
+        "unit_price": 3.15
+      },
+      {
+        "line_no": 3,
+        "item": "BLT-M8x40",
+        "qty": 200,
+        "unit_price": 14.9
+      },
+      {
+        "line_no": 4,
+        "item": "CPL-3/4",
+        "qty": 100,
+        "unit_price": 9.35
+      },
+      {
+        "line_no": 5,
+        "item": "PLT-AL3",
+        "qty": 100,
+        "unit_price": 27.6
+      }
+    ]
+  },
+  "expected_flags": []
+}

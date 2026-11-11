@@ -1,0 +1,29 @@
+From: Marcus Lee <marcus@northwind-metals.test>
+To: purchasing@example-buyer.test
+Subject: Shipment notice for PO 4584372
+Date: Fri, 13 Nov 2026 09:37:00 +0000
+Message-ID: <ship-03@golden.test>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+From: Northwind Metals
+Date: November 13th, 2026
+Your PO: PO 4584372
+Order ref: 784990
+Carrier: USPS
+Tracking: 9467407662631885884862, 9411963003618274178447, 9441969873552345616=
+385
+Ship date: November 13th, 2026
+ETA: November 19th, 2026
+
+Your order has shipped.
+
+Line  Part No    Description     Qty
+1     GSK-G9     Gasket G-9      60
+2     MTR-075    Motor 0.75kW    40
+3     BLT-M8x40  Hex bolt M8x40  10
+
+Regards,
+Marcus Lee
+Northwind Metals

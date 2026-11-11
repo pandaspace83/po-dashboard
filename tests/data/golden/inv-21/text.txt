@@ -1,0 +1,20 @@
+INVOICE
+
+From: Hooli Plastics
+Invoice No : INV-67101
+Inv0ice date: November 18, 2026
+Buyer PO: P.O. 4582964
+Our order: SO-53472
+
+Payment terms: Net 30.
+
+Line 1: 150 EA WID-100 (Widget 100) at $5.00 each.
+Line 2 : 40 BOX NUT-M8 (Hex nut M8) at $6.75 each.
+Line 3: 5 EA PLT-AL3 (Aluminum plate 3mm) at $27.60 each.
+Line 4: 10 BOX BLT-M8x40 (Hex bolt M8x40) at $14.90 each.
+Sales tax (6%): $78.42.
+Total due USD : $1,385.42.
+
+Regards,
+A1icia Moreno
+Hooli P1astics

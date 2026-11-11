@@ -1,0 +1,69 @@
+{
+  "id": "ship-09",
+  "kind": "ship",
+  "format": "pdf",
+  "tags": [
+    "partial",
+    "vendor_near"
+  ],
+  "schema_version": 1,
+  "answer": {
+    "doc_type": "shipment_notice",
+    "po_number": "4584344",
+    "vendor_order_number": "4584427",
+    "invoice_number": null,
+    "invoice_date": null,
+    "carrier": "FedEx",
+    "tracking_numbers": [
+      "471796582244"
+    ],
+    "ship_date": "2026-11-06",
+    "arrival_date": "2026-11-09",
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "FLG-DN50",
+        "qty": 10,
+        "unit": null,
+        "unit_price": null,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 2,
+        "item": "BLT-M8x40",
+        "qty": 24,
+        "unit": null,
+        "unit_price": null,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      }
+    ],
+    "charges": [],
+    "total": null
+  },
+  "tell_tales": [],
+  "po_context": {
+    "po_number": "4584344",
+    "vendor": "Initech Tools",
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "FLG-DN50",
+        "qty": 10,
+        "unit_price": 18.4
+      },
+      {
+        "line_no": 2,
+        "item": "BLT-M8x40",
+        "qty": 40,
+        "unit_price": 14.9
+      }
+    ]
+  },
+  "expected_flags": [
+    "qty_below_order"
+  ]
+}

@@ -1,0 +1,20 @@
+INVOICE
+
+From: Contoso Bearings
+Invoice No: INV-95434
+Invoice date: 11/14/2026
+Your PO: 4594587
+Our order: 978911
+
+Payment terms: Net 30.
+
+Line 1: 12 EA CPL-3/4 (Coupling 3/4 in) at $9.35 each.
+Line 2: 80 EA VLV-V12 (Ball valve V-12) at $46.25 each.
+Line 3: 10 FT HSE-12 (Hydraulic h0se 12mm) at $4.20 each.
+Line 4: 70 EA WID-100 (Widget 100) at $5.00 each.
+Line 5: 10 EA GRS-400 (Grease cartridge 400g) at $3.95 each.
+Total due USD: $4,243.70.
+
+Regards,
+Tom Becker
+C0ntoso Bearings

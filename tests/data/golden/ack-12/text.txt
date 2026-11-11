@@ -1,0 +1,20 @@
+ORDER ACKNOWLEDGEMENT
+
+From: Contoso Bearings
+Date: November 12, 2026
+PO Number: P.O. 4545722
+Sales order: AB-84319
+
+Thank you for your order. We confirm it as follows.
+
+Line  Part No  Description          Qty  UoM  Unit Price  Promised
+1     VLV-V12  Ball valve V-12      10   EA   $46.25      December 11, 2026
+2     WID-400  Widget 400           100  EA   $12.50      December 11, 2026
+3     GSK-G9   Gasket G-9           300  EA   $0.85       December 11, 2026
+4     HSE-12   Hydraulic hose 12mm  10   FT   $4.20       December 11, 2026
+
+Quantity reduced on one line; the balance will follow, date to be advised.
+
+Regards,
+Tom Becker
+Contoso Bearings

@@ -1,0 +1,24 @@
+From: Dana Whitfield <dana@acme-fasteners.test>
+To: purchasing@example-buyer.test
+Subject: Invoice INV-44741 for PO 4580528
+Date: Tue, 10 Nov 2026 09:36:00 +0000
+
+From: Acme Fasteners
+Invoice No: INV-44741
+Invoice date: 11/10/2026
+PO Number: P.O. 4580528
+Order ref: SO-63267
+
+Payment terms: Net 30.
+
+Line  Part No   Description      Qty  Unit Price  Amount
+1     GSK-G9    Gasket G-9       200  $0.85       170.00
+2     CPL-3/4   Coupling 3/4 in  25   $9.35       233.75
+3     FLG-DN50  Flange DN50      12   $18.40      220.80
+Total due USD                                     624.55
+
+Items not listed here are not invoiced yet.
+
+Regards,
+Dana Whitfield
+Acme Fasteners

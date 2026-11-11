@@ -1,0 +1,104 @@
+{
+  "id": "inv-21",
+  "kind": "inv",
+  "format": "scan",
+  "tags": [
+    "tax"
+  ],
+  "schema_version": 1,
+  "answer": {
+    "doc_type": "invoice",
+    "po_number": "4582964",
+    "vendor_order_number": "SO-53472",
+    "invoice_number": "INV-67101",
+    "invoice_date": "2026-11-18",
+    "carrier": null,
+    "tracking_numbers": [],
+    "ship_date": null,
+    "arrival_date": null,
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "WID-100",
+        "qty": 150,
+        "unit": "EA",
+        "unit_price": 5.0,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 2,
+        "item": "NUT-M8",
+        "qty": 40,
+        "unit": "BOX",
+        "unit_price": 6.75,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 3,
+        "item": "PLT-AL3",
+        "qty": 5,
+        "unit": "EA",
+        "unit_price": 27.6,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 4,
+        "item": "BLT-M8x40",
+        "qty": 10,
+        "unit": "BOX",
+        "unit_price": 14.9,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      }
+    ],
+    "charges": [
+      {
+        "kind": "tax",
+        "label": "Sales tax (6%)",
+        "amount": 78.42
+      }
+    ],
+    "total": 1385.42
+  },
+  "tell_tales": [],
+  "po_context": {
+    "po_number": "4582964",
+    "vendor": "Hooli Plastics",
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "WID-100",
+        "qty": 150,
+        "unit_price": 5.0
+      },
+      {
+        "line_no": 2,
+        "item": "NUT-M8",
+        "qty": 40,
+        "unit_price": 6.75
+      },
+      {
+        "line_no": 3,
+        "item": "PLT-AL3",
+        "qty": 5,
+        "unit_price": 27.6
+      },
+      {
+        "line_no": 4,
+        "item": "BLT-M8x40",
+        "qty": 10,
+        "unit_price": 14.9
+      }
+    ]
+  },
+  "expected_flags": [
+    "charge_present"
+  ]
+}

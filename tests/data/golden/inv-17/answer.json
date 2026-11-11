@@ -1,0 +1,73 @@
+{
+  "id": "inv-17",
+  "kind": "inv",
+  "format": "pdf",
+  "tags": [
+    "partial",
+    "vendor_lineno"
+  ],
+  "schema_version": 1,
+  "answer": {
+    "doc_type": "invoice",
+    "po_number": "4550693",
+    "vendor_order_number": "AB-81259",
+    "invoice_number": "INV-65655",
+    "invoice_date": "2026-11-17",
+    "carrier": null,
+    "tracking_numbers": [],
+    "ship_date": null,
+    "arrival_date": null,
+    "lines": [
+      {
+        "line_no": null,
+        "item": "PLT-AL3",
+        "qty": 80,
+        "unit": null,
+        "unit_price": 27.6,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": null,
+        "item": "WID-100",
+        "qty": 200,
+        "unit": null,
+        "unit_price": 5.0,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      }
+    ],
+    "charges": [],
+    "total": 3208.0
+  },
+  "tell_tales": [],
+  "po_context": {
+    "po_number": "4550693",
+    "vendor": "Stark Fittings",
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "PLT-AL3",
+        "qty": 80,
+        "unit_price": 27.6
+      },
+      {
+        "line_no": 2,
+        "item": "FLT-OIL7",
+        "qty": 10,
+        "unit_price": 11.8
+      },
+      {
+        "line_no": 3,
+        "item": "WID-100",
+        "qty": 200,
+        "unit_price": 5.0
+      }
+    ]
+  },
+  "expected_flags": [
+    "lines_not_covered"
+  ]
+}

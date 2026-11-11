@@ -1,0 +1,81 @@
+{
+  "id": "inv-16",
+  "kind": "inv",
+  "format": "pdf",
+  "tags": [
+    "full",
+    "vendor_near"
+  ],
+  "schema_version": 1,
+  "answer": {
+    "doc_type": "invoice",
+    "po_number": "4559584",
+    "vendor_order_number": "4559657",
+    "invoice_number": "INV-47066",
+    "invoice_date": "2026-11-11",
+    "carrier": null,
+    "tracking_numbers": [],
+    "ship_date": null,
+    "arrival_date": null,
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "FLG-DN50",
+        "qty": 12,
+        "unit": null,
+        "unit_price": 18.4,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 2,
+        "item": "WID-400",
+        "qty": 10,
+        "unit": null,
+        "unit_price": 12.5,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 3,
+        "item": "BRG-6204",
+        "qty": 25,
+        "unit": null,
+        "unit_price": 3.15,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      }
+    ],
+    "charges": [],
+    "total": 424.55
+  },
+  "tell_tales": [],
+  "po_context": {
+    "po_number": "4559584",
+    "vendor": "Hooli Plastics",
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "FLG-DN50",
+        "qty": 12,
+        "unit_price": 18.4
+      },
+      {
+        "line_no": 2,
+        "item": "WID-400",
+        "qty": 10,
+        "unit_price": 12.5
+      },
+      {
+        "line_no": 3,
+        "item": "BRG-6204",
+        "qty": 25,
+        "unit_price": 3.15
+      }
+    ]
+  },
+  "expected_flags": []
+}

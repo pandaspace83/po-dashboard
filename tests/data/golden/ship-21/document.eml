@@ -1,0 +1,45 @@
+From: Priya Nair <priya@initech-tools.test>
+To: purchasing@example-buyer.test
+Subject: Shipment notice for PO 4552242
+Date: Thu, 05 Nov 2026 09:37:00 +0000
+Message-ID: <ship-21@golden.test>
+MIME-Version: 1.0
+Content-Type: multipart/alternative; boundary="golden-boundary"
+
+--golden-boundary
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+From: Initech Tools
+Date: 11/05/26
+Buyer PO: PO 4552242
+Our order: 732188
+Carrier: UPS
+Tracking: 1ZNEE8QQLX6JYLZNUQ
+Ship date: 11/05/26
+ETA: 11/10/26
+
+Your order has shipped.
+
+PO Line  Part No   Description        Qty
+1        FLT-OIL7  Oil filter 7       40
+2        BRG-6204  Ball bearing 6204  60
+
+Regards,
+Priya Nair
+Initech Tools
+
+--golden-boundary
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+<html><body><p>From: Initech Tools</p><p>Date: 11/05/26</p><p>Buyer PO: PO 45=
+52242</p><p>Our order: 732188</p><p>Carrier: UPS</p><p>Tracking: 1ZNEE8QQLX6J=
+YLZNUQ</p><p>Ship date: 11/05/26</p><p>ETA: 11/10/26</p><p>&nbsp;</p><p>Your =
+order has shipped.</p><p>&nbsp;</p><p>PO Line  Part No   Description        Q=
+ty</p><p>1        FLT-OIL7  Oil filter 7       40</p><p>2        BRG-6204  Ba=
+ll bearing 6204  60</p><p>&nbsp;</p><p>Regards,</p><p>Priya Nair</p><p>Initec=
+h Tools</p></body></html>
+
+--golden-boundary--

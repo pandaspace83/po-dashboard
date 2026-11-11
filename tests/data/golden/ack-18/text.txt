@@ -1,0 +1,17 @@
+ORDER ACKNOWLEDGEMENT
+
+From: Hooli Plastics
+Date: November 22, 2026
+Buyer PO: P.O. 4594444
+Order ref: 887892
+
+Thank you for your order. We confirm it as follows.
+REVISED: this replaces our earlier acknowledgement, which gave December 10, 2026.
+
+Line  Part No  Description            Qty  UoM  Unit Price  Delivery
+1     GRS-400  Grease cartridge 400g  5    EA   $3.95       December 26, 2026
+2     PIN-D6   Dowel pin 6mm          500  BOX  $8.10       December 21, 2026
+
+Regards,
+Alicia Moreno
+Hooli Plastics

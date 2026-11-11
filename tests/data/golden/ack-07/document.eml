@@ -1,0 +1,29 @@
+From: Dana Whitfield <dana@acme-fasteners.test>
+To: purchasing@example-buyer.test
+Subject: RE: PO 4565849
+Date: Thu, 12 Nov 2026 09:36:00 +0000
+Message-ID: <ack-07@golden.test>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+From: Acme Fasteners
+Date: November 12th, 2026
+Buyer PO: 4565849
+Sales order: AB-63470
+
+Please find our order acknowledgement below.
+
+PO Line  Part No    Description          Qty  UoM  Unit Price  Promised
+1        HSE-12     Hydraulic hose 12mm  60   FT   $4.20       Ships in 2 wee=
+ks
+2        BLT-M8x40  Hex bolt M8x40       12   BOX  $14.90      Ships in 2 wee=
+ks
+3        PIN-D6     Dowel pin 6mm        25   BOX  $8.10       Ships in 2 wee=
+ks
+
+Order ships in 2 weeks.
+
+Regards,
+Dana Whitfield
+Acme Fasteners

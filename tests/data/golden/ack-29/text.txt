@@ -1,0 +1,20 @@
+From: Alicia Moreno <alicia@hooli-plastics.test>
+To: purchasing@example-buyer.test
+Subject: Order Acknowledgement - PO 4562555
+Date: Mon, 16 Nov 2026 09:36:00 +0000
+
+From: Hooli Plastics
+Date: 11/16/2026
+Order ref: AB-88530
+
+Thank you for your order. We confirm it as follows.
+
+PO Line  Part No   Description          Qty  UoM  Unit Price  Ship date
+1        PIN-D6    Dowel pin 6mm        500  BOX  $8.10       12/03/2026
+2        FLT-OIL7  Oil filter 7         5    EA   $11.80      12/03/2026
+3        CPL-3/4   Coupling 3/4 in      5    EA   $9.35       12/03/2026
+4        HSE-12    Hydraulic hose 12mm  25   FT   $4.20       12/03/2026
+
+Regards,
+Alicia Moreno
+Hooli Plastics

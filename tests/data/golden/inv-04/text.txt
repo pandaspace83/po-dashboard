@@ -1,0 +1,23 @@
+From: Sam Okafor <sam@globex-hydraulics.test>
+To: purchasing@example-buyer.test
+Subject: Invoice INV-74181 for PO 4563690
+Date: Thu, 12 Nov 2026 09:36:00 +0000
+
+From: Globex Hydraulics
+Invoice No: INV-74181
+Invoice date: Nov 12, 2026
+Buyer PO: 4563690
+Our order: AB-95723
+
+Payment terms: Net 30.
+
+Line  Part No    Description     Qty  Unit Price  Amount
+1     BLT-M8x40  Hex bolt M8x40  12   $14.90      178.80
+2     MTR-075    Motor 0.75kW    25   $212.00     5,300.00
+3     FLG-DN50   Flange DN50     200  $18.40      3,680.00
+Freight                                             145.00
+Total due USD                                     9,303.80
+
+Regards,
+Sam Okafor
+Globex Hydraulics

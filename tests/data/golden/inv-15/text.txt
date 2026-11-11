@@ -1,0 +1,22 @@
+INVOICE
+
+From: Hooli Plastics
+Invoice No: INV-74569
+Invoice date: 11/19/26
+Your PO: PO 4552884
+Our order: AB-41481
+
+Payment terms: Net 30.
+
+Line  Part No   Description             Qty  Unit Price  Amount
+1     FLG-DN50  Flange DN50             12   $18.40      220.80
+2     CPL-3/4   Coupling 3/4 in         100  $9.35       935.00
+3     BRG-6204  Ball bearing 6204       100  $3.15       315.00
+4     SEAL-22   Oil seal 22mm           200  $1.10       220.00
+5     TARIFF    Tariff surcharge (10%)  1    169.08      169.08
+Freight                                                  145.00
+Total due USD                                          2,004.88
+
+Regards,
+Alicia Moreno
+Hooli Plastics

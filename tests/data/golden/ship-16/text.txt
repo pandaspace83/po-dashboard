@@ -1,0 +1,18 @@
+Sheet: Document
+SHIPPING NOTICE
+From	Stark Fittings
+Date	2026-11-21
+PO Number	P.O. 4553515
+Order ref	546867
+Carrier	DHL
+Tracking	0267092028, 5686764754, 9945047434
+Ship date	2026-11-21
+Expected arrival	2026-11-25
+
+Your order has shipped.
+
+PO Line	Part No	Description	Qty
+1	MTR-075	Motor 0.75kW	24
+2	HSE-12	Hydraulic hose 12mm	25
+4	WID-100	Widget 100	25
+Remaining items are on backorder and will ship separately.

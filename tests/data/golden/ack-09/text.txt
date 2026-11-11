@@ -1,0 +1,18 @@
+From: Sam Okafor <sam@globex-hydraulics.test>
+To: purchasing@example-buyer.test
+Subject: Re: your order 4588960
+Date: Wed, 18 Nov 2026 09:36:00 +0000
+
+From: Globex Hydraulics
+Date: 11/18/2026
+Order ref: SO-38671
+
+We are pleased to acknowledge your purchase order.
+
+Line  Part No  Description      Qty  UoM  Unit Price  Promised
+1     CPL-3/4  Coupling 3/4 in  500  EA   $9.35       12/09/2026
+2     VLV-V12  Ball valve V-12  25   EA   $46.25      12/09/2026
+
+Regards,
+Sam Okafor
+Globex Hydraulics

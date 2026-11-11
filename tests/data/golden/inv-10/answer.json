@@ -1,0 +1,104 @@
+{
+  "id": "inv-10",
+  "kind": "inv",
+  "format": "pdf",
+  "tags": [
+    "freight"
+  ],
+  "schema_version": 1,
+  "answer": {
+    "doc_type": "invoice",
+    "po_number": "4576156",
+    "vendor_order_number": "AB-12434",
+    "invoice_number": "INV-61995",
+    "invoice_date": "2026-11-17",
+    "carrier": null,
+    "tracking_numbers": [],
+    "ship_date": null,
+    "arrival_date": null,
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "VLV-V12",
+        "qty": 60,
+        "unit": null,
+        "unit_price": 46.25,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 2,
+        "item": "SEAL-22",
+        "qty": 150,
+        "unit": null,
+        "unit_price": 1.1,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 3,
+        "item": "PIN-D6",
+        "qty": 500,
+        "unit": null,
+        "unit_price": 8.1,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 4,
+        "item": "FLT-OIL7",
+        "qty": 60,
+        "unit": null,
+        "unit_price": 11.8,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      }
+    ],
+    "charges": [
+      {
+        "kind": "freight",
+        "label": "Freight",
+        "amount": 145.0
+      }
+    ],
+    "total": 7843.0
+  },
+  "tell_tales": [],
+  "po_context": {
+    "po_number": "4576156",
+    "vendor": "Umbrella Seals",
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "VLV-V12",
+        "qty": 60,
+        "unit_price": 46.25
+      },
+      {
+        "line_no": 2,
+        "item": "SEAL-22",
+        "qty": 150,
+        "unit_price": 1.1
+      },
+      {
+        "line_no": 3,
+        "item": "PIN-D6",
+        "qty": 500,
+        "unit_price": 8.1
+      },
+      {
+        "line_no": 4,
+        "item": "FLT-OIL7",
+        "qty": 60,
+        "unit_price": 11.8
+      }
+    ]
+  },
+  "expected_flags": [
+    "charge_present"
+  ]
+}

@@ -1,0 +1,13 @@
+From: Jon Harlow <jon@stark-fittings.test>
+To: purchasing@example-buyer.test
+Subject: Automatic reply: Out of office
+Date: Tue, 03 Nov 2026 09:38:00 +0000
+
+Hello, I am out of the office until November 11, 2026 with limited access to email.
+For urgent matters please contact our main desk.
+
+Jon Harlow, Stark Fittings
+
+Regards,
+Jon Harlow
+Stark Fittings

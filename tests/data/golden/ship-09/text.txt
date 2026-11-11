@@ -1,0 +1,22 @@
+SHIPPING NOTICE
+
+From: Initech Tools
+Date: 2026-11-06
+Your PO: 4584344
+Order ref: 4584427
+Carrier: FedEx
+Tracking: 471796582244
+Ship date: 2026-11-06
+Arrives: 2026-11-09
+
+Your order has shipped.
+
+Line  Part No    Description     Qty
+1     FLG-DN50   Flange DN50     10
+2     BLT-M8x40  Hex bolt M8x40  24
+
+Remaining items are on backorder and will ship separately.
+
+Regards,
+Priya Nair
+Initech Tools

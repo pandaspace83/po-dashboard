@@ -1,0 +1,64 @@
+{
+  "id": "ack-09",
+  "kind": "ack",
+  "format": "email",
+  "tags": [
+    "subject_po"
+  ],
+  "schema_version": 1,
+  "answer": {
+    "doc_type": "order_acknowledgement",
+    "po_number": "4588960",
+    "vendor_order_number": "SO-38671",
+    "invoice_number": null,
+    "invoice_date": null,
+    "carrier": null,
+    "tracking_numbers": [],
+    "ship_date": null,
+    "arrival_date": null,
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "CPL-3/4",
+        "qty": 500,
+        "unit": "EA",
+        "unit_price": 9.35,
+        "promised_date": "2026-12-09",
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 2,
+        "item": "VLV-V12",
+        "qty": 25,
+        "unit": "EA",
+        "unit_price": 46.25,
+        "promised_date": "2026-12-09",
+        "arrival_date": null,
+        "requested_date": null
+      }
+    ],
+    "charges": [],
+    "total": null
+  },
+  "tell_tales": [],
+  "po_context": {
+    "po_number": "4588960",
+    "vendor": "Globex Hydraulics",
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "CPL-3/4",
+        "qty": 500,
+        "unit_price": 9.35
+      },
+      {
+        "line_no": 2,
+        "item": "VLV-V12",
+        "qty": 25,
+        "unit_price": 46.25
+      }
+    ]
+  },
+  "expected_flags": []
+}

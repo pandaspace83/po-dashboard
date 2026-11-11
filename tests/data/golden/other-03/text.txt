@@ -1,0 +1,13 @@
+QUOTATION
+
+From: Northwind Metals
+Valid for 30 days.
+
+Part No   Description        Qty   Unit Price
+BLT-M8x40   Hex bolt M8x40   100   $14.90
+
+This is a quotation and not an order confirmation. Please send a purchase order to accept.
+
+Regards,
+Marcus Lee
+Northwind Metals

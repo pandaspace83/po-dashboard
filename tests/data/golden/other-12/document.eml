@@ -1,0 +1,30 @@
+From: Sam Okafor <sam@globex-hydraulics.test>
+To: purchasing@example-buyer.test
+Subject: RE: PO 4523426
+Date: Fri, 20 Nov 2026 09:38:00 +0000
+Message-ID: <other-12@golden.test>
+MIME-Version: 1.0
+Content-Type: multipart/alternative; boundary="golden-boundary"
+
+--golden-boundary
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Thanks, received.
+
+Sam Okafor, Globex Hydraulics
+
+Regards,
+Sam Okafor
+Globex Hydraulics
+
+--golden-boundary
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+<html><body><p>Thanks, received.</p><p>&nbsp;</p><p>Sam Okafor, Globex Hydrau=
+lics</p><p>&nbsp;</p><p>Regards,</p><p>Sam Okafor</p><p>Globex Hydraulics</p>=
+</body></html>
+
+--golden-boundary--

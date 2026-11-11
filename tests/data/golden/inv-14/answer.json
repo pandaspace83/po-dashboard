@@ -1,0 +1,99 @@
+{
+  "id": "inv-14",
+  "kind": "inv",
+  "format": "pdf",
+  "tags": [
+    "no_lineno",
+    "price_diff"
+  ],
+  "schema_version": 1,
+  "answer": {
+    "doc_type": "invoice",
+    "po_number": "4582415",
+    "vendor_order_number": "SO-90459",
+    "invoice_number": "INV-63685",
+    "invoice_date": "2026-11-10",
+    "carrier": null,
+    "tracking_numbers": [],
+    "ship_date": null,
+    "arrival_date": null,
+    "lines": [
+      {
+        "line_no": null,
+        "item": "FLG-DN50",
+        "qty": 5,
+        "unit": null,
+        "unit_price": 18.4,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": null,
+        "item": "CPL-3/4",
+        "qty": 500,
+        "unit": null,
+        "unit_price": 10.35,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": null,
+        "item": "BRG-6204",
+        "qty": 80,
+        "unit": null,
+        "unit_price": 3.15,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": null,
+        "item": "GSK-G9",
+        "qty": 25,
+        "unit": null,
+        "unit_price": 0.85,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      }
+    ],
+    "charges": [],
+    "total": 5540.25
+  },
+  "tell_tales": [],
+  "po_context": {
+    "po_number": "4582415",
+    "vendor": "Stark Fittings",
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "FLG-DN50",
+        "qty": 5,
+        "unit_price": 18.4
+      },
+      {
+        "line_no": 2,
+        "item": "CPL-3/4",
+        "qty": 500,
+        "unit_price": 9.35
+      },
+      {
+        "line_no": 3,
+        "item": "BRG-6204",
+        "qty": 80,
+        "unit_price": 3.15
+      },
+      {
+        "line_no": 4,
+        "item": "GSK-G9",
+        "qty": 25,
+        "unit_price": 0.85
+      }
+    ]
+  },
+  "expected_flags": [
+    "price_differs"
+  ]
+}

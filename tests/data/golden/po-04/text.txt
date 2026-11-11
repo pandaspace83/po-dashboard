@@ -1,0 +1,18 @@
+PURCHASE ORDER
+
+From: Example Buyer Inc.
+PO Number: PO 4537071
+Date: 11/03/2026
+Vendor: Umbrella Seals
+
+Please supply the items below to Example Buyer Inc.. Confirm receipt of this order.
+
+Line  Part No    Description     Qty  UoM  Unit Price  Required
+1     NUT-M8     Hex nut M8      12   BOX  $6.75       01/10/2027
+2     BLT-M8x40  Hex bolt M8x40  10   BOX  $14.90      12/11/2026
+3     FLT-OIL7   Oil filter 7    10   EA   $11.80      12/30/2026
+4     FLG-DN50   Flange DN50     5    EA   $18.40      12/12/2026
+5     WID-400    Widget 400      12   EA   $12.50      12/07/2026
+
+Purchasing
+Example Buyer Inc.

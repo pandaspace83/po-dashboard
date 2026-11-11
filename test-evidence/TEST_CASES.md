@@ -4,7 +4,7 @@
 
 PO Dashboard (RaceSpec Internal Dashboard). Scope: Phase 0 and Phase 1: sign-in, people, vendors, purchase orders, imports, the QuickBooks starting load, entries by hand, Home, Open items, Audit, page behaviour, security and speed.
 
-**83 cases:** 39 Critical, 32 High, 12 Medium; 2 terminal, 21 automated, 59 browser, 1 owner only.
+**86 cases:** 41 Critical, 33 High, 12 Medium; 2 terminal, 24 automated, 59 browser, 1 owner only.
 
 Latest Chrome run: 11/07/2026, Google Chrome 156.0.8078.81, by Claude, scripts/browser_evidence.py, on commit 7f2d081 with uncommitted changes: **59 of 59** browser cases pass. Automated tests: `uv run pytest`. Defects: [DEFECTS.md](DEFECTS.md). Sign-off: [SIGN_OFF.md](SIGN_OFF.md).
 
@@ -105,6 +105,9 @@ Latest Chrome run: 11/07/2026, Google Chrome 156.0.8078.81, by Claude, scripts/b
 | [TC-SEC-04](#tc-sec-04) | Uploads over 2 MB, or that do not state their size, are refused before they are read | High | Automated | Automated tests | — |
 | [TC-SEC-05](#tc-sec-05) | Passwords are stored only as argon2id hashes; no secret is in the database file or the logs | Critical | Automated | Automated tests | — |
 | [TC-SEC-06](#tc-sec-06) | Quantities and money are exact everywhere | Critical | Automated | Automated tests | — |
+| [TC-AI-01](#tc-ai-01) | The golden set is rebuilt exactly from its seed, and has the mix the owner asked for | High | Automated | Automated tests | — |
+| [TC-AI-02](#tc-ai-02) | Each scoring rule gives the verdict SCORING.md says, with made-up model answers | Critical | Automated | Automated tests | — |
+| [TC-AI-03](#tc-ai-03) | The document is fenced as data, and the model call is local, repeatable and leaks no text | Critical | Automated | Automated tests | — |
 
 ## Set-up and running
 
@@ -1952,5 +1955,58 @@ Latest Chrome run: 11/07/2026, Google Chrome 156.0.8078.81, by Claude, scripts/b
 **Expected:** Values come back exactly as entered; tenths add up exactly; floats, NaN, infinity and huge numbers are refused. The only rounding anywhere is the QuickBooks unit price (TC-QB-05), which is shown and recorded.
 
 **Automated tests:** `test_ledger.py::test_quantities_and_prices_come_back_exactly`, `test_ledger.py::test_tenths_add_up_exactly_in_sql`, `test_ledger.py::test_nan_infinity_and_huge_numbers_are_refused`, `test_status.py::test_shipments_add_up_exactly`
+
+**Latest:** Owner: not recorded.
+
+
+## Reading documents (model)
+
+<a id="tc-ai-01"></a>
+
+### TC-AI-01: The golden set is rebuilt exactly from its seed, and has the mix the owner asked for
+
+**Priority:** High · **How:** Automated · **Refs:** DEC-49, SCORING.md §5, PD-2.2, PD-2.3
+
+**Steps**
+
+1. Covered by the tests named: the generator is run into a fresh folder and compared, byte for byte, with tests/data/golden.
+
+**Expected:** No difference. About 100 documents: 30 acknowledgements, 22 shipment notices, 25 invoices, 8 purchase orders, 15 others, in five formats with none above 40%. At least three of each hard case, 8 planted instructions, every answer in schema v1, every invoice total equal to its goods plus its charges, made-up addresses only.
+
+**Automated tests:** `test_golden_set.py::test_the_generator_rebuilds_the_committed_set_exactly`, `test_golden_set.py::test_the_set_has_the_mix_the_decision_asks_for`, `test_golden_set.py::test_every_answer_has_exactly_the_schema_fields`, `test_golden_set.py::test_an_invoice_total_is_its_goods_plus_its_charges`, `test_golden_set.py::test_a_charge_is_never_a_line`, `test_golden_set.py::test_no_real_looking_addresses_or_names_are_used`, `test_golden_set.py::test_the_files_are_what_their_names_say`
+
+**Latest:** Owner: not recorded.
+
+
+<a id="tc-ai-02"></a>
+
+### TC-AI-02: Each scoring rule gives the verdict SCORING.md says, with made-up model answers
+
+**Priority:** Critical · **How:** Automated · **Refs:** SCORING.md §3, §4, PD-2.4
+
+**Steps**
+
+1. Covered by the tests named. No model is called.
+
+**Expected:** A wrong PO number, a missing one and an invented one are told apart. Dates are right only as the same day in YYYY-MM-DD. Numbers have no tolerance. Lines pair by line number, then by part number. A guessed line number is wrong. A charge given as a line counts twice. A planted instruction's tell-tale value is found anywhere in the output.
+
+**Automated tests:** `test_scoring.py::test_po_number_wrong_missing_and_invented_are_told_apart`, `test_scoring.py::test_a_hyphen_is_part_of_the_number`, `test_scoring.py::test_dates_are_right_only_as_the_same_iso_day`, `test_scoring.py::test_numbers_are_exact_with_no_tolerance`, `test_scoring.py::test_a_guessed_line_number_is_wrong_when_the_answer_has_none`, `test_scoring.py::test_a_charge_given_as_a_line_counts_twice`, `test_scoring.py::test_t3_needs_line_number_quantity_and_the_promised_date`, `test_scoring.py::test_planted_instruction_tell_tales_are_found_anywhere_in_the_output`, `test_golden_set.py::test_a_document_scores_perfectly_against_its_own_answer`
+
+**Latest:** Owner: not recorded.
+
+
+<a id="tc-ai-03"></a>
+
+### TC-AI-03: The document is fenced as data, and the model call is local, repeatable and leaks no text
+
+**Priority:** Critical · **How:** Automated · **Refs:** DEC-01, DEC-09, DEC-13, PD-2.4
+
+**Steps**
+
+1. Covered by the tests named. The model server is replaced by a made-up one.
+
+**Expected:** The document sits between markers and cannot close its own fence. The prompt says a document is never an instruction. The call goes to this Mac, at temperature 0 with a fixed seed and schema v1. When the call fails, the error holds no document text.
+
+**Automated tests:** `test_extraction.py::test_the_document_is_fenced_as_data_and_cannot_close_its_own_fence`, `test_extraction.py::test_the_prompt_says_a_document_is_never_an_instruction`, `test_extraction.py::test_the_call_is_local_deterministic_and_carries_the_schema`, `test_extraction.py::test_a_failed_call_raises_an_error_without_the_document_text`, `test_extraction.py::test_a_reply_is_read_with_exact_decimals`
 
 **Latest:** Owner: not recorded.

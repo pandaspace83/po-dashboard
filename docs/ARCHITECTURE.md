@@ -101,6 +101,7 @@ Tables, with the fields that matter. Every table has `id`, `created_at`; accepte
 | `promised_date_history` | line_id, date, source ack, recorded_at: one row per accepted date, so a slip is visible |
 | `shipment` / `shipment_line` | carrier, tracking_number, shipped_at, eta; line_id, qty |
 | `invoice` / `invoice_line` | invoice_number, invoice_date, total; line_id, qty, price |
+| `invoice_charge` | invoice_id, kind (freight, tariff, tax, other), label as printed, amount: charges that are not goods (DEC-48, Phase 4) |
 | `alert` | po_line_id (or po_id), rule, state (open, snoozed, dismissed, cleared), snoozed_until, first_seen, last_changed |
 | `contact_log` | alert_id, user_id, note, contacted_at: "marked contacted" entries |
 | `app_user` | email (lower case, unique), password hash, role, sealed TOTP secret, totp_confirmed_at, last_totp_step, failed attempts, locked_until, must_change_password, temp_password_expires_at, disabled_at |
@@ -120,7 +121,7 @@ vendor domain, and one invoice number per PO. **Deletes:** a PO's lines go with 
 shipment or invoice, a vendor with POs, and a line that anything refers to refuse to be deleted (a PO is cancelled, not
 deleted). Removing a person keeps what they recorded and empties the name.
 
-### Quantities, money and tax (DEC-24, OPEN-11)
+### Quantities, money and charges (DEC-24, DEC-48)
 
 SQLite has no exact decimal type, and SQLAlchemy's `Numeric` goes through floats on SQLite, which DEC-24 rules out. So
 Python uses `Decimal` and the database holds scaled integers through one custom column type: quantities × 10,000 (four
@@ -129,8 +130,10 @@ that is refused, never rounded. Status is computed from these exact values. Each
 amounts are never converted, and never added across currencies. Each line has its own unit, and units are never
 converted, so a confirmation in another unit is flagged for a person.
 
-Tax is undecided (OPEN-11, Phase 2). Until then `invoice.total` holds the total as written and there is no tax field;
-adding one later is a migration.
+Tax, freight and tariffs are **charges**, not goods lines (DEC-48, owner 2026-11-10: tax is rare, freight varies,
+tariffs sometimes come as their own line items). They are read as printed, each with its kind, label and amount, and
+stored in `invoice_charge` (a Phase 4 migration). The app never works out a tax or tariff rate. Until Phase 4,
+`invoice.total` holds the total as written.
 
 ### How the standard EDI documents map
 
@@ -202,15 +205,17 @@ so someone always decides about the missing quantity. A PO with no lines is Open
 3. **Text.** Body (HTML → text), PDF text, OCR for scanned pages or images, spreadsheet rows, Word text. Quoted
    earlier messages in a thread are marked so they are not mistaken for the current message.
 4. **Extract.** One model call per document with the system prompt below, the fenced text and the JSON schema:
-   `doc_type` (now including `purchase_order`), `po_number`, `tracking_numbers`, a shipment-level arrival date, and per line `line_no`, `item`,
-   `qty`, `promised_date`. The prompt is versioned (`prompt_version`) so results can be compared across changes.
+   the fields of extraction schema v1 ([SCORING.md](SCORING.md) §2): `doc_type` (including `purchase_order`),
+   `po_number`, the vendor's own order number, invoice number and date, carrier and tracking numbers, shipment-level
+   dates, goods `lines` (`line_no` only when the document gives the company's line number), `charges` (DEC-48) and the
+   total. The prompt is versioned (`prompt_version`) so results can be compared across changes.
 5. **Validate** (plain code, no model):
    - the PO number exists and the sender's domain belongs to the PO's vendor, else **Unmatched**. For a `purchase_order`
   document the PO number must be new, and the vendor is found from the recipient domain (DEC-17);
    - each line number exists on the PO; the item agrees with the PO line, else flagged;
    - quantity is a positive number and not above what is still open; dates parse and are plausible (not years away);
-   - invoice total agrees with lines × price, where the total is given (this fails on an invoice with tax, so its
-     final form waits for OPEN-11);
+   - where a total is given, the goods (quantity × price) plus the charges equal it to the cent (DEC-48); freight or a
+     tariff the PO did not list is flagged for the purchaser;
    - a value present in the document text. The extracted PO number and each date must appear in the source text,
      so a value the model invented cannot pass;
    - differences against the PO (price, quantity, date) are listed beside the line.
@@ -534,12 +539,13 @@ A clean-machine rehearsal is a Phase 7 task (NFR-07).
 | Golden set | the synthetic documents scored against the real model, field by field | `evals/` |
 | Browser | main flows with Playwright, with an accessibility check | `tests/e2e` |
 | Soak | 24 hours with a restart in the middle, no message missed or repeated (T-6) | `evals/soak` |
-| By hand | [test-evidence/HUMAN_TEST_CHECKLIST.md](../test-evidence/HUMAN_TEST_CHECKLIST.md), written in Phase 7 | |
+| By hand | the test record ([test_record.toml](../test-evidence/test_record.toml)): test cases, defects and the user sign-off, with a workbook for each test cycle (PD-1.13) | `test-evidence/` |
 
-The golden set is generated by a script from templates, so each document has a known answer file next to it:
-tables, prose, European date formats, short confirmations, shipment-level dates, quoted threads, scanned PDFs,
-spreadsheets, partial invoices, price differences, a duplicate, a revised acknowledgement that slips a date, and
-documents with planted instructions. A change that lowers its score needs a reason.
+The golden set is generated by a seeded script, so each document has a known answer file next to it (DEC-49): US
+English only, a broad mix of formats, the hard cases (quoted threads, the vendor's own numbers, part numbers without
+line numbers, charges printed as lines, a duplicate, a revised acknowledgement that slips a date) and documents with
+planted instructions. What "correct" means, field by field, and how T-1 to T-5 are worked out is in
+[SCORING.md](SCORING.md). A change that lowers its score needs a reason.
 
 ## 14. Folder layout
 

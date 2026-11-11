@@ -1,0 +1,12 @@
+Sheet: Document
+ORDER ACKNOWLEDGEMENT
+From	Acme Fasteners
+Date	11/12/26
+Your PO	PO 4542488
+Order ref	AB-78903
+
+We are pleased to acknowledge your purchase order.
+
+PO Line	Part No	Description	Qty	UoM	Unit Price	Delivery
+1	BRG-6204	Ball bearing 6204	150	EA	$3.15	11/27/26
+2	WID-400	Widget 400	100	EA	$12.50	12/11/26

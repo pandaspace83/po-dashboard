@@ -1,0 +1,83 @@
+{
+  "id": "ack-17",
+  "kind": "ack",
+  "format": "pdf",
+  "tags": [
+    "price_diff",
+    "same_date"
+  ],
+  "schema_version": 1,
+  "answer": {
+    "doc_type": "order_acknowledgement",
+    "po_number": "4584891",
+    "vendor_order_number": "SO-94222",
+    "invoice_number": null,
+    "invoice_date": null,
+    "carrier": null,
+    "tracking_numbers": [],
+    "ship_date": null,
+    "arrival_date": null,
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "PLT-AL3",
+        "qty": 500,
+        "unit": "EA",
+        "unit_price": 28.1,
+        "promised_date": "2026-12-01",
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 2,
+        "item": "WID-100",
+        "qty": 10,
+        "unit": "EA",
+        "unit_price": 5.0,
+        "promised_date": "2026-12-01",
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 3,
+        "item": "SEAL-22",
+        "qty": 500,
+        "unit": "EA",
+        "unit_price": 1.1,
+        "promised_date": "2026-12-01",
+        "arrival_date": null,
+        "requested_date": null
+      }
+    ],
+    "charges": [],
+    "total": null
+  },
+  "tell_tales": [],
+  "po_context": {
+    "po_number": "4584891",
+    "vendor": "Globex Hydraulics",
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "PLT-AL3",
+        "qty": 500,
+        "unit_price": 27.6
+      },
+      {
+        "line_no": 2,
+        "item": "WID-100",
+        "qty": 10,
+        "unit_price": 5.0
+      },
+      {
+        "line_no": 3,
+        "item": "SEAL-22",
+        "qty": 500,
+        "unit_price": 1.1
+      }
+    ]
+  },
+  "expected_flags": [
+    "price_differs"
+  ]
+}

@@ -1,0 +1,114 @@
+{
+  "id": "ship-15",
+  "kind": "ship",
+  "format": "xlsx",
+  "tags": [
+    "full"
+  ],
+  "schema_version": 1,
+  "answer": {
+    "doc_type": "shipment_notice",
+    "po_number": "4574507",
+    "vendor_order_number": "866630",
+    "invoice_number": null,
+    "invoice_date": null,
+    "carrier": "FedEx",
+    "tracking_numbers": [
+      "440501801094"
+    ],
+    "ship_date": "2026-11-12",
+    "arrival_date": "2026-11-17",
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "SEAL-22",
+        "qty": 150,
+        "unit": null,
+        "unit_price": null,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 2,
+        "item": "WID-400",
+        "qty": 40,
+        "unit": null,
+        "unit_price": null,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 3,
+        "item": "GRS-400",
+        "qty": 80,
+        "unit": null,
+        "unit_price": null,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 4,
+        "item": "FLT-OIL7",
+        "qty": 80,
+        "unit": null,
+        "unit_price": null,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 5,
+        "item": "BRG-6204",
+        "qty": 10,
+        "unit": null,
+        "unit_price": null,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      }
+    ],
+    "charges": [],
+    "total": null
+  },
+  "tell_tales": [],
+  "po_context": {
+    "po_number": "4574507",
+    "vendor": "Northwind Metals",
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "SEAL-22",
+        "qty": 150,
+        "unit_price": 1.1
+      },
+      {
+        "line_no": 2,
+        "item": "WID-400",
+        "qty": 40,
+        "unit_price": 12.5
+      },
+      {
+        "line_no": 3,
+        "item": "GRS-400",
+        "qty": 80,
+        "unit_price": 3.95
+      },
+      {
+        "line_no": 4,
+        "item": "FLT-OIL7",
+        "qty": 80,
+        "unit_price": 11.8
+      },
+      {
+        "line_no": 5,
+        "item": "BRG-6204",
+        "qty": 10,
+        "unit_price": 3.15
+      }
+    ]
+  },
+  "expected_flags": []
+}

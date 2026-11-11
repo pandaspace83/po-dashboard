@@ -26,6 +26,8 @@ dev = [
     "mypy>=1.13",
     "types-openpyxl>=3.1.5.20261017",
     "xlsxwriter==3.2.9",
+    "reportlab==4.4.4",
+    "pillow==12.0.0",
 ]
 
 [project.scripts]
@@ -52,7 +54,7 @@ select = ["E", "F", "I", "B", "UP", "S"]
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S101", "S105", "S106", "S603", "S607", "F811"]  # F811: a fixture imported from another test file
 "scripts/**" = ["S603", "S607"]
-"evals/**" = ["S310", "E501", "E741", "S110"]
+"evals/**" = ["S101", "S311", "S310", "E501", "E741", "E702", "E731", "S110"]
 
 [tool.mypy]
 python_version = "3.13"

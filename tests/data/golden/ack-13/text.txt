@@ -1,0 +1,19 @@
+ORDER ACKNOWLEDGEMENT
+
+From: Contoso Bearings
+Date: November 15th, 2026
+Customer PO: PO 4591834
+Our order: 422585
+
+Thank you for your order. We confirm it as follows.
+
+Line  Part No    Description         Qty  UoM  Unit Price  Delivery
+1     GSK-G9     Gasket G-9          40   EA   $0.85       November 30th, 2026
+2     BRG-6204   Ball bearing 6204   12   EA   $3.15       December 14th, 2026
+3     BLT-M8x40  Hex bolt M8x40      200  BOX  $14.90      December 28th, 2026
+4     CPL-3/4    Coupling 3/4 in     100  EA   $9.35       January 11th, 2027
+5     PLT-AL3    Aluminum plate 3mm  100  EA   $27.60      January 25th, 2027
+
+Regards,
+Tom Becker
+Contoso Bearings

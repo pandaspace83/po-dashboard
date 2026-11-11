@@ -1,0 +1,98 @@
+{
+  "id": "ship-02",
+  "kind": "ship",
+  "format": "email",
+  "tags": [
+    "full"
+  ],
+  "schema_version": 1,
+  "answer": {
+    "doc_type": "shipment_notice",
+    "po_number": "4551146",
+    "vendor_order_number": "SO-82607",
+    "invoice_number": null,
+    "invoice_date": null,
+    "carrier": "DHL",
+    "tracking_numbers": [
+      "5241445591"
+    ],
+    "ship_date": "2026-11-09",
+    "arrival_date": "2026-11-17",
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "VLV-V12",
+        "qty": 12,
+        "unit": null,
+        "unit_price": null,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 2,
+        "item": "WID-100",
+        "qty": 100,
+        "unit": null,
+        "unit_price": null,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 3,
+        "item": "SEAL-22",
+        "qty": 150,
+        "unit": null,
+        "unit_price": null,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 4,
+        "item": "FLT-OIL7",
+        "qty": 5,
+        "unit": null,
+        "unit_price": null,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      }
+    ],
+    "charges": [],
+    "total": null
+  },
+  "tell_tales": [],
+  "po_context": {
+    "po_number": "4551146",
+    "vendor": "Umbrella Seals",
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "VLV-V12",
+        "qty": 12,
+        "unit_price": 46.25
+      },
+      {
+        "line_no": 2,
+        "item": "WID-100",
+        "qty": 100,
+        "unit_price": 5.0
+      },
+      {
+        "line_no": 3,
+        "item": "SEAL-22",
+        "qty": 150,
+        "unit_price": 1.1
+      },
+      {
+        "line_no": 4,
+        "item": "FLT-OIL7",
+        "qty": 5,
+        "unit_price": 11.8
+      }
+    ]
+  },
+  "expected_flags": []
+}

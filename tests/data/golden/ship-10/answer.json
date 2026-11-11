@@ -1,0 +1,84 @@
+{
+  "id": "ship-10",
+  "kind": "ship",
+  "format": "pdf",
+  "tags": [
+    "multi_track"
+  ],
+  "schema_version": 1,
+  "answer": {
+    "doc_type": "shipment_notice",
+    "po_number": "4545157",
+    "vendor_order_number": "SO-34658",
+    "invoice_number": null,
+    "invoice_date": null,
+    "carrier": "USPS",
+    "tracking_numbers": [
+      "9492376870083877327917",
+      "9460811360294384842493",
+      "9411898413179799237651"
+    ],
+    "ship_date": "2026-11-15",
+    "arrival_date": "2026-11-18",
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "NUT-M8",
+        "qty": 10,
+        "unit": null,
+        "unit_price": null,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 2,
+        "item": "FLT-OIL7",
+        "qty": 500,
+        "unit": null,
+        "unit_price": null,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 3,
+        "item": "CPL-3/4",
+        "qty": 150,
+        "unit": null,
+        "unit_price": null,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      }
+    ],
+    "charges": [],
+    "total": null
+  },
+  "tell_tales": [],
+  "po_context": {
+    "po_number": "4545157",
+    "vendor": "Acme Fasteners",
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "NUT-M8",
+        "qty": 10,
+        "unit_price": 6.75
+      },
+      {
+        "line_no": 2,
+        "item": "FLT-OIL7",
+        "qty": 500,
+        "unit_price": 11.8
+      },
+      {
+        "line_no": 3,
+        "item": "CPL-3/4",
+        "qty": 150,
+        "unit_price": 9.35
+      }
+    ]
+  },
+  "expected_flags": []
+}

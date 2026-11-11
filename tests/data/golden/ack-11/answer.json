@@ -1,0 +1,96 @@
+{
+  "id": "ack-11",
+  "kind": "ack",
+  "format": "pdf",
+  "tags": [
+    "full"
+  ],
+  "schema_version": 1,
+  "answer": {
+    "doc_type": "order_acknowledgement",
+    "po_number": "4556087",
+    "vendor_order_number": "SO-51106",
+    "invoice_number": null,
+    "invoice_date": null,
+    "carrier": null,
+    "tracking_numbers": [],
+    "ship_date": null,
+    "arrival_date": null,
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "WID-100",
+        "qty": 60,
+        "unit": "EA",
+        "unit_price": 5.0,
+        "promised_date": "2026-12-20",
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 2,
+        "item": "GSK-G9",
+        "qty": 150,
+        "unit": "EA",
+        "unit_price": 0.85,
+        "promised_date": "2026-12-20",
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 3,
+        "item": "FLG-DN50",
+        "qty": 12,
+        "unit": "EA",
+        "unit_price": 18.4,
+        "promised_date": "2026-12-20",
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 4,
+        "item": "FLT-OIL7",
+        "qty": 40,
+        "unit": "EA",
+        "unit_price": 11.8,
+        "promised_date": "2026-12-20",
+        "arrival_date": null,
+        "requested_date": null
+      }
+    ],
+    "charges": [],
+    "total": null
+  },
+  "tell_tales": [],
+  "po_context": {
+    "po_number": "4556087",
+    "vendor": "Umbrella Seals",
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "WID-100",
+        "qty": 60,
+        "unit_price": 5.0
+      },
+      {
+        "line_no": 2,
+        "item": "GSK-G9",
+        "qty": 150,
+        "unit_price": 0.85
+      },
+      {
+        "line_no": 3,
+        "item": "FLG-DN50",
+        "qty": 12,
+        "unit_price": 18.4
+      },
+      {
+        "line_no": 4,
+        "item": "FLT-OIL7",
+        "qty": 40,
+        "unit_price": 11.8
+      }
+    ]
+  },
+  "expected_flags": []
+}

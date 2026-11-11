@@ -1,0 +1,22 @@
+SHIPPING NOTICE
+
+From: Contoso Bearings
+Date: 11/05/26
+Buyer PO: PO 4585305
+Our order: AB-55807
+Carrier: USPS
+Tracking: 9468466549335268860863
+Ship date: 11/05/26
+ETA: 11/11/26
+
+The following items left our dock today.
+
+Part No  Description    Qty
+WID-100  Widget 100     15
+PIN-D6   Dowel pin 6mm  5
+
+Remaining items are on backorder and will ship separately.
+
+Regards,
+Tom Becker
+Contoso Bearings

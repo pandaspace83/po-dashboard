@@ -1,0 +1,13 @@
+From: Dana Whitfield <dana@acme-fasteners.test>
+To: purchasing@example-buyer.test
+Subject: Question about PO 4520281
+Date: Fri, 20 Nov 2026 09:38:00 +0000
+
+Hello, can you tell me which delivery address applies to PO 4520281?
+Is it still the main warehouse?
+
+Thanks, Dana Whitfield, Acme Fasteners
+
+Regards,
+Dana Whitfield
+Acme Fasteners

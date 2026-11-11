@@ -1,0 +1,96 @@
+{
+  "id": "ack-21",
+  "kind": "ack",
+  "format": "scan",
+  "tags": [
+    "full"
+  ],
+  "schema_version": 1,
+  "answer": {
+    "doc_type": "order_acknowledgement",
+    "po_number": "4589375",
+    "vendor_order_number": "576496",
+    "invoice_number": null,
+    "invoice_date": null,
+    "carrier": null,
+    "tracking_numbers": [],
+    "ship_date": null,
+    "arrival_date": null,
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "SEAL-22",
+        "qty": 40,
+        "unit": "EA",
+        "unit_price": 1.1,
+        "promised_date": "2026-12-16",
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 2,
+        "item": "WID-400",
+        "qty": 60,
+        "unit": "EA",
+        "unit_price": 12.5,
+        "promised_date": "2026-12-16",
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 3,
+        "item": "CPL-3/4",
+        "qty": 12,
+        "unit": "EA",
+        "unit_price": 9.35,
+        "promised_date": "2026-12-16",
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 4,
+        "item": "BRG-6204",
+        "qty": 200,
+        "unit": "EA",
+        "unit_price": 3.15,
+        "promised_date": "2026-12-16",
+        "arrival_date": null,
+        "requested_date": null
+      }
+    ],
+    "charges": [],
+    "total": null
+  },
+  "tell_tales": [],
+  "po_context": {
+    "po_number": "4589375",
+    "vendor": "Stark Fittings",
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "SEAL-22",
+        "qty": 40,
+        "unit_price": 1.1
+      },
+      {
+        "line_no": 2,
+        "item": "WID-400",
+        "qty": 60,
+        "unit_price": 12.5
+      },
+      {
+        "line_no": 3,
+        "item": "CPL-3/4",
+        "qty": 12,
+        "unit_price": 9.35
+      },
+      {
+        "line_no": 4,
+        "item": "BRG-6204",
+        "qty": 200,
+        "unit_price": 3.15
+      }
+    ]
+  },
+  "expected_flags": []
+}

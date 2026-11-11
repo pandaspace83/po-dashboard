@@ -1,0 +1,19 @@
+ORDER ACKNOWLEDGEMENT
+
+From : Initech Tools
+Date : November 5th, 2026
+Your PO: PO 4522758
+Order ref: AB-28837
+
+Thank you for your order. We confirm it as follows.
+
+Part No Description Qty UoM Unit Price Ship date
+FLT-OIL7 Oil fi1ter 7 10 EA $11.80 December 4th, 2026
+NUT-M8 Hex nut M8 80 BOX $6.75 December 18th, 2026
+BLT-M8x40 Hex bolt M8x40 40 BOX $14.90 January 1st, 2027
+GSK-G9 Gasket G-9 40 EA $0.85 January 15th, 2027
+PLT-AL3 Aluminum plate 3mm 500 EA $27.60 January 29th, 2027
+
+Regards,
+Priya Nair
+Initech Tools

@@ -1,0 +1,67 @@
+{
+  "id": "ship-14",
+  "kind": "ship",
+  "format": "scan",
+  "tags": [
+    "no_lineno",
+    "one_date"
+  ],
+  "schema_version": 1,
+  "answer": {
+    "doc_type": "shipment_notice",
+    "po_number": "4535622",
+    "vendor_order_number": "SO-75091",
+    "invoice_number": null,
+    "invoice_date": null,
+    "carrier": "UPS",
+    "tracking_numbers": [
+      "1Z8KAFH31523KR6GRT"
+    ],
+    "ship_date": "2026-11-03",
+    "arrival_date": "2026-11-09",
+    "lines": [
+      {
+        "line_no": null,
+        "item": "GRS-400",
+        "qty": 25,
+        "unit": null,
+        "unit_price": null,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": null,
+        "item": "PLT-AL3",
+        "qty": 10,
+        "unit": null,
+        "unit_price": null,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      }
+    ],
+    "charges": [],
+    "total": null
+  },
+  "tell_tales": [],
+  "po_context": {
+    "po_number": "4535622",
+    "vendor": "Contoso Bearings",
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "GRS-400",
+        "qty": 25,
+        "unit_price": 3.95
+      },
+      {
+        "line_no": 2,
+        "item": "PLT-AL3",
+        "qty": 10,
+        "unit_price": 27.6
+      }
+    ]
+  },
+  "expected_flags": []
+}

@@ -1,0 +1,37 @@
+From: Dana Whitfield <dana@acme-fasteners.test>
+To: purchasing@example-buyer.test
+Subject: Acme Fasteners news: new catalog and holiday hours
+Date: Fri, 20 Nov 2026 09:38:00 +0000
+Message-ID: <other-08@golden.test>
+MIME-Version: 1.0
+Content-Type: multipart/alternative; boundary="golden-boundary"
+
+--golden-boundary
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Acme Fasteners Newsletter
+
+Our 2027 catalog is now available online.
+Holiday hours: closed Thursday November 26th and Friday November 27th.
+Winter sale: 10% off selected hydraulic fittings through December 15.
+
+To stop receiving this newsletter, click unsubscribe.
+
+Regards,
+Dana Whitfield
+Acme Fasteners
+
+--golden-boundary
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+<html><body><p>Acme Fasteners Newsletter</p><p>&nbsp;</p><p>Our 2027 catalog =
+is now available online.</p><p>Holiday hours: closed Thursday November 26th a=
+nd Friday November 27th.</p><p>Winter sale: 10% off selected hydraulic fittin=
+gs through December 15.</p><p>&nbsp;</p><p>To stop receiving this newsletter,=
+ click unsubscribe.</p><p>&nbsp;</p><p>Regards,</p><p>Dana Whitfield</p><p>Ac=
+me Fasteners</p></body></html>
+
+--golden-boundary--

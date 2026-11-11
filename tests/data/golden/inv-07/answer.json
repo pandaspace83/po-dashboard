@@ -1,0 +1,64 @@
+{
+  "id": "inv-07",
+  "kind": "inv",
+  "format": "pdf",
+  "tags": [
+    "full"
+  ],
+  "schema_version": 1,
+  "answer": {
+    "doc_type": "invoice",
+    "po_number": "4525915",
+    "vendor_order_number": "AB-80363",
+    "invoice_number": "INV-98789",
+    "invoice_date": "2026-11-17",
+    "carrier": null,
+    "tracking_numbers": [],
+    "ship_date": null,
+    "arrival_date": null,
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "WID-400",
+        "qty": 500,
+        "unit": null,
+        "unit_price": 12.5,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 2,
+        "item": "FLG-DN50",
+        "qty": 10,
+        "unit": null,
+        "unit_price": 18.4,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      }
+    ],
+    "charges": [],
+    "total": 6434.0
+  },
+  "tell_tales": [],
+  "po_context": {
+    "po_number": "4525915",
+    "vendor": "Globex Hydraulics",
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "WID-400",
+        "qty": 500,
+        "unit_price": 12.5
+      },
+      {
+        "line_no": 2,
+        "item": "FLG-DN50",
+        "qty": 10,
+        "unit_price": 18.4
+      }
+    ]
+  },
+  "expected_flags": []
+}

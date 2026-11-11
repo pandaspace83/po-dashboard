@@ -1,0 +1,27 @@
+From: Marcus Lee <marcus@northwind-metals.test>
+To: purchasing@example-buyer.test
+Subject: RE: PO 4577735
+Date: Sun, 15 Nov 2026 09:36:00 +0000
+Message-ID: <ack-02@golden.test>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+MIME-Version: 1.0
+
+From: Northwind Metals
+Date: 11/15/26
+Buyer PO: PO 4577735
+Order ref: AB-70797
+
+We are pleased to acknowledge your purchase order.
+
+PO Line  Part No   Description         Qty  UoM  Unit Price  Ship date
+1        FLG-DN50  Flange DN50         100  EA   $18.40      12/07/26
+2        GSK-G9    Gasket G-9          6    EA   $0.85       12/07/26
+3        PLT-AL3   Aluminum plate 3mm  100  EA   $27.60      12/07/26
+4        MTR-075   Motor 0.75kW        12   EA   $212.00     12/07/26
+
+Quantity reduced on one line; the balance will follow, date to be advised.
+
+Regards,
+Marcus Lee
+Northwind Metals

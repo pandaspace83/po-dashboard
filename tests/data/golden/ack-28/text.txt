@@ -1,0 +1,16 @@
+Sheet: Document
+ORDER ACKNOWLEDGEMENT
+From	Globex Hydraulics
+Date	11/14/2026
+PO Number	PO 4519655
+Sales order	AB-29073
+
+Please find our order acknowledgement below.
+
+Part No	Description	Qty	UoM	Unit Price	Delivery
+FLT-OIL7	Oil filter 7	10	EA	$11.80	12/01/2026
+MTR-075	Motor 0.75kW	5	EA	$212.00	12/01/2026
+HSE-12	Hydraulic hose 12mm	500	FT	$4.20	12/01/2026
+GRS-400	Grease cartridge 400g	100	EA	$3.95	12/01/2026
+FLG-DN50	Flange DN50	60	EA	$18.40	12/01/2026
+Quantity reduced on one line; the balance will follow, date to be advised.

@@ -1,0 +1,18 @@
+From: Jon Harlow <jon@stark-fittings.test>
+To: purchasing@example-buyer.test
+Subject: Quotation Q-5436 from Stark Fittings
+Date: Thu, 05 Nov 2026 09:38:00 +0000
+
+QUOTATION
+
+From: Stark Fittings
+Valid for 30 days.
+
+Part No   Description        Qty   Unit Price
+WID-100   Widget 100   100   $5.00
+
+This is a quotation and not an order confirmation. Please send a purchase order to accept.
+
+Regards,
+Jon Harlow
+Stark Fittings

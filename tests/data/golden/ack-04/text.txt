@@ -1,0 +1,22 @@
+From: Sam Okafor <sam@globex-hydraulics.test>
+To: purchasing@example-buyer.test
+Subject: RE: PO 4590634
+Date: Mon, 02 Nov 2026 09:36:00 +0000
+
+From: Globex Hydraulics
+Date: 11/02/26
+Your PO: PO 4590634
+Order ref: 662007
+
+We are pleased to acknowledge your purchase order.
+
+Line 1: 200 EA MTR-075 (Motor 0.75kW) at $212.00 each.
+Line 2: 5 BOX NUT-M8 (Hex nut M8) at $6.75 each.
+Line 3: 200 EA PLT-AL3 (Aluminum plate 3mm) at $27.60 each.
+Line 4: 40 EA BRG-6204 (Ball bearing 6204) at $3.15 each.
+
+Delivery date to be advised.
+
+Regards,
+Sam Okafor
+Globex Hydraulics

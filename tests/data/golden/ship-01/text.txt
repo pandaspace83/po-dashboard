@@ -1,0 +1,24 @@
+From: Dana Whitfield <dana@acme-fasteners.test>
+To: purchasing@example-buyer.test
+Subject: Shipment notice for PO 4528464
+Date: Tue, 17 Nov 2026 09:37:00 +0000
+
+From: Acme Fasteners
+Date: 11/17/2026
+PO Number: PO 4528464
+Sales order: AB-72139
+Carrier: DHL
+Tracking: 9711177624
+Ship date: 11/17/2026
+Expected arrival: 11/25/2026
+
+The following items left our dock today.
+
+Line 1: 6 EA CPL-3/4 (Coupling 3/4 in).
+Line 2: 12 BOX BLT-M8x40 (Hex bolt M8x40).
+
+Remaining items are on backorder and will ship separately.
+
+Regards,
+Dana Whitfield
+Acme Fasteners

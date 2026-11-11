@@ -1,0 +1,69 @@
+{
+  "id": "ship-11",
+  "kind": "ship",
+  "format": "pdf",
+  "tags": [
+    "no_lineno",
+    "partial"
+  ],
+  "schema_version": 1,
+  "answer": {
+    "doc_type": "shipment_notice",
+    "po_number": "4585305",
+    "vendor_order_number": "AB-55807",
+    "invoice_number": null,
+    "invoice_date": null,
+    "carrier": "USPS",
+    "tracking_numbers": [
+      "9468466549335268860863"
+    ],
+    "ship_date": "2026-11-05",
+    "arrival_date": "2026-11-11",
+    "lines": [
+      {
+        "line_no": null,
+        "item": "WID-100",
+        "qty": 15,
+        "unit": null,
+        "unit_price": null,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": null,
+        "item": "PIN-D6",
+        "qty": 5,
+        "unit": null,
+        "unit_price": null,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      }
+    ],
+    "charges": [],
+    "total": null
+  },
+  "tell_tales": [],
+  "po_context": {
+    "po_number": "4585305",
+    "vendor": "Contoso Bearings",
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "WID-100",
+        "qty": 25,
+        "unit_price": 5.0
+      },
+      {
+        "line_no": 2,
+        "item": "PIN-D6",
+        "qty": 5,
+        "unit_price": 8.1
+      }
+    ]
+  },
+  "expected_flags": [
+    "qty_below_order"
+  ]
+}

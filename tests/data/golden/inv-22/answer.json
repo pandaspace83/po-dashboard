@@ -1,0 +1,114 @@
+{
+  "id": "inv-22",
+  "kind": "inv",
+  "format": "scan",
+  "tags": [
+    "over"
+  ],
+  "schema_version": 1,
+  "answer": {
+    "doc_type": "invoice",
+    "po_number": "4594587",
+    "vendor_order_number": "978911",
+    "invoice_number": "INV-95434",
+    "invoice_date": "2026-11-14",
+    "carrier": null,
+    "tracking_numbers": [],
+    "ship_date": null,
+    "arrival_date": null,
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "CPL-3/4",
+        "qty": 12,
+        "unit": "EA",
+        "unit_price": 9.35,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 2,
+        "item": "VLV-V12",
+        "qty": 80,
+        "unit": "EA",
+        "unit_price": 46.25,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 3,
+        "item": "HSE-12",
+        "qty": 10,
+        "unit": "FT",
+        "unit_price": 4.2,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 4,
+        "item": "WID-100",
+        "qty": 70,
+        "unit": "EA",
+        "unit_price": 5.0,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 5,
+        "item": "GRS-400",
+        "qty": 10,
+        "unit": "EA",
+        "unit_price": 3.95,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      }
+    ],
+    "charges": [],
+    "total": 4243.7
+  },
+  "tell_tales": [],
+  "po_context": {
+    "po_number": "4594587",
+    "vendor": "Contoso Bearings",
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "CPL-3/4",
+        "qty": 12,
+        "unit_price": 9.35
+      },
+      {
+        "line_no": 2,
+        "item": "VLV-V12",
+        "qty": 80,
+        "unit_price": 46.25
+      },
+      {
+        "line_no": 3,
+        "item": "HSE-12",
+        "qty": 10,
+        "unit_price": 4.2
+      },
+      {
+        "line_no": 4,
+        "item": "WID-100",
+        "qty": 60,
+        "unit_price": 5.0
+      },
+      {
+        "line_no": 5,
+        "item": "GRS-400",
+        "qty": 10,
+        "unit_price": 3.95
+      }
+    ]
+  },
+  "expected_flags": [
+    "billed_over_order"
+  ]
+}

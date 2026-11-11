@@ -1,0 +1,88 @@
+{
+  "id": "inv-04",
+  "kind": "inv",
+  "format": "email",
+  "tags": [
+    "freight"
+  ],
+  "schema_version": 1,
+  "answer": {
+    "doc_type": "invoice",
+    "po_number": "4563690",
+    "vendor_order_number": "AB-95723",
+    "invoice_number": "INV-74181",
+    "invoice_date": "2026-11-12",
+    "carrier": null,
+    "tracking_numbers": [],
+    "ship_date": null,
+    "arrival_date": null,
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "BLT-M8x40",
+        "qty": 12,
+        "unit": null,
+        "unit_price": 14.9,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 2,
+        "item": "MTR-075",
+        "qty": 25,
+        "unit": null,
+        "unit_price": 212.0,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 3,
+        "item": "FLG-DN50",
+        "qty": 200,
+        "unit": null,
+        "unit_price": 18.4,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      }
+    ],
+    "charges": [
+      {
+        "kind": "freight",
+        "label": "Freight",
+        "amount": 145.0
+      }
+    ],
+    "total": 9303.8
+  },
+  "tell_tales": [],
+  "po_context": {
+    "po_number": "4563690",
+    "vendor": "Globex Hydraulics",
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "BLT-M8x40",
+        "qty": 12,
+        "unit_price": 14.9
+      },
+      {
+        "line_no": 2,
+        "item": "MTR-075",
+        "qty": 25,
+        "unit_price": 212.0
+      },
+      {
+        "line_no": 3,
+        "item": "FLG-DN50",
+        "qty": 200,
+        "unit_price": 18.4
+      }
+    ]
+  },
+  "expected_flags": [
+    "charge_present"
+  ]
+}

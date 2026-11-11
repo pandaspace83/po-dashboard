@@ -1,0 +1,19 @@
+INVOICE
+
+From: Globex Hydraulics
+Invoice No: INV-77346
+Invoice date: Nov 20, 2026
+Customer PO: PO 4531067
+Our order: 197757
+
+Payment terms: Net 30.
+
+PO Line  Part No  Description             Qty  Unit Price  Amount
+1        PIN-D6   Dowel pin 6mm           10   $8.10       81.00
+2        NUT-M8   Hex nut M8              12   $6.75       81.00
+3        TARIFF   Tariff surcharge (10%)  1    16.20       16.20
+Total due USD                                              178.20
+
+Regards,
+Sam Okafor
+Globex Hydraulics

@@ -1,0 +1,17 @@
+PURCHASE ORDER
+
+From: Example Buyer Inc.
+PO Number: PO 4575059
+Date: 11/22/2026
+Vendor: Northwind Metals
+
+Please supply the items below to Example Buyer Inc.. Confirm receipt of this order.
+
+PO Line  Part No  Description         Qty  UoM  Unit Price  Required
+1        NUT-M8   Hex nut M8          80   BOX  $6.75       12/08/2026
+2        GSK-G9   Gasket G-9          200  EA   $0.85       01/11/2027
+3        PLT-AL3  Aluminum plate 3mm  5    EA   $27.60      12/31/2026
+4        WID-100  Widget 100          5    EA   $5.00       12/07/2026
+
+Purchasing
+Example Buyer Inc.

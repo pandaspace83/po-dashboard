@@ -1,0 +1,110 @@
+{
+  "id": "inv-15",
+  "kind": "inv",
+  "format": "pdf",
+  "tags": [
+    "freight",
+    "tariff_line"
+  ],
+  "schema_version": 1,
+  "answer": {
+    "doc_type": "invoice",
+    "po_number": "4552884",
+    "vendor_order_number": "AB-41481",
+    "invoice_number": "INV-74569",
+    "invoice_date": "2026-11-19",
+    "carrier": null,
+    "tracking_numbers": [],
+    "ship_date": null,
+    "arrival_date": null,
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "FLG-DN50",
+        "qty": 12,
+        "unit": null,
+        "unit_price": 18.4,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 2,
+        "item": "CPL-3/4",
+        "qty": 100,
+        "unit": null,
+        "unit_price": 9.35,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 3,
+        "item": "BRG-6204",
+        "qty": 100,
+        "unit": null,
+        "unit_price": 3.15,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 4,
+        "item": "SEAL-22",
+        "qty": 200,
+        "unit": null,
+        "unit_price": 1.1,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      }
+    ],
+    "charges": [
+      {
+        "kind": "freight",
+        "label": "Freight",
+        "amount": 145.0
+      },
+      {
+        "kind": "tariff",
+        "label": "Tariff surcharge (10%)",
+        "amount": 169.08
+      }
+    ],
+    "total": 2004.88
+  },
+  "tell_tales": [],
+  "po_context": {
+    "po_number": "4552884",
+    "vendor": "Hooli Plastics",
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "FLG-DN50",
+        "qty": 12,
+        "unit_price": 18.4
+      },
+      {
+        "line_no": 2,
+        "item": "CPL-3/4",
+        "qty": 100,
+        "unit_price": 9.35
+      },
+      {
+        "line_no": 3,
+        "item": "BRG-6204",
+        "qty": 100,
+        "unit_price": 3.15
+      },
+      {
+        "line_no": 4,
+        "item": "SEAL-22",
+        "qty": 200,
+        "unit_price": 1.1
+      }
+    ]
+  },
+  "expected_flags": [
+    "charge_present"
+  ]
+}

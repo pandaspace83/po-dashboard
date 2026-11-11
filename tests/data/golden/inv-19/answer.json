@@ -1,0 +1,73 @@
+{
+  "id": "inv-19",
+  "kind": "inv",
+  "format": "scan",
+  "tags": [
+    "no_lineno",
+    "partial"
+  ],
+  "schema_version": 1,
+  "answer": {
+    "doc_type": "invoice",
+    "po_number": "4533022",
+    "vendor_order_number": "AB-74027",
+    "invoice_number": "INV-40467",
+    "invoice_date": "2026-11-15",
+    "carrier": null,
+    "tracking_numbers": [],
+    "ship_date": null,
+    "arrival_date": null,
+    "lines": [
+      {
+        "line_no": null,
+        "item": "SEAL-22",
+        "qty": 500,
+        "unit": "EA",
+        "unit_price": 1.1,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": null,
+        "item": "PIN-D6",
+        "qty": 80,
+        "unit": "BOX",
+        "unit_price": 8.1,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      }
+    ],
+    "charges": [],
+    "total": 1198.0
+  },
+  "tell_tales": [],
+  "po_context": {
+    "po_number": "4533022",
+    "vendor": "Globex Hydraulics",
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "SEAL-22",
+        "qty": 500,
+        "unit_price": 1.1
+      },
+      {
+        "line_no": 2,
+        "item": "BRG-6204",
+        "qty": 80,
+        "unit_price": 3.15
+      },
+      {
+        "line_no": 3,
+        "item": "PIN-D6",
+        "qty": 80,
+        "unit_price": 8.1
+      }
+    ]
+  },
+  "expected_flags": [
+    "lines_not_covered"
+  ]
+}

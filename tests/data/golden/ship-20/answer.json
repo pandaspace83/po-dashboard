@@ -1,0 +1,101 @@
+{
+  "id": "ship-20",
+  "kind": "ship",
+  "format": "auto",
+  "tags": [
+    "multi_track",
+    "subject_po"
+  ],
+  "schema_version": 1,
+  "answer": {
+    "doc_type": "shipment_notice",
+    "po_number": "4526516",
+    "vendor_order_number": "SO-12292",
+    "invoice_number": null,
+    "invoice_date": null,
+    "carrier": "UPS",
+    "tracking_numbers": [
+      "1ZHDD2FEWATK52DR9V",
+      "1ZD0WTVX4WPFWM47YM",
+      "1ZTV6DGJK4GFSN1T98"
+    ],
+    "ship_date": "2026-11-08",
+    "arrival_date": "2026-11-11",
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "WID-100",
+        "qty": 40,
+        "unit": null,
+        "unit_price": null,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 2,
+        "item": "HSE-12",
+        "qty": 60,
+        "unit": null,
+        "unit_price": null,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 3,
+        "item": "MTR-075",
+        "qty": 500,
+        "unit": null,
+        "unit_price": null,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 4,
+        "item": "VLV-V12",
+        "qty": 150,
+        "unit": null,
+        "unit_price": null,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      }
+    ],
+    "charges": [],
+    "total": null
+  },
+  "tell_tales": [],
+  "po_context": {
+    "po_number": "4526516",
+    "vendor": "Hooli Plastics",
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "WID-100",
+        "qty": 40,
+        "unit_price": 5.0
+      },
+      {
+        "line_no": 2,
+        "item": "HSE-12",
+        "qty": 60,
+        "unit_price": 4.2
+      },
+      {
+        "line_no": 3,
+        "item": "MTR-075",
+        "qty": 500,
+        "unit_price": 212.0
+      },
+      {
+        "line_no": 4,
+        "item": "VLV-V12",
+        "qty": 150,
+        "unit_price": 46.25
+      }
+    ]
+  },
+  "expected_flags": []
+}

@@ -1,0 +1,44 @@
+From: Alicia Moreno <alicia@hooli-plastics.test>
+To: purchasing@example-buyer.test
+Subject: Order Acknowledgement - PO 4562555
+Date: Mon, 16 Nov 2026 09:36:00 +0000
+Message-ID: <ack-29@golden.test>
+MIME-Version: 1.0
+Content-Type: multipart/alternative; boundary="golden-boundary"
+
+--golden-boundary
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+From: Hooli Plastics
+Date: 11/16/2026
+Order ref: AB-88530
+
+Thank you for your order. We confirm it as follows.
+
+PO Line  Part No   Description          Qty  UoM  Unit Price  Ship date
+1        PIN-D6    Dowel pin 6mm        500  BOX  $8.10       12/03/2026
+2        FLT-OIL7  Oil filter 7         5    EA   $11.80      12/03/2026
+3        CPL-3/4   Coupling 3/4 in      5    EA   $9.35       12/03/2026
+4        HSE-12    Hydraulic hose 12mm  25   FT   $4.20       12/03/2026
+
+Regards,
+Alicia Moreno
+Hooli Plastics
+
+--golden-boundary
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+<html><body><p>From: Hooli Plastics</p><p>Date: 11/16/2026</p><p>Order ref: A=
+B-88530</p><p>&nbsp;</p><p>Thank you for your order. We confirm it as follows=
+.</p><p>&nbsp;</p><p>PO Line  Part No   Description          Qty  UoM  Unit P=
+rice  Ship date</p><p>1        PIN-D6    Dowel pin 6mm        500  BOX  $8.10=
+       12/03/2026</p><p>2        FLT-OIL7  Oil filter 7         5    EA   $11=
+.80      12/03/2026</p><p>3        CPL-3/4   Coupling 3/4 in      5    EA   $=
+9.35       12/03/2026</p><p>4        HSE-12    Hydraulic hose 12mm  25   FT  =
+ $4.20       12/03/2026</p><p>&nbsp;</p><p>Regards,</p><p>Alicia Moreno</p><p=
+>Hooli Plastics</p></body></html>
+
+--golden-boundary--

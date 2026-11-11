@@ -1,0 +1,47 @@
+From: Alicia Moreno <alicia@hooli-plastics.test>
+To: purchasing@example-buyer.test
+Subject: Advance Ship Notice - PO 4526516
+Date: Sun, 08 Nov 2026 09:37:00 +0000
+Message-ID: <ship-20@golden.test>
+MIME-Version: 1.0
+Content-Type: multipart/alternative; boundary="golden-boundary"
+
+--golden-boundary
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+From: Hooli Plastics
+Date: 11/08/2026
+Our order: SO-12292
+Carrier: UPS
+Tracking: 1ZHDD2FEWATK52DR9V, 1ZD0WTVX4WPFWM47YM, 1ZTV6DGJK4GFSN1T98
+Ship date: 11/08/2026
+Arrives: 11/11/2026
+
+Your order has shipped.
+
+Line  Part No  Description          Qty
+1     WID-100  Widget 100           40
+2     HSE-12   Hydraulic hose 12mm  60
+3     MTR-075  Motor 0.75kW         500
+4     VLV-V12  Ball valve V-12      150
+
+Regards,
+Alicia Moreno
+Hooli Plastics
+
+--golden-boundary
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+<html><body><p>From: Hooli Plastics</p><p>Date: 11/08/2026</p><p>Our order: S=
+O-12292</p><p>Carrier: UPS</p><p>Tracking: 1ZHDD2FEWATK52DR9V, 1ZD0WTVX4WPFWM=
+47YM, 1ZTV6DGJK4GFSN1T98</p><p>Ship date: 11/08/2026</p><p>Arrives: 11/11/202=
+6</p><p>&nbsp;</p><p>Your order has shipped.</p><p>&nbsp;</p><p>Line  Part No=
+  Description          Qty</p><p>1     WID-100  Widget 100           40</p><p=
+>2     HSE-12   Hydraulic hose 12mm  60</p><p>3     MTR-075  Motor 0.75kW    =
+     500</p><p>4     VLV-V12  Ball valve V-12      150</p><p>&nbsp;</p><p>Reg=
+ards,</p><p>Alicia Moreno</p><p>Hooli Plastics</p></body></html>
+
+--golden-boundary--

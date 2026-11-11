@@ -1,0 +1,22 @@
+From: Priya Nair <priya@initech-tools.test>
+To: purchasing@example-buyer.test
+Subject: Invoice INV-49067 for PO 4542918
+Date: Sat, 14 Nov 2026 09:36:00 +0000
+
+From: Initech Tools
+Invoice No: INV-49067
+Invoice date: 11/14/2026
+PO Number: P.O. 4542918
+Our order: AB-82022
+
+Payment terms: Net 30.
+
+Line  Part No   Description    Qty  Unit Price  Amount
+1     FLT-OIL7  Oil filter 7   12   $11.80      141.60
+2     PIN-D6    Dowel pin 6mm  100  $9.10       910.00
+3     FLG-DN50  Flange DN50    40   $18.40      736.00
+Total due USD                                 1,787.60
+
+Regards,
+Priya Nair
+Initech Tools

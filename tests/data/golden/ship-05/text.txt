@@ -1,0 +1,23 @@
+From: Jon Harlow <jon@stark-fittings.test>
+To: purchasing@example-buyer.test
+Subject: Shipment notice for PO 4523551
+Date: Mon, 02 Nov 2026 09:37:00 +0000
+
+From: Stark Fittings
+Date: 2026-11-02
+Your PO: P.O. 4523551
+Our order: AB-10387
+Carrier: DHL
+Tracking: 5958405408
+Ship date: 2026-11-02
+
+Your shipment is on its way.
+
+Line  Part No   Description    Qty  Arrival
+1     FLG-DN50  Flange DN50    200  2026-11-08
+2     SEAL-22   Oil seal 22mm  100  2026-11-10
+3     WID-400   Widget 400     80   2026-11-12
+
+Regards,
+Jon Harlow
+Stark Fittings

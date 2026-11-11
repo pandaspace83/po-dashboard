@@ -1,0 +1,21 @@
+SHIPPING NOTICE
+
+From: Acme Fasteners
+Date: 11/15/2026
+PO Number: 4545157
+Order ref: SO-34658
+Carrier: USPS
+Tracking: 9492376870083877327917, 9460811360294384842493, 9411898413179799237651
+Ship date: 11/15/2026
+Arrives: 11/18/2026
+
+Your shipment is on its way.
+
+Line  Part No   Description      Qty
+1     NUT-M8    Hex nut M8       10
+2     FLT-OIL7  Oil filter 7     500
+3     CPL-3/4   Coupling 3/4 in  150
+
+Regards,
+Dana Whitfield
+Acme Fasteners

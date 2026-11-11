@@ -1,0 +1,23 @@
+From: Priya Nair <priya@initech-tools.test>
+To: purchasing@example-buyer.test
+Subject: Invoice INV-43601 for PO 4561084
+Date: Sat, 21 Nov 2026 09:36:00 +0000
+
+From: Initech Tools
+Invoice No: INV-43601
+Invoice date: November 21st, 2026
+Your PO: PO 4561084
+Our order: 658054
+
+Payment terms: Net 30.
+
+Line 1: 10 EA PLT-AL3 (Aluminum plate 3mm) at $27.60 each.
+Line 2: 40 EA CPL-3/4 (Coupling 3/4 in) at $9.35 each.
+Line 3: 80 BOX NUT-M8 (Hex nut M8) at $6.75 each.
+Total due USD: $1,190.00.
+
+Items not listed here are not invoiced yet.
+
+Regards,
+Priya Nair
+Initech Tools

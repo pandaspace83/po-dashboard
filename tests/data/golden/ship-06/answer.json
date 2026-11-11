@@ -1,0 +1,77 @@
+{
+  "id": "ship-06",
+  "kind": "ship",
+  "format": "email",
+  "tags": [
+    "partial",
+    "quoted_old",
+    "subject_po"
+  ],
+  "schema_version": 1,
+  "answer": {
+    "doc_type": "shipment_notice",
+    "po_number": "4520670",
+    "vendor_order_number": "165140",
+    "invoice_number": null,
+    "invoice_date": null,
+    "carrier": "DHL",
+    "tracking_numbers": [
+      "1199341168"
+    ],
+    "ship_date": "2026-11-09",
+    "arrival_date": "2026-11-12",
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "PLT-AL3",
+        "qty": 7,
+        "unit": "EA",
+        "unit_price": null,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 2,
+        "item": "MTR-075",
+        "qty": 200,
+        "unit": "EA",
+        "unit_price": null,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      }
+    ],
+    "charges": [],
+    "total": null
+  },
+  "tell_tales": [],
+  "po_context": {
+    "po_number": "4520670",
+    "vendor": "Globex Hydraulics",
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "PLT-AL3",
+        "qty": 12,
+        "unit_price": 27.6
+      },
+      {
+        "line_no": 2,
+        "item": "MTR-075",
+        "qty": 200,
+        "unit_price": 212.0
+      },
+      {
+        "line_no": 3,
+        "item": "WID-100",
+        "qty": 10,
+        "unit_price": 5.0
+      }
+    ]
+  },
+  "expected_flags": [
+    "lines_not_covered",
+    "qty_below_order"
+  ]
+}

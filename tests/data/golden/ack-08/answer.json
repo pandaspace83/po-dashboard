@@ -1,0 +1,72 @@
+{
+  "id": "ack-08",
+  "kind": "ack",
+  "format": "email",
+  "tags": [
+    "freight"
+  ],
+  "schema_version": 1,
+  "answer": {
+    "doc_type": "order_acknowledgement",
+    "po_number": "4593435",
+    "vendor_order_number": "AB-19477",
+    "invoice_number": null,
+    "invoice_date": null,
+    "carrier": null,
+    "tracking_numbers": [],
+    "ship_date": null,
+    "arrival_date": null,
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "NUT-M8",
+        "qty": 60,
+        "unit": "BOX",
+        "unit_price": 6.75,
+        "promised_date": "2026-11-26",
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 2,
+        "item": "SEAL-22",
+        "qty": 500,
+        "unit": "EA",
+        "unit_price": 1.1,
+        "promised_date": "2026-11-26",
+        "arrival_date": null,
+        "requested_date": null
+      }
+    ],
+    "charges": [
+      {
+        "kind": "freight",
+        "label": "Freight (estimated)",
+        "amount": 85.0
+      }
+    ],
+    "total": null
+  },
+  "tell_tales": [],
+  "po_context": {
+    "po_number": "4593435",
+    "vendor": "Globex Hydraulics",
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "NUT-M8",
+        "qty": 60,
+        "unit_price": 6.75
+      },
+      {
+        "line_no": 2,
+        "item": "SEAL-22",
+        "qty": 500,
+        "unit_price": 1.1
+      }
+    ]
+  },
+  "expected_flags": [
+    "charge_present"
+  ]
+}

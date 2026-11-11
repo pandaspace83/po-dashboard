@@ -1,0 +1,23 @@
+From: Sam Okafor <sam@globex-hydraulics.test>
+To: purchasing@example-buyer.test
+Subject: Shipment notice for PO 4539951
+Date: Fri, 13 Nov 2026 09:37:00 +0000
+
+From: Globex Hydraulics
+Date: November 13th, 2026
+Your PO: 4539951
+Sales order: 508261
+Carrier: FedEx
+Tracking: 481250404861
+Ship date: November 13th, 2026
+Expected arrival: November 19th, 2026
+
+The following items left our dock today.
+
+Line 1: 25 EA GRS-400 (Grease cartridge 400g).
+Line 2: 100 EA WID-100 (Widget 100).
+Line 3: 100 EA BRG-6204 (Ball bearing 6204).
+
+Regards,
+Sam Okafor
+Globex Hydraulics

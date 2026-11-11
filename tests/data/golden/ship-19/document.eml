@@ -1,0 +1,51 @@
+From: Jon Harlow <jon@stark-fittings.test>
+To: purchasing@example-buyer.test
+Subject: RE: PO 4516602
+Date: Fri, 20 Nov 2026 09:37:00 +0000
+Message-ID: <ship-19@golden.test>
+MIME-Version: 1.0
+Content-Type: multipart/alternative; boundary="golden-boundary"
+
+--golden-boundary
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+From: Stark Fittings
+Date: 2026-11-20
+PO Number: P.O. 4516602
+Sales order: SO-90273
+Carrier: DHL
+Tracking: 4765505496
+Ship date: 2026-11-20
+ETA: 2026-11-28
+
+The following items left our dock today.
+
+Line  Part No   Description            Qty
+1     FLG-DN50  Flange DN50            100
+2     PIN-D6    Dowel pin 6mm          100
+4     GRS-400   Grease cartridge 400g  48
+5     MTR-075   Motor 0.75kW           40
+
+Remaining items are on backorder and will ship separately.
+
+Regards,
+Jon Harlow
+Stark Fittings
+
+--golden-boundary
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+<html><body><p>From: Stark Fittings</p><p>Date: 2026-11-20</p><p>PO Number: P=
+.O. 4516602</p><p>Sales order: SO-90273</p><p>Carrier: DHL</p><p>Tracking: 47=
+65505496</p><p>Ship date: 2026-11-20</p><p>ETA: 2026-11-28</p><p>&nbsp;</p><p=
+>The following items left our dock today.</p><p>&nbsp;</p><p>Line  Part No   =
+Description            Qty</p><p>1     FLG-DN50  Flange DN50            100</=
+p><p>2     PIN-D6    Dowel pin 6mm          100</p><p>4     GRS-400   Grease =
+cartridge 400g  48</p><p>5     MTR-075   Motor 0.75kW           40</p><p>&nbs=
+p;</p><p>Remaining items are on backorder and will ship separately.</p><p>&nb=
+sp;</p><p>Regards,</p><p>Jon Harlow</p><p>Stark Fittings</p></body></html>
+
+--golden-boundary--

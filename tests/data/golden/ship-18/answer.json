@@ -1,0 +1,114 @@
+{
+  "id": "ship-18",
+  "kind": "ship",
+  "format": "auto",
+  "tags": [
+    "full"
+  ],
+  "schema_version": 1,
+  "answer": {
+    "doc_type": "shipment_notice",
+    "po_number": "4532416",
+    "vendor_order_number": "SO-33041",
+    "invoice_number": null,
+    "invoice_date": null,
+    "carrier": "FedEx",
+    "tracking_numbers": [
+      "968451396240"
+    ],
+    "ship_date": "2026-11-13",
+    "arrival_date": "2026-11-18",
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "BRG-6204",
+        "qty": 100,
+        "unit": "EA",
+        "unit_price": null,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 2,
+        "item": "CPL-3/4",
+        "qty": 10,
+        "unit": "EA",
+        "unit_price": null,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 3,
+        "item": "FLT-OIL7",
+        "qty": 5,
+        "unit": "EA",
+        "unit_price": null,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 4,
+        "item": "SEAL-22",
+        "qty": 100,
+        "unit": "EA",
+        "unit_price": null,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      },
+      {
+        "line_no": 5,
+        "item": "MTR-075",
+        "qty": 60,
+        "unit": "EA",
+        "unit_price": null,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": null
+      }
+    ],
+    "charges": [],
+    "total": null
+  },
+  "tell_tales": [],
+  "po_context": {
+    "po_number": "4532416",
+    "vendor": "Contoso Bearings",
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "BRG-6204",
+        "qty": 100,
+        "unit_price": 3.15
+      },
+      {
+        "line_no": 2,
+        "item": "CPL-3/4",
+        "qty": 10,
+        "unit_price": 9.35
+      },
+      {
+        "line_no": 3,
+        "item": "FLT-OIL7",
+        "qty": 5,
+        "unit_price": 11.8
+      },
+      {
+        "line_no": 4,
+        "item": "SEAL-22",
+        "qty": 100,
+        "unit_price": 1.1
+      },
+      {
+        "line_no": 5,
+        "item": "MTR-075",
+        "qty": 60,
+        "unit_price": 212.0
+      }
+    ]
+  },
+  "expected_flags": []
+}

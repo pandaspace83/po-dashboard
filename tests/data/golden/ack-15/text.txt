@@ -1,0 +1,17 @@
+ORDER ACKNOWLEDGEMENT
+
+From: Umbrella Seals
+Date: 11/20/26
+Buyer PO: PO 4537895
+Sales order: SO-88884
+
+We are pleased to acknowledge your purchase order.
+
+Part No   Description   Qty  UoM  Unit Price  Promised
+MTR-075   Motor 0.75kW  80   EA   $212.00     12/10/26
+FLG-DN50  Flange DN50   100  EA   $18.40      12/24/26
+NUT-M8    Hex nut M8    100  BOX  $6.75       01/07/27
+
+Regards,
+Rita Chen
+Umbrella Seals

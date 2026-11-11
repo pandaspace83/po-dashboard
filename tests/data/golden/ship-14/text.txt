@@ -1,0 +1,20 @@
+ADVANCE SHIP NOTICE
+
+From: Contoso Bearings
+Date : 11/03/26
+PO Number: PO 4535622
+Sales order: SO-75091
+Carrier: UPS
+Tracking: 1Z8KAFH31523KR6GRT
+Ship date : 11/03/26
+ETA: 11/09/26
+
+Your shipment is on its way.
+
+Part No Description Qty
+GRS-400 Grease cartridge 400g 25
+PLT-AL3 Aluminum plate 3mm 10
+
+Regards,
+Tom Becker
+C0ntoso Bearings

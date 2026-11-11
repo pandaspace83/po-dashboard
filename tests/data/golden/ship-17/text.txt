@@ -1,0 +1,16 @@
+Sheet: Document
+SHIPPING NOTICE
+From	Hooli Plastics
+Date	2026-11-08
+PO Number	P.O. 4593972
+Order ref	SO-28284
+Carrier	UPS
+Tracking	1Z89WTM7DB9QYB12TY
+Ship date	2026-11-08
+
+The following items left our dock today.
+
+Line	Part No	Description	Qty	Arrival
+1	SEAL-22	Oil seal 22mm	150	2026-11-15
+2	PLT-AL3	Aluminum plate 3mm	12	2026-11-17
+3	VLV-V12	Ball valve V-12	25	2026-11-19

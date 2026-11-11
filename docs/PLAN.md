@@ -117,21 +117,36 @@ dashboard and the open-items report follow.
 
 ## Phase 2: Synthetic data and the golden set
 
-*Opus for PD-2.1 (scoring design). Needs: **OPEN-11 (tax), which the owner asked to be reminded of**; OPEN-09 only when real samples arrive.*
+*Opus for PD-2.1 (the scoring design, written 2026-11-10); Sonnet for PD-2.2 to PD-2.5. Nothing more is needed from
+the owner except the go-ahead.*
 
-- [ ] PD-2.0 Documentation pass (DEC-25). **Ask the owner OPEN-11: do invoices carry tax the app must read, store or
-  check?** The answer shapes PD-2.1, the golden invoices, and the invoice-total check in ARCHITECTURE §6.
-- [ ] PD-2.1 Write what "correct" means field by field, and the scoring rules (exact, normalised date, quantity).
-- [ ] PD-2.2 A generator that builds synthetic vendors, PO emails (body and PDF, sent from the mailbox, or sent to the vendor with the mailbox copied), acknowledgements (table, prose, German-style dates,
-  short, no date, revised), shipment notices (partial, full, shipment-level date), invoices (partial, price
-  difference, over-billed), scanned PDFs, spreadsheets, quoted threads, a duplicate, and documents with planted
-  instructions. Each document gets an answer file.
-- [ ] PD-2.3 The golden set committed under `tests/data/` (synthetic only) with a `GOLDEN_SET.md` that lists it.
-- [ ] PD-2.4 `evals/` runner: scores a model against the golden set; writes a report. Copy in the 2026-11-04
-  trial script as the starting point.
-- [ ] PD-2.5 Score `qwen2.5:14b-instruct` (and the 7b and 3b for the record); set `golden_baseline.json`.
+- [x] PD-2.0 Documentation pass (DEC-25), 2026-11-10. The owner's answers: tax is rare, freight varies, and tariffs
+  sometimes come as their own line items (OPEN-11 closed; DEC-48, REQ-INV-06); vendors send every kind of document
+  (typed in the email, PDFs, scans, spreadsheets) and write only US English (DEC-49); made-up documents only for now
+  (OPEN-09 moved to Phase 6). OPEN-21 (charge lines on POs) was answered the same day: charges are information only. ARCHITECTURE §4, §6 and §13
+  brought in line; the test record replaces the Phase 7 checklist.
+- [x] PD-2.1 What "correct" means field by field, and the scoring rules: [SCORING.md](SCORING.md). Written and
+  approved by the owner 2026-11-10.
+- [x] PD-2.2 The seeded generator (`evals/golden/generate.py`): about 100 documents as SCORING.md §5 lists them, each in
+  its real form, its text, and its answer file. Two new dev dependencies to write PDFs and scan images: `reportlab` and
+  `pillow` (a few MB together). Done 2026-11-10: 100 documents (30 acknowledgements, 22 shipment notices, 25
+  invoices, 8 purchase orders, 15 others; 36 emails, 30 PDFs, 12 spreadsheets, 11 scans, 11 automatic notices). The
+  same seed gives the same bytes.
+- [x] PD-2.3 The golden set committed under `tests/data/golden/` (made up only) with `GOLDEN_SET.md` listing it, and a
+  test that the generator rebuilds it exactly from the seed (TC-AI-01). Written to the folder; **not committed
+  until the owner asks.**
+- [x] PD-2.4 The scoring run `evals/score.py`, starting from the 2026-11-04 trial script. Pulled forward from PD-4.1 so
+  the run and the app share one prompt: `extraction/schema.py` (schema v1), `extraction/prompts.py` (prompt v1, the
+  document fenced as data, DEC-09), and the model call in `models/llm.py` (local Ollama only). Unit tests for every
+  scoring rule with made-up model answers, so they need no model (TC-AI-02, TC-AI-03). Done 2026-11-10. A reply stops
+  at 2,048 tokens, so a runaway answer cannot hold the run for minutes.
+- [~] PD-2.5 Score `qwen2.5:14b-instruct`: **skipped by the owner, 2026-11-10** ("not worried about knowing exactly how
+  fast or slow the model is"). The 14b model wrote about 3 tokens a second on this Mac while it was swapping, which
+  made a full two-pass run about 9 hours. What is known: the pipeline works (`evals/score.py --only` on 3 documents,
+  7b), and the 14b read ack-01 and ack-06 correctly. No accuracy baseline is set. The first full score and
+  `evals/golden_baseline.json` now come with PD-4.7, on the whole pipeline, when Phase 4 is built.
 
-**Demo:** one command prints the score table against T-1 to T-5.
+**Demo:** one command prints the score table against T-1 to T-5 (T-5 waits for the validator, PD-4.2).
 
 ## Phase 3: Mail sources and intake
 
@@ -153,7 +168,8 @@ Then the same through the Gmail test account.
 ## Phase 4: Extraction, validation, review queue
 
 - [ ] PD-4.0 Documentation pass (DEC-25).
-- [ ] PD-4.1 Model gateway `models/llm.py` and the versioned prompt and schema (ARCHITECTURE §6).
+- [ ] PD-4.1 Model gateway `models/llm.py` and the versioned prompt and schema (ARCHITECTURE §6); they start in PD-2.4
+  and are finished here (retries, time-outs, the health strip).
 - [ ] PD-4.2 The validator (§6.5), each check with a test; the "value must appear in the source" check.
 - [ ] PD-4.3 Matching a message to a vendor and PO; the Unmatched queue (REQ-ACK-05). For an emailed PO the vendor comes from the recipient address and a new PO is created on accept (REQ-PO-03, DEC-17).
 - [ ] PD-4.4 The Review screen: source beside fields, differences against the PO, accept, edit, reject

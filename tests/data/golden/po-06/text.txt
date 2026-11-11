@@ -1,0 +1,15 @@
+PURCHASE ORDER
+
+From: Example Buyer Inc.
+PO Number: 4505173
+Date: 11/16/26
+Vendor: Acme Fasteners
+
+Please supply the items below to Example Buyer Inc.. Confirm receipt of this order.
+
+Part No   Description        Qty  UoM  Unit Price  Required
+VLV-V12   Ball valve V-12    12   EA   $46.25      01/02/27
+BRG-6204  Ball bearing 6204  500  EA   $3.15       12/05/26
+
+Purchasing
+Example Buyer Inc.

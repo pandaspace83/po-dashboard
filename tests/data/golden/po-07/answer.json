@@ -1,0 +1,77 @@
+{
+  "id": "po-07",
+  "kind": "po",
+  "format": "xlsx",
+  "tags": [
+    "full"
+  ],
+  "schema_version": 1,
+  "answer": {
+    "doc_type": "purchase_order",
+    "po_number": "4538894",
+    "vendor_order_number": null,
+    "invoice_number": null,
+    "invoice_date": null,
+    "carrier": null,
+    "tracking_numbers": [],
+    "ship_date": null,
+    "arrival_date": null,
+    "lines": [
+      {
+        "line_no": 1,
+        "item": "PIN-D6",
+        "qty": 5,
+        "unit": "BOX",
+        "unit_price": 8.1,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": "2027-01-04"
+      },
+      {
+        "line_no": 2,
+        "item": "HSE-12",
+        "qty": 100,
+        "unit": "FT",
+        "unit_price": 4.2,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": "2026-11-28"
+      },
+      {
+        "line_no": 3,
+        "item": "PLT-AL3",
+        "qty": 5,
+        "unit": "EA",
+        "unit_price": 27.6,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": "2026-11-23"
+      },
+      {
+        "line_no": 4,
+        "item": "WID-100",
+        "qty": 60,
+        "unit": "EA",
+        "unit_price": 5.0,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": "2026-12-06"
+      },
+      {
+        "line_no": 5,
+        "item": "GRS-400",
+        "qty": 25,
+        "unit": "EA",
+        "unit_price": 3.95,
+        "promised_date": null,
+        "arrival_date": null,
+        "requested_date": "2026-12-06"
+      }
+    ],
+    "charges": [],
+    "total": null
+  },
+  "tell_tales": [],
+  "po_context": null,
+  "expected_flags": []
+}

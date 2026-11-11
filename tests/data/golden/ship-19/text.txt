@@ -1,0 +1,27 @@
+From: Jon Harlow <jon@stark-fittings.test>
+To: purchasing@example-buyer.test
+Subject: RE: PO 4516602
+Date: Fri, 20 Nov 2026 09:37:00 +0000
+
+From: Stark Fittings
+Date: 2026-11-20
+PO Number: P.O. 4516602
+Sales order: SO-90273
+Carrier: DHL
+Tracking: 4765505496
+Ship date: 2026-11-20
+ETA: 2026-11-28
+
+The following items left our dock today.
+
+Line  Part No   Description            Qty
+1     FLG-DN50  Flange DN50            100
+2     PIN-D6    Dowel pin 6mm          100
+4     GRS-400   Grease cartridge 400g  48
+5     MTR-075   Motor 0.75kW           40
+
+Remaining items are on backorder and will ship separately.
+
+Regards,
+Jon Harlow
+Stark Fittings

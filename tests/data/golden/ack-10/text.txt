@@ -1,0 +1,27 @@
+From: Rita Chen <rita@umbrella-seals.test>
+To: purchasing@example-buyer.test
+Subject: RE: PO 4538802
+Date: Sat, 07 Nov 2026 09:36:00 +0000
+
+From: Umbrella Seals
+Date: November 7, 2026
+Buyer PO: 4538802
+Sales order: 746864
+
+Please find our order acknowledgement below.
+
+PO Line  Part No   Description      Qty  UoM  Unit Price  Ship date
+1        WID-100   Widget 100       12   EA   $5.00       December 3, 2026
+2        SEAL-22   Oil seal 22mm    60   EA   $1.10       December 17, 2026
+3        PIN-D6    Dowel pin 6mm    60   BOX  $8.10       December 31, 2026
+4        FLT-OIL7  Oil filter 7     40   EA   $11.80      January 14, 2027
+5        CPL-3/4   Coupling 3/4 in  200  EA   $9.35       January 28, 2027
+
+
+Regards,
+Rita Chen
+Umbrella Seals
+-----Original Message-----
+From: Example Buyer Inc. Purchasing
+Subject: Status on PO 4539206
+Also, did PO 4539206 ever ship? It was for 80 units due 11/02/2026.
