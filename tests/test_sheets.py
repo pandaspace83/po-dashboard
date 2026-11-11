@@ -54,6 +54,7 @@ NS = 'xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"'
 def test_the_reader_uses_the_safe_xml_parser() -> None:
     from openpyxl import xml
 
+    assert xml.LXML is False  # lxml is installed (python-docx needs it) but openpyxl must not use its parser
     assert xml.DEFUSEDXML is True  # defusedxml is installed and openpyxl uses it; without it, entity bombs get through
 
 

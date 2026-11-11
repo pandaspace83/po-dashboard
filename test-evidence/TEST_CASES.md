@@ -4,7 +4,7 @@
 
 PO Dashboard (RaceSpec Internal Dashboard). Scope: Phase 0 and Phase 1: sign-in, people, vendors, purchase orders, imports, the QuickBooks starting load, entries by hand, Home, Open items, Audit, page behaviour, security and speed.
 
-**98 cases:** 46 Critical, 38 High, 14 Medium; 2 terminal, 36 automated, 59 browser, 1 owner only.
+**102 cases:** 46 Critical, 42 High, 14 Medium; 2 terminal, 40 automated, 59 browser, 1 owner only.
 
 Latest Chrome run: 11/07/2026, Google Chrome 156.0.8078.81, by Claude, scripts/browser_evidence.py, on commit 7f2d081 with uncommitted changes: **59 of 59** browser cases pass. Automated tests: `uv run pytest`. Defects: [DEFECTS.md](DEFECTS.md). Sign-off: [SIGN_OFF.md](SIGN_OFF.md).
 
@@ -115,11 +115,15 @@ Latest Chrome run: 11/07/2026, Google Chrome 156.0.8078.81, by Claude, scripts/b
 | [TC-MAIL-05](#tc-mail-05) | Every original message and attachment is kept unchanged, once, under its hash | Critical | Automated | Automated tests | — |
 | [TC-MAIL-06](#tc-mail-06) | A hostile message cannot hurt intake: odd file names, broken mail, huge or too many files | Critical | Automated | Automated tests | — |
 | [TC-MAIL-07](#tc-mail-07) | The store is private, never half-written, rolls back cleanly, keeps message text out of logs and honours the start date | High | Automated | Automated tests | — |
+| [TC-MAIL-08](#tc-mail-08) | Every kind of document in the golden set becomes the expected text | High | Automated | Automated tests | — |
+| [TC-MAIL-09](#tc-mail-09) | HTML, earlier messages, scans, spreadsheets and Word are read the DEC-51 way | High | Automated | Automated tests | — |
+| [TC-MAIL-10](#tc-mail-10) | A file over a limit, a damaged file or a missing Tesseract never loses a document | High | Automated | Automated tests | — |
 | [TC-OPS-01](#tc-ops-01) | A backup restores to exactly what was backed up; it never overwrites, never deletes, and refuses unsafe places | Critical | Automated | Automated tests | — |
 | [TC-OPS-02](#tc-ops-02) | Two people, or a double click, cannot corrupt a record | High | Automated | Automated tests | — |
 | [TC-OPS-03](#tc-ops-03) | A model server that is down fails fast and leaves the document waiting; the health check sees a broken database | High | Automated | Automated tests | — |
 | [TC-OPS-04](#tc-ops-04) | The log is useful and holds no secret, no message text, no query and no id; its files are private | Critical | Automated | Automated tests | — |
 | [TC-OPS-05](#tc-ops-05) | Extra security headers are sent, and HSTS only when HTTPS is really on | Medium | Automated | Automated tests | — |
+| [TC-OPS-06](#tc-ops-06) | A save from a page that is out of date is refused | High | Automated | Automated tests | — |
 
 ## Set-up and running
 
@@ -2146,6 +2150,57 @@ Latest Chrome run: 11/07/2026, Google Chrome 156.0.8078.81, by Claude, scripts/b
 **Latest:** Owner: not recorded.
 
 
+<a id="tc-mail-08"></a>
+
+### TC-MAIL-08: Every kind of document in the golden set becomes the expected text
+
+**Priority:** High · **How:** Automated · **Refs:** DEC-51, PD-3.3, REQ-IN-03
+
+**Steps**
+
+1. Covered by the tests named.
+
+**Expected:** For each of the 100 made-up documents (email, typed PDF, scan, spreadsheet, automatic notice) the text step gives text that matches the expected text (emails 95% or better, typed PDFs and spreadsheets 99%, scans 95% allowing for OCR mistakes), and all 47 emails go in and come out as read.
+
+**Automated tests:** `test_text.py::test_every_golden_document_gives_the_expected_text`, `test_reading.py::test_the_whole_golden_set_goes_in_and_comes_out_as_text`
+
+**Latest:** Owner: not recorded.
+
+
+<a id="tc-mail-09"></a>
+
+### TC-MAIL-09: HTML, earlier messages, scans, spreadsheets and Word are read the DEC-51 way
+
+**Priority:** High · **How:** Automated · **Refs:** DEC-51, DEC-09, PD-3.3
+
+**Steps**
+
+1. Covered by the tests named.
+
+**Expected:** HTML gives its words with links, scripts, styles and images left out. An earlier message is marked once and nothing is removed, and a document's own From line is not taken for a quote. A scanned PDF and an image are read by Tesseract. A spreadsheet gives stored values only (a formula is not calculated, a hidden sheet is skipped); CSV, TSV and Word tables read in order.
+
+**Automated tests:** `test_text.py::test_html_gives_its_words_without_links_scripts_or_styles`, `test_text.py::test_an_earlier_message_is_marked_and_nothing_is_removed`, `test_text.py::test_a_from_line_in_a_document_is_not_taken_for_a_quote`, `test_text.py::test_a_scanned_pdf_is_read_by_ocr_from_its_page_images`, `test_text.py::test_an_image_is_read_by_ocr`, `test_text.py::test_a_formula_is_never_calculated_and_a_hidden_sheet_is_skipped`, `test_text.py::test_csv_and_tsv_are_read_with_their_own_separator`, `test_text.py::test_a_word_file_gives_paragraphs_and_tables_in_order`
+
+**Latest:** Owner: not recorded.
+
+
+<a id="tc-mail-10"></a>
+
+### TC-MAIL-10: A file over a limit, a damaged file or a missing Tesseract never loses a document
+
+**Priority:** High · **How:** Automated · **Refs:** DEC-51, DEC-13, PD-3.3
+
+**Steps**
+
+1. Covered by the tests named.
+
+**Expected:** A PDF over 50 pages, a password-protected PDF, a damaged file, a zip bomb and an image with too many pixels are marked not read with a fixed reason. A Word or Excel file with an entity trick never leaks a local file, and openpyxl is pinned to the defusedxml parser even though lxml is installed. A reader that breaks marks the file failed with the kind of error only, never document text. If Tesseract is missing the document stays waiting and is read later. No document text reaches the logs.
+
+**Automated tests:** `test_text.py::test_a_pdf_over_the_page_limit_is_not_read`, `test_text.py::test_a_password_protected_pdf_is_not_read`, `test_text.py::test_a_zip_bomb_is_refused_before_it_is_opened`, `test_text.py::test_an_image_with_too_many_pixels_is_refused`, `test_text.py::test_a_word_file_with_an_entity_trick_does_not_leak_a_local_file`, `test_text.py::test_a_spreadsheet_with_an_entity_trick_is_refused_by_the_text_step_too`, `test_sheets.py::test_the_reader_uses_the_safe_xml_parser`, `test_reading.py::test_a_refused_file_says_why_and_the_message_is_still_read`, `test_reading.py::test_a_file_that_breaks_the_reader_is_marked_failed_with_the_kind_of_error_only`, `test_reading.py::test_a_missing_program_leaves_the_document_waiting_and_it_is_read_later`, `test_reading.py::test_no_document_text_reaches_the_logs`
+
+**Latest:** Owner: not recorded.
+
+
 ## Operations
 
 <a id="tc-ops-01"></a>
@@ -2229,5 +2284,22 @@ Latest Chrome run: 11/07/2026, Google Chrome 156.0.8078.81, by Claude, scripts/b
 **Expected:** Permissions-Policy and Cross-Origin-Opener-Policy are on every response. Strict-Transport-Security is absent on plain HTTP and present when the https setting is on.
 
 **Automated tests:** `test_gate.py::test_security_headers_are_on_public_responses`, `test_gate.py::test_hsts_is_sent_only_when_https_is_on`
+
+**Latest:** Owner: not recorded.
+
+
+<a id="tc-ops-06"></a>
+
+### TC-OPS-06: A save from a page that is out of date is refused
+
+**Priority:** High · **How:** Automated · **Refs:** DEC-52, engineering review: optimistic locking
+
+**Steps**
+
+1. Covered by the tests named.
+
+**Expected:** A vendor save, a settle and a reopen made from a page drawn before someone else changed the record are refused with 'changed by someone else', change nothing, and the pages carry the version they were drawn from.
+
+**Automated tests:** `test_closing.py::test_a_settle_from_a_stale_page_is_refused_and_changes_nothing`, `test_closing.py::test_a_reopen_from_a_stale_page_is_refused`, `test_closing.py::test_the_pages_carry_the_version_they_were_drawn_from`, `test_orders_web.py::test_a_vendor_save_from_a_stale_page_is_refused`
 
 **Latest:** Owner: not recorded.

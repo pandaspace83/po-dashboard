@@ -71,7 +71,7 @@ flowchart LR
 | Scheduler | An asyncio task inside the app, one scan at a time, with a saved position per mail source | Assumed | Simple; no extra process |
 | Model runtime | Ollama on localhost, JSON-schema `format` parameter | Decided | DEC-05; structured output is Ollama's documented way to constrain an answer |
 | Extraction model | `qwen2.5:14b-instruct` (9 GB), temperature 0, fixed seed | Decided | DEC-05 |
-| PDF text | pdfplumber (text PDFs); Tesseract OCR for scans and images | Assumed | Tesseract is already installed on the owner's Mac |
+| PDF text | `pypdf` (text PDFs); Tesseract OCR for scans, images and scanned PDFs (DEC-51) | Decided | Tesseract 5 was already on the owner's Mac; Pillow reads the images |
 | Spreadsheets, Word | openpyxl, csv, python-docx | Assumed | |
 | Mail: Microsoft 365 | Microsoft Graph, read-only, message delta query per folder. Access to the one shared mailbox is verified at PD-6.0 (§7) | Expected, confirmed at the switch (OPEN-14) | DEC-06, DEC-30, DEC-31. Delta tracking is per folder and returns a saved delta link for the next round. How attachments come back through delta is **to verify in Phase 6** |
 | Mail: Gmail | The Gmail API with Google's sign-in page, or IMAP with an app password. Used for the build and the demo until the switch | Open | DEC-31, OPEN-04 |

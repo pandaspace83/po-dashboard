@@ -1219,6 +1219,39 @@ steps = ["Covered by the tests named."]
 expected = "Folders are 700 and files 600, with no temporary file left behind. A failure while writing rows leaves the database empty and a retry works. A subject, body and file name never appear in the logs. Mail from before the mailbox's start date is not stored; a message with no date is stored with the time it was read."
 tests = ["test_intake.py::test_the_store_is_owner_only_and_never_half_written", "test_intake.py::test_a_failure_while_writing_rows_leaves_nothing_in_the_database_and_the_retry_works", "test_intake.py::test_no_message_text_reaches_the_logs", "test_intake.py::test_mail_from_before_the_start_date_is_not_stored", "test_intake.py::test_a_message_with_no_date_is_stored_with_the_time_it_was_read"]
 
+[[case]]
+id = "TC-MAIL-08"
+area = "Mail sources"
+title = "Every kind of document in the golden set becomes the expected text"
+priority = "High"
+kind = "automated"
+refs = ["DEC-51", "PD-3.3", "REQ-IN-03"]
+steps = ["Covered by the tests named."]
+expected = "For each of the 100 made-up documents (email, typed PDF, scan, spreadsheet, automatic notice) the text step gives text that matches the expected text (emails 95% or better, typed PDFs and spreadsheets 99%, scans 95% allowing for OCR mistakes), and all 47 emails go in and come out as read."
+tests = ["test_text.py::test_every_golden_document_gives_the_expected_text", "test_reading.py::test_the_whole_golden_set_goes_in_and_comes_out_as_text"]
+
+[[case]]
+id = "TC-MAIL-09"
+area = "Mail sources"
+title = "HTML, earlier messages, scans, spreadsheets and Word are read the DEC-51 way"
+priority = "High"
+kind = "automated"
+refs = ["DEC-51", "DEC-09", "PD-3.3"]
+steps = ["Covered by the tests named."]
+expected = "HTML gives its words with links, scripts, styles and images left out. An earlier message is marked once and nothing is removed, and a document's own From line is not taken for a quote. A scanned PDF and an image are read by Tesseract. A spreadsheet gives stored values only (a formula is not calculated, a hidden sheet is skipped); CSV, TSV and Word tables read in order."
+tests = ["test_text.py::test_html_gives_its_words_without_links_scripts_or_styles", "test_text.py::test_an_earlier_message_is_marked_and_nothing_is_removed", "test_text.py::test_a_from_line_in_a_document_is_not_taken_for_a_quote", "test_text.py::test_a_scanned_pdf_is_read_by_ocr_from_its_page_images", "test_text.py::test_an_image_is_read_by_ocr", "test_text.py::test_a_formula_is_never_calculated_and_a_hidden_sheet_is_skipped", "test_text.py::test_csv_and_tsv_are_read_with_their_own_separator", "test_text.py::test_a_word_file_gives_paragraphs_and_tables_in_order"]
+
+[[case]]
+id = "TC-MAIL-10"
+area = "Mail sources"
+title = "A file over a limit, a damaged file or a missing Tesseract never loses a document"
+priority = "High"
+kind = "automated"
+refs = ["DEC-51", "DEC-13", "PD-3.3"]
+steps = ["Covered by the tests named."]
+expected = "A PDF over 50 pages, a password-protected PDF, a damaged file, a zip bomb and an image with too many pixels are marked not read with a fixed reason. A Word or Excel file with an entity trick never leaks a local file, and openpyxl is pinned to the defusedxml parser even though lxml is installed. A reader that breaks marks the file failed with the kind of error only, never document text. If Tesseract is missing the document stays waiting and is read later. No document text reaches the logs."
+tests = ["test_text.py::test_a_pdf_over_the_page_limit_is_not_read", "test_text.py::test_a_password_protected_pdf_is_not_read", "test_text.py::test_a_zip_bomb_is_refused_before_it_is_opened", "test_text.py::test_an_image_with_too_many_pixels_is_refused", "test_text.py::test_a_word_file_with_an_entity_trick_does_not_leak_a_local_file", "test_text.py::test_a_spreadsheet_with_an_entity_trick_is_refused_by_the_text_step_too", "test_sheets.py::test_the_reader_uses_the_safe_xml_parser", "test_reading.py::test_a_refused_file_says_why_and_the_message_is_still_read", "test_reading.py::test_a_file_that_breaks_the_reader_is_marked_failed_with_the_kind_of_error_only", "test_reading.py::test_a_missing_program_leaves_the_document_waiting_and_it_is_read_later", "test_reading.py::test_no_document_text_reaches_the_logs"]
+
 # =====================================================================================================================
 # Operations (engineering review, 2026-11-10)
 
@@ -1276,6 +1309,17 @@ refs = ["engineering review: TLS, headers"]
 steps = ["Covered by the tests named."]
 expected = "Permissions-Policy and Cross-Origin-Opener-Policy are on every response. Strict-Transport-Security is absent on plain HTTP and present when the https setting is on."
 tests = ["test_gate.py::test_security_headers_are_on_public_responses", "test_gate.py::test_hsts_is_sent_only_when_https_is_on"]
+
+[[case]]
+id = "TC-OPS-06"
+area = "Operations"
+title = "A save from a page that is out of date is refused"
+priority = "High"
+kind = "automated"
+refs = ["DEC-52", "engineering review: optimistic locking"]
+steps = ["Covered by the tests named."]
+expected = "A vendor save, a settle and a reopen made from a page drawn before someone else changed the record are refused with 'changed by someone else', change nothing, and the pages carry the version they were drawn from."
+tests = ["test_closing.py::test_a_settle_from_a_stale_page_is_refused_and_changes_nothing", "test_closing.py::test_a_reopen_from_a_stale_page_is_refused", "test_closing.py::test_the_pages_carry_the_version_they_were_drawn_from", "test_orders_web.py::test_a_vendor_save_from_a_stale_page_is_refused"]
 
 # =====================================================================================================================
 # Defects. Logged the moment they are found (owner, 2026-11-07).

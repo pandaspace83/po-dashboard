@@ -32,6 +32,8 @@ jobs:
         run: uv run ruff check .
       - name: Mypy (strict)
         run: uv run mypy
+      - name: Tesseract, which reads scans (about 50 MB)
+        run: brew install tesseract
       - name: Tests
         run: uv run pytest
       - name: No real documents or secrets in the tree (DEC-13)
