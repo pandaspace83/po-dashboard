@@ -174,6 +174,9 @@ class Invoice(Base):
     __tablename__ = "invoice"
     __table_args__ = (
         UniqueConstraint("po_id", "invoice_number", name="uq_invoice_po_id_invoice_number"),
+        # Migration 0006 also adds a unique index on (po_id, lower(invoice_number)): INV-1 and inv-1 are one invoice.
+        # It is left out of the model on purpose: SQLAlchemy cannot compare expression indexes on SQLite, and
+        # tests/test_concurrency.py proves the database refuses the second spelling.
         CheckConstraint("total >= 0", name="total_not_negative"),
     )
 

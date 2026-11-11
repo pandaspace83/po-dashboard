@@ -9,7 +9,7 @@ cover.
 | What | Where |
 |---|---|
 | Code | the cloned repository on the office Mac, anywhere under `~/Projects` (never Desktop, Documents or iCloud) |
-| Database, stored originals, logs | the data folder, default `~/Library/Application Support/PO Dashboard/` (PD-6.5) |
+| Database, stored originals, logs | the data folder, default `~/Library/Application Support/PO Dashboard/`; the log is `logs/app.log` (600, 1 MB, five kept): routes, status and timings with a request id, never a message, a query or a password. A user can quote the id shown in the `X-Request-ID` header |
 | Backups | a folder the user chooses, outside iCloud; 35 days kept |
 | Mailbox tokens or secrets | the office Mac's Keychain, one entry per mailbox, "PO Dashboard mailbox ..." |
 | The key that seals TOTP secrets | the macOS Keychain, entry "PO Dashboard sealing key" (PD-1.9b) |
@@ -65,12 +65,28 @@ for 30 minutes.
 
 ## 6. Backup and restore (PD-6.5)
 
-Nightly copy of the database and stored files to the chosen folder, 35 days kept. Restore: stop the service, run
-`scripts/restore.sh <backup>`, start the service. The restore is tested in PD-6.5 on a copy, never on the live data.
+**Built 2026-11-11 (the nightly schedule and the 35-day pruning are still PD-6.5):**
+
+- **Back up now:** `uv run po-dashboard backup --to ~/Backups` (a folder on this Mac, outside iCloud, Desktop and
+  Documents; the command refuses those, and refuses a folder inside the data folder). It makes a new folder with the
+  database (a consistent copy made with SQLite's own backup call: it is safe while the app runs, and a plain file copy of
+  a database in use is not), every stored original, and a manifest of hashes. It checks its own copy before it says done.
+  It never overwrites a backup and never deletes one.
+- **Restore:** stop the app, then `uv run po-dashboard restore ~/Backups/<folder> --into ~/NewDataFolder`. It verifies the
+  backup first (hashes and integrity), and goes only into a folder that has no database, so it cannot damage the data you
+  have. Start the app against it with `PO_DASHBOARD_DATA=~/NewDataFolder`. Move the old data folder aside yourself once
+  you have checked the result; nothing deletes it for you.
+- **Before every upgrade** the app makes a safety copy in the data folder's `backups/` folder when a migration is about to
+  change a database that has data, and does not start if that copy fails. It also refuses, in plain words, a database that
+  a newer version of the app has changed.
+- **By hand until PD-6.5 schedules it:** run the backup command before every update and once a week. Until then, stored
+  originals exist in only one place.
+- **Still to come (PD-6.5):** the nightly run, 35 days kept (removing old backups needs the owner's yes, so the app will
+  ask or list them, never silently delete), and a second copy on a different disk.
 
 ## 7. Update (PD-6.5)
 
-`git pull`, then restart the service. On start the app backs up the database, then applies migrations. If a migration
+`git pull`, then restart the service. **Run exactly one copy of the app**: the scanner, the SQLite file and the held upload previews all assume a single process, and a second copy would break them. On start the app backs up the database (§6), then applies migrations. If a migration
 fails the app does not start and says why; restore the backup and report it. After an update, reload each open tab once
 with Cmd-Shift-R (Safari: Cmd-Option-R) so the browser picks up the new stylesheet and script.
 

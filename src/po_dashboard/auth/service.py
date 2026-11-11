@@ -12,7 +12,7 @@ import secrets
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
 from po_dashboard.auth import passwords
@@ -22,6 +22,7 @@ from po_dashboard.db.models import AppUser, AuditLog, SignInSession
 LOCKOUT_ATTEMPTS = 5
 LOCKOUT = timedelta(minutes=15)
 IDLE = timedelta(minutes=30)
+TOUCH_EVERY = timedelta(seconds=60)  # last_seen is written at most this often
 ABSOLUTE = timedelta(hours=12)
 PENDING = timedelta(minutes=10)
 TEMP_PASSWORD_LIFETIME = timedelta(hours=72)
@@ -116,7 +117,8 @@ def sign_in(
         ok = False
     if not ok or user is None:
         if user is not None and usable:
-            user.failed_attempts += 1
+            db.execute(update(AppUser).where(AppUser.id == user.id).values(failed_attempts=AppUser.failed_attempts + 1))
+            db.refresh(user)  # counted by the database, so parallel guesses cannot undercount
             if user.failed_attempts >= LOCKOUT_ATTEMPTS:
                 user.locked_until = now + LOCKOUT
                 user.failed_attempts = 0
@@ -155,7 +157,7 @@ def resolve_session(
         db.delete(row)
         db.commit()
         return None
-    if touch:
+    if touch and now - row.last_seen_at >= TOUCH_EVERY:  # one write a minute, not one on every request
         row.last_seen_at = now
         db.commit()
     return row

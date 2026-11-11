@@ -44,6 +44,9 @@ def test_creates_the_sign_in_tables(engine: Engine) -> None:
     assert {"app_user", "session", "recovery_code", "audit_log"} <= tables
 
 
+# SQLAlchemy cannot reflect the case-blind invoice index (an expression index, migration 0006) on SQLite and says so;
+# tests/test_concurrency.py proves the database enforces it.
+@pytest.mark.filterwarnings("ignore:Skipped unsupported reflection of expression-based index")
 def test_migration_matches_the_models(engine: Engine) -> None:
     with engine.connect() as conn:
         diff = compare_metadata(MigrationContext.configure(conn), Base.metadata)

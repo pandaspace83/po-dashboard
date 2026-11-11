@@ -44,7 +44,7 @@ def sign_in_page(request: Request, db: Db) -> Response:
     no_accounts = db.scalar(select(AppUser.id).limit(1)) is None
     response = _page(request, "sign_in.html", form_token=token, no_accounts=no_accounts, error=None)
     secure = request.app.state.settings.https
-    response.set_cookie(SIGN_IN_COOKIE, token, httponly=True, samesite="strict", secure=secure)
+    response.set_cookie(SIGN_IN_COOKIE, token, httponly=True, samesite="strict", secure=secure, path="/")
     return response
 
 

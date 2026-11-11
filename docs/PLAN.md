@@ -26,7 +26,7 @@ The rest is following this plan, which suits Sonnet. I will say before each swit
 - [x] PD-0.3 `scripts/setup.sh` for macOS: Python, dependencies, checks for Ollama and Tesseract, states the 9 GB
   model size and asks before pulling it.
 - [x] PD-0.4 A page that starts and shows "PO Dashboard" and the health strip.
-- [ ] PD-0.5 CI on GitHub Actions: Ruff and the fast tests on every push (once the repo is on GitHub).
+- [~] PD-0.5 CI on GitHub Actions: Ruff and the fast tests on every push (once the repo is on GitHub). **Written 2026-11-11** (`.github/workflows/ci.yml`: lock check, locked install, ruff, strict mypy, all tests, the real-documents guard over every tracked file, the test-record check; `.github/dependabot.yml`). It has not run, because nothing is pushed. Actions are pinned by major version; pin them to commit SHAs on the first push. On the first push also turn on branch protection with the CI check required.
 - [x] PD-0.6 A pre-commit check that refuses `.eml`, PDFs, databases and `.env` outside `tests/data/` (RISK-07).
 
 **Demo:** `scripts/setup.sh && uv run po-dashboard serve` opens an empty app at http://127.0.0.1:8000.
@@ -164,9 +164,9 @@ the model is wired in.*
 - [ ] PD-3.3 Text extraction (DEC-51): HTML body, text PDF, OCR, XLSX/CSV, DOCX, quoted-thread marking (REQ-IN-03).
   Checked against the golden set: each document's text must be close to its `text.txt`.
 - [ ] PD-3.4 The scanner loop with a saved position, one scan at a time, and the crash test (kill mid-scan, no loss,
-  no duplicate).
+  no duplicate). **From the engineering review ([ENGINEERING_REVIEW.md](ENGINEERING_REVIEW.md)):** one scan at a time through a guard, so an overlapping tick is skipped, not queued; a cap on extraction work per tick, so a burst of mail cannot starve the web pages; a "model not reachable" state (`ModelUnavailable`) that leaves documents waiting instead of marking them failed; writes that start as immediate transactions (`BEGIN IMMEDIATE`) so the web app and the scanner queue on the lock instead of one failing at once with "database is locked" (measure with `tests/test_speed.py` before and after); `scan_state` heartbeat; the 60-second "last scan" check on the health strip.
 - [ ] PD-3.5 The Gmail provider (read-only, DEC-50) and a test that proves it cannot write (REQ-IN-02). The Keychain
-  entries go through `keyring`.
+  entries go through `keyring`. **From the engineering review:** retry with exponential backoff, jitter and a cap, honouring `Retry-After`, for 429 and 5xx and connect errors only (never 401 or 403); the API hosts and the redirect address are fixed constants (SSRF); the OAuth `state` and PKCE; a test that the refresh token never reaches a log; it must pass the shared contract in `tests/mail_contract.py`.
 - [ ] PD-3.6 Hostile-attachment tests: oversize, wrong type, a PDF bomb, a spreadsheet with formulas.
 - [ ] PD-3.7 The Mailboxes screen: connect, reconnect, disconnect the one mailbox, show its state and last check, with
   the wording in ARCHITECTURE §7 (REQ-IN-07).
@@ -177,6 +177,7 @@ Then the same through the Gmail test account.
 ## Phase 4: Extraction, validation, review queue
 
 - [ ] PD-4.0 Documentation pass (DEC-25).
+- [ ] PD-4.0a **Before the first extraction row exists** (engineering review): add to `source_document` the queue columns `attempts`, `last_error` (a type and a reason, never document text) and `next_attempt_at`, and the states `pending` and `processing`; a retry cap after which a document is "failed" and listed for a person to Retry or Dismiss, with a count on the health strip (this is the dead letter queue); documents left "processing" by a crash go back to "pending" on start; rows are claimed with one guarded `UPDATE` and its row count. A database table is the queue: no Redis, RabbitMQ or Kafka.
 - [ ] PD-4.1 Model gateway `models/llm.py` and the versioned prompt and schema (ARCHITECTURE §6); they start in PD-2.4
   and are finished here (retries, time-outs, the health strip).
 - [ ] PD-4.2 The validator (§6.5), each check with a test; the "value must appear in the source" check.
@@ -215,9 +216,9 @@ reopens it as a slip.
 - [ ] PD-6.2 A check that the app can read each connected mailbox and is **refused** on any other (RISK-04), and has no
   write permission.
 - [ ] PD-6.3 Re-run the golden set shape on real mail only after the owner confirms each real document (DEC-13).
-- [ ] PD-6.3a Network access (DEC-28, NFR-14), **only once a second factor exists (DEC-34)**: HTTPS with a certificate for the office Mac's name, the app refuses to listen on the network without it, the firewall check, the one-time certificate step on a laptop, and a real sign-in from a second laptop on the real office network (RISK-12).
+- [ ] PD-6.3a Network access (DEC-28, NFR-14), **only once a second factor exists (DEC-34)**: HTTPS with a certificate for the office Mac's name, the app refuses to listen on the network without it, the firewall check, the one-time certificate step on a laptop, and a real sign-in from a second laptop on the real office network (RISK-12). **From the engineering review:** `ssl_certfile` and `ssl_keyfile` passed to Uvicorn from Settings, and Settings refuses a non-loopback host unless `https` and both files are set (the certificate key must be mode 600), so HTTPS cannot be "on" in name only; a per-IP limit on sign-in failures beside the per-account lockout (so one laptop cannot lock a colleague out, or guess across accounts); the `__Host-` prefix on the session cookie; Uvicorn's proxy headers stay off because there is no proxy, so a spoofed `X-Forwarded-For` is never trusted; a real-laptop check that the `.local` name resolves; a startup warning if FileVault is off (`fdesetup status`).
 - [ ] PD-6.4 launchd service, restart on failure, start at login (DEC-12); stay-awake settings; what really happens after a power cut, and the Keychain prompt (RISK-10, RISK-11).
-- [ ] PD-6.5 Backups with a tested restore, 35-day pruning; migrations preceded by a backup (§11).
+- [~] PD-6.5 Backups with a tested restore, 35-day pruning; migrations preceded by a backup (§11). **Pulled forward 2026-11-11, because stored originals exist from PD-3.2:** `po-dashboard backup` and `restore`, a safety copy before an upgrade, a refusal of a newer database, 20 tests that restore a backup and compare it (TC-OPS-01). Still to do here: the nightly schedule, a second copy on another disk, 35-day pruning only with the owner's yes, the runbook tested by following it.
 - [ ] PD-6.6 24-hour soak test with a restart in the middle (T-6).
 - [ ] PD-6.7 `OPERATIONS.md` filled with the real commands and tested by following it.
 - [ ] PD-6.8 Provider sign-in as settled by OPEN-13(a) and DEC-32.

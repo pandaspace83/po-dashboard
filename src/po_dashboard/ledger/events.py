@@ -16,6 +16,7 @@ from decimal import Decimal
 from typing import Literal
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from po_dashboard.auth.service import audit
@@ -218,8 +219,12 @@ def record_invoice(
         po_id=order.id, invoice_number=number_, invoice_date=dated, total=written_total,
         accepted_by=actor.id if actor else None, accepted_at=utcnow(),
     )  # fmt: skip
-    db.add(invoice)
-    db.flush()
+    try:
+        with db.begin_nested():  # two people sending the same invoice at once: the database refuses the second
+            db.add(invoice)
+            db.flush()
+    except IntegrityError as clash:
+        raise LedgerError(f"Invoice {number_} is already recorded for this purchase order.") from clash
     for entry in lines:
         db.add(InvoiceLine(invoice_id=invoice.id, po_line_id=entry.po_line_id, qty=entry.qty, price=entry.price))
     db.flush()

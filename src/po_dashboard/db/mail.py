@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import CheckConstraint, ForeignKey, Index, Integer, String, Text, text
+from sqlalchemy import CheckConstraint, ForeignKey, Index, Integer, String, Text, UniqueConstraint, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from po_dashboard.db.base import Base, UTCDateTime, utcnow
@@ -45,6 +45,10 @@ class SourceMessage(Base):
     bytes are already stored, even if it came through another mailbox, is never stored again (REQ-IN-05)."""
 
     __tablename__ = "source_message"
+    __table_args__ = (
+        # a provider's id is unique within its mailbox: a re-scan cannot store a message twice, even if scans race
+        UniqueConstraint("mailbox_id", "provider_id", name="uq_source_message_mailbox_id_provider_id"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
@@ -54,7 +58,7 @@ class SourceMessage(Base):
     sender: Mapped[str | None] = mapped_column(String(500), default=None)
     recipients: Mapped[str | None] = mapped_column(Text, default=None)  # To and Cc, as written
     subject: Mapped[str | None] = mapped_column(String(1000), default=None)
-    received_at: Mapped[datetime] = mapped_column(UTCDateTime)
+    received_at: Mapped[datetime] = mapped_column(UTCDateTime, index=True)  # lists are newest first
     message_id_header: Mapped[str | None] = mapped_column(String(500), default=None)
     raw_path: Mapped[str] = mapped_column(String(200))  # inside the file store
     content_hash: Mapped[str] = mapped_column(String(64), unique=True)  # SHA-256 of the raw message

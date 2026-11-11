@@ -327,6 +327,18 @@ def test_security_headers_are_on_public_responses(env, path: str) -> None:  # no
     assert "frame-ancestors 'none'" in response.headers["content-security-policy"]
     assert response.headers["x-content-type-options"] == "nosniff"
     assert response.headers["referrer-policy"] == "same-origin"
+    assert "camera=()" in response.headers["permissions-policy"]
+    assert response.headers["cross-origin-opener-policy"] == "same-origin"
+    assert "strict-transport-security" not in response.headers  # HSTS only once HTTPS is really on
+
+
+def test_hsts_is_sent_only_when_https_is_on(tmp_path) -> None:  # noqa: ANN001
+    from po_dashboard.config import Settings
+    from po_dashboard.web import create_app
+
+    app = create_app(Settings(data_dir=tmp_path, https=True))
+    response = new_client(app).get("/sign-in")
+    assert response.headers["strict-transport-security"].startswith("max-age=")
 
 
 def test_signed_in_pages_are_not_cached_and_refusals_carry_headers(admin_client: TestClient, env) -> None:  # noqa: ANN001

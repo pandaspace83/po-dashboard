@@ -1,0 +1,13 @@
+# Weekly pull requests for newer dependencies and newer workflow actions. Each is one small change that CI checks;
+# nothing is merged by itself.
+version: 2
+updates:
+  - package-ecosystem: uv
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

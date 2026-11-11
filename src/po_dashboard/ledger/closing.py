@@ -7,7 +7,10 @@ reason, and the audit trail keeps what was said. Whole or nothing: if any pick i
 
 from __future__ import annotations
 
-from sqlalchemy import select
+from typing import Any, cast
+
+from sqlalchemy import select, update
+from sqlalchemy.engine import CursorResult
 from sqlalchemy.orm import Session
 
 from po_dashboard.auth.service import audit
@@ -46,12 +49,14 @@ def close_lines(
     now = utcnow()
     for line_id, action in chosen.items():
         line = lines[line_id]
-        line.closed_reason, line.closed_at, line.closed_by, line.close_note = (
-            action,
-            now,
-            actor.id if actor else None,
-            why,
-        )
+        taken = cast("CursorResult[Any]", db.execute(
+            update(POLine).where(POLine.id == line_id, POLine.closed_reason.is_(None)).values(
+                closed_reason=action, closed_at=now, closed_by=actor.id if actor else None, close_note=why
+            )
+        ))
+        if taken.rowcount != 1:  # someone closed it between our check and now
+            raise LedgerError(f"Line {line.line_no} was just closed by someone else. Reload the page.")
+        db.expire(line)
         audit(db, "line.close", actor, f"po_line:{line_id}", client_address,
               before={"status": states[line_id].status.value}, after={"closed": action, "reason": why})  # fmt: skip
     db.flush()

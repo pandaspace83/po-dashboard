@@ -9,7 +9,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from sqlalchemy import Engine
+from sqlalchemy import Engine, text
 from starlette.exceptions import HTTPException
 
 from po_dashboard import __version__
@@ -42,7 +42,12 @@ def create_app(settings: Settings | None = None, engine: Engine | None = None) -
 
     @app.get("/health")
     def health() -> JSONResponse:
-        """Up or down only. Model and scan details are on the signed-in home page."""
+        """Up or down only (down if the database cannot be read). Model and scan details need a sign-in."""
+        try:
+            with engine.connect() as conn:
+                conn.execute(text("SELECT 1"))
+        except Exception:
+            return JSONResponse({"status": "down"}, status_code=503)
         return JSONResponse({"status": "ok"})
 
     app.include_router(account.router)

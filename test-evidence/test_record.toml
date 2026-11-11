@@ -1220,6 +1220,64 @@ expected = "Folders are 700 and files 600, with no temporary file left behind. A
 tests = ["test_intake.py::test_the_store_is_owner_only_and_never_half_written", "test_intake.py::test_a_failure_while_writing_rows_leaves_nothing_in_the_database_and_the_retry_works", "test_intake.py::test_no_message_text_reaches_the_logs", "test_intake.py::test_mail_from_before_the_start_date_is_not_stored", "test_intake.py::test_a_message_with_no_date_is_stored_with_the_time_it_was_read"]
 
 # =====================================================================================================================
+# Operations (engineering review, 2026-11-10)
+
+[[case]]
+id = "TC-OPS-01"
+area = "Operations"
+title = "A backup restores to exactly what was backed up; it never overwrites, never deletes, and refuses unsafe places"
+priority = "Critical"
+kind = "automated"
+refs = ["NFR-06", "PD-6.5", "docs/ENGINEERING_REVIEW.md"]
+steps = ["Covered by the tests named: a data folder with messages in the database and the stored originals is backed up, restored into a new folder, and compared row by row and hash by hash."]
+expected = "The restored database passes its integrity check and has the same rows; every original is byte for byte the same; a commit still in the write-ahead log is in the backup. Backups are owner-only. A second backup with the same name, a folder in iCloud, Desktop or Documents, and a folder inside the data folder are refused. A damaged original, a changed database or a missing manifest is refused before restore. A restore never goes over an existing database. Old backups are never removed. An upgrade of a database with data makes a safety copy first and stops if that fails. A database from a newer app is refused in plain words."
+tests = ["test_backup.py::test_a_backup_restores_to_exactly_what_was_backed_up", "test_backup.py::test_the_snapshot_holds_committed_rows_still_in_the_write_ahead_log", "test_backup.py::test_a_backup_is_private", "test_backup.py::test_nothing_is_overwritten_or_pruned", "test_backup.py::test_a_synced_folder_is_refused", "test_backup.py::test_a_backup_inside_the_data_folder_is_refused", "test_backup.py::test_a_damaged_backup_is_refused_before_it_is_restored", "test_backup.py::test_a_changed_database_or_a_missing_manifest_is_refused", "test_backup.py::test_a_restore_never_goes_over_a_data_folder_that_has_a_database", "test_backup.py::test_an_upgrade_of_a_database_with_data_makes_a_backup_first", "test_backup.py::test_when_the_backup_fails_nothing_is_changed_and_the_app_does_not_start", "test_backup.py::test_a_database_from_a_newer_app_is_refused_in_plain_words", "test_backup.py::test_the_commands_back_up_and_restore_and_print_no_message_text"]
+
+[[case]]
+id = "TC-OPS-02"
+area = "Operations"
+title = "Two people, or a double click, cannot corrupt a record"
+priority = "High"
+kind = "automated"
+refs = ["engineering review: race conditions"]
+steps = ["Covered by the tests named."]
+expected = "Invoice INV-1 and inv-1 are one invoice in the database as well as in the app, and a clash is a message, not a 500. The second of two people closing a line is told and the first person's record is not overwritten. Wrong passwords are counted by the database. The session row is written once a minute while idle time still counts. A message id is stored once per mailbox."
+tests = ["test_concurrency.py::test_the_database_itself_treats_inv_1_and_INV_1_as_one_invoice", "test_concurrency.py::test_a_clash_the_app_check_misses_is_a_message_not_a_crash", "test_concurrency.py::test_the_second_of_two_people_closing_a_line_is_told_and_nothing_is_overwritten", "test_concurrency.py::test_wrong_passwords_are_counted_by_the_database", "test_concurrency.py::test_the_session_is_written_once_a_minute_and_idle_time_still_counts", "test_concurrency.py::test_a_message_id_is_stored_once_per_mailbox"]
+
+[[case]]
+id = "TC-OPS-03"
+area = "Operations"
+title = "A model server that is down fails fast and leaves the document waiting; the health check sees a broken database"
+priority = "High"
+kind = "automated"
+refs = ["engineering review: timeouts, health checks"]
+steps = ["Covered by the tests named. The model server is replaced by a made-up one."]
+expected = "A refused or timed-out connection is ModelUnavailable (not a failed document) after at most 5 seconds; only the wait for an answer is long. A server error is a different error. /health answers 503 'down' when the database cannot be read and says only up or down."
+tests = ["test_extraction.py::test_a_server_that_is_not_there_is_unavailable_not_a_failed_document", "test_extraction.py::test_only_the_wait_for_an_answer_is_long", "test_web.py::test_health_says_down_when_the_database_cannot_be_read"]
+
+[[case]]
+id = "TC-OPS-04"
+area = "Operations"
+title = "The log is useful and holds no secret, no message text, no query and no id; its files are private"
+priority = "Critical"
+kind = "automated"
+refs = ["DEC-13", "engineering review: logging"]
+steps = ["Covered by the tests named. A wrong password, a search text, a record number and an exception message made of 'document text' are used as sentinels."]
+expected = "Each response has an X-Request-ID and Server-Timing header and exactly one log line with the method, the route with numbers masked, the status and the milliseconds. None of the sentinels appears in the log file or the captured log. An unhandled error logs its type and route only. The log folder is 700 and the file 600, and configuring twice adds no second handler."
+tests = ["test_logging.py::test_every_response_has_a_request_id_and_a_time_and_one_log_line", "test_logging.py::test_the_log_has_the_route_and_never_the_query_text_or_the_ids", "test_logging.py::test_no_password_or_token_reaches_the_log", "test_logging.py::test_an_unhandled_error_logs_its_type_and_route_but_not_its_message", "test_logging.py::test_the_log_files_are_private", "test_logging.py::test_configuring_twice_adds_no_second_handler"]
+
+[[case]]
+id = "TC-OPS-05"
+area = "Operations"
+title = "Extra security headers are sent, and HSTS only when HTTPS is really on"
+priority = "Medium"
+kind = "automated"
+refs = ["engineering review: TLS, headers"]
+steps = ["Covered by the tests named."]
+expected = "Permissions-Policy and Cross-Origin-Opener-Policy are on every response. Strict-Transport-Security is absent on plain HTTP and present when the https setting is on."
+tests = ["test_gate.py::test_security_headers_are_on_public_responses", "test_gate.py::test_hsts_is_sent_only_when_https_is_on"]
+
+# =====================================================================================================================
 # Defects. Logged the moment they are found (owner, 2026-11-07).
 
 [[defect]]

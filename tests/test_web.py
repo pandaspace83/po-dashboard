@@ -12,6 +12,17 @@ def test_health_says_only_up(tmp_path: Path) -> None:
     assert client.get("/health").json() == {"status": "ok"}
 
 
+def test_health_says_down_when_the_database_cannot_be_read(tmp_path: Path) -> None:
+    app = create_app(Settings(data_dir=tmp_path))
+    client = TestClient(app, base_url="http://127.0.0.1")
+    assert client.get("/health").status_code == 200
+    app.state.engine.dispose()
+    (tmp_path / "po-dashboard.db").unlink()
+    (tmp_path / "po-dashboard.db").mkdir()  # the database is now something that cannot be opened
+    response = client.get("/health")
+    assert response.status_code == 503 and response.json() == {"status": "down"}
+
+
 def test_non_loopback_host_refused() -> None:
     with pytest.raises(ConfigError):
         Settings(host="0.0.0.0")  # noqa: S104

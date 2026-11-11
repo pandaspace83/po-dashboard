@@ -527,7 +527,12 @@ The full runbook is [OPERATIONS.md](OPERATIONS.md). The design points that make 
 - **Data outside the repo.** The database, files, logs and backups sit in a per-user data folder, so `git pull` to
   update never touches them. Alembic migrates the database on start, after a backup.
 - **Backups.** A nightly copy of the database and stored files to a folder the user chooses, outside iCloud, with a
-  tested restore and 35 days kept (LegalLens's rule).
+  tested restore and 35 days kept (LegalLens's rule). The database is copied with SQLite's online-backup call, never by
+  copying the file of a database in use (the write-ahead log can make that copy torn); the stored originals are copied and
+  each is checked against its hash; a manifest records the hashes. `po-dashboard backup` and `restore` are built
+  (2026-11-11); a restore goes only into a data folder with no database; the nightly schedule and the pruning are PD-6.5.
+  A safety copy is also made in `backups/` before a migration changes a database with data. The app is **one process**:
+  the scanner, SQLite and the held upload previews assume it.
 - **Sleep.** The office Mac is set not to sleep. If it does stop, laptops cannot reach the app at all, so no banner can
   appear; the catch-up scan still recovers the mail.
 

@@ -4,7 +4,7 @@
 
 PO Dashboard (RaceSpec Internal Dashboard). Scope: Phase 0 and Phase 1: sign-in, people, vendors, purchase orders, imports, the QuickBooks starting load, entries by hand, Home, Open items, Audit, page behaviour, security and speed.
 
-**93 cases:** 44 Critical, 36 High, 13 Medium; 2 terminal, 31 automated, 59 browser, 1 owner only.
+**98 cases:** 46 Critical, 38 High, 14 Medium; 2 terminal, 36 automated, 59 browser, 1 owner only.
 
 Latest Chrome run: 11/07/2026, Google Chrome 156.0.8078.81, by Claude, scripts/browser_evidence.py, on commit 7f2d081 with uncommitted changes: **59 of 59** browser cases pass. Automated tests: `uv run pytest`. Defects: [DEFECTS.md](DEFECTS.md). Sign-off: [SIGN_OFF.md](SIGN_OFF.md).
 
@@ -115,6 +115,11 @@ Latest Chrome run: 11/07/2026, Google Chrome 156.0.8078.81, by Claude, scripts/b
 | [TC-MAIL-05](#tc-mail-05) | Every original message and attachment is kept unchanged, once, under its hash | Critical | Automated | Automated tests | — |
 | [TC-MAIL-06](#tc-mail-06) | A hostile message cannot hurt intake: odd file names, broken mail, huge or too many files | Critical | Automated | Automated tests | — |
 | [TC-MAIL-07](#tc-mail-07) | The store is private, never half-written, rolls back cleanly, keeps message text out of logs and honours the start date | High | Automated | Automated tests | — |
+| [TC-OPS-01](#tc-ops-01) | A backup restores to exactly what was backed up; it never overwrites, never deletes, and refuses unsafe places | Critical | Automated | Automated tests | — |
+| [TC-OPS-02](#tc-ops-02) | Two people, or a double click, cannot corrupt a record | High | Automated | Automated tests | — |
+| [TC-OPS-03](#tc-ops-03) | A model server that is down fails fast and leaves the document waiting; the health check sees a broken database | High | Automated | Automated tests | — |
+| [TC-OPS-04](#tc-ops-04) | The log is useful and holds no secret, no message text, no query and no id; its files are private | Critical | Automated | Automated tests | — |
+| [TC-OPS-05](#tc-ops-05) | Extra security headers are sent, and HSTS only when HTTPS is really on | Medium | Automated | Automated tests | — |
 
 ## Set-up and running
 
@@ -2137,5 +2142,92 @@ Latest Chrome run: 11/07/2026, Google Chrome 156.0.8078.81, by Claude, scripts/b
 **Expected:** Folders are 700 and files 600, with no temporary file left behind. A failure while writing rows leaves the database empty and a retry works. A subject, body and file name never appear in the logs. Mail from before the mailbox's start date is not stored; a message with no date is stored with the time it was read.
 
 **Automated tests:** `test_intake.py::test_the_store_is_owner_only_and_never_half_written`, `test_intake.py::test_a_failure_while_writing_rows_leaves_nothing_in_the_database_and_the_retry_works`, `test_intake.py::test_no_message_text_reaches_the_logs`, `test_intake.py::test_mail_from_before_the_start_date_is_not_stored`, `test_intake.py::test_a_message_with_no_date_is_stored_with_the_time_it_was_read`
+
+**Latest:** Owner: not recorded.
+
+
+## Operations
+
+<a id="tc-ops-01"></a>
+
+### TC-OPS-01: A backup restores to exactly what was backed up; it never overwrites, never deletes, and refuses unsafe places
+
+**Priority:** Critical · **How:** Automated · **Refs:** NFR-06, PD-6.5, docs/ENGINEERING_REVIEW.md
+
+**Steps**
+
+1. Covered by the tests named: a data folder with messages in the database and the stored originals is backed up, restored into a new folder, and compared row by row and hash by hash.
+
+**Expected:** The restored database passes its integrity check and has the same rows; every original is byte for byte the same; a commit still in the write-ahead log is in the backup. Backups are owner-only. A second backup with the same name, a folder in iCloud, Desktop or Documents, and a folder inside the data folder are refused. A damaged original, a changed database or a missing manifest is refused before restore. A restore never goes over an existing database. Old backups are never removed. An upgrade of a database with data makes a safety copy first and stops if that fails. A database from a newer app is refused in plain words.
+
+**Automated tests:** `test_backup.py::test_a_backup_restores_to_exactly_what_was_backed_up`, `test_backup.py::test_the_snapshot_holds_committed_rows_still_in_the_write_ahead_log`, `test_backup.py::test_a_backup_is_private`, `test_backup.py::test_nothing_is_overwritten_or_pruned`, `test_backup.py::test_a_synced_folder_is_refused`, `test_backup.py::test_a_backup_inside_the_data_folder_is_refused`, `test_backup.py::test_a_damaged_backup_is_refused_before_it_is_restored`, `test_backup.py::test_a_changed_database_or_a_missing_manifest_is_refused`, `test_backup.py::test_a_restore_never_goes_over_a_data_folder_that_has_a_database`, `test_backup.py::test_an_upgrade_of_a_database_with_data_makes_a_backup_first`, `test_backup.py::test_when_the_backup_fails_nothing_is_changed_and_the_app_does_not_start`, `test_backup.py::test_a_database_from_a_newer_app_is_refused_in_plain_words`, `test_backup.py::test_the_commands_back_up_and_restore_and_print_no_message_text`
+
+**Latest:** Owner: not recorded.
+
+
+<a id="tc-ops-02"></a>
+
+### TC-OPS-02: Two people, or a double click, cannot corrupt a record
+
+**Priority:** High · **How:** Automated · **Refs:** engineering review: race conditions
+
+**Steps**
+
+1. Covered by the tests named.
+
+**Expected:** Invoice INV-1 and inv-1 are one invoice in the database as well as in the app, and a clash is a message, not a 500. The second of two people closing a line is told and the first person's record is not overwritten. Wrong passwords are counted by the database. The session row is written once a minute while idle time still counts. A message id is stored once per mailbox.
+
+**Automated tests:** `test_concurrency.py::test_the_database_itself_treats_inv_1_and_INV_1_as_one_invoice`, `test_concurrency.py::test_a_clash_the_app_check_misses_is_a_message_not_a_crash`, `test_concurrency.py::test_the_second_of_two_people_closing_a_line_is_told_and_nothing_is_overwritten`, `test_concurrency.py::test_wrong_passwords_are_counted_by_the_database`, `test_concurrency.py::test_the_session_is_written_once_a_minute_and_idle_time_still_counts`, `test_concurrency.py::test_a_message_id_is_stored_once_per_mailbox`
+
+**Latest:** Owner: not recorded.
+
+
+<a id="tc-ops-03"></a>
+
+### TC-OPS-03: A model server that is down fails fast and leaves the document waiting; the health check sees a broken database
+
+**Priority:** High · **How:** Automated · **Refs:** engineering review: timeouts, health checks
+
+**Steps**
+
+1. Covered by the tests named. The model server is replaced by a made-up one.
+
+**Expected:** A refused or timed-out connection is ModelUnavailable (not a failed document) after at most 5 seconds; only the wait for an answer is long. A server error is a different error. /health answers 503 'down' when the database cannot be read and says only up or down.
+
+**Automated tests:** `test_extraction.py::test_a_server_that_is_not_there_is_unavailable_not_a_failed_document`, `test_extraction.py::test_only_the_wait_for_an_answer_is_long`, `test_web.py::test_health_says_down_when_the_database_cannot_be_read`
+
+**Latest:** Owner: not recorded.
+
+
+<a id="tc-ops-04"></a>
+
+### TC-OPS-04: The log is useful and holds no secret, no message text, no query and no id; its files are private
+
+**Priority:** Critical · **How:** Automated · **Refs:** DEC-13, engineering review: logging
+
+**Steps**
+
+1. Covered by the tests named. A wrong password, a search text, a record number and an exception message made of 'document text' are used as sentinels.
+
+**Expected:** Each response has an X-Request-ID and Server-Timing header and exactly one log line with the method, the route with numbers masked, the status and the milliseconds. None of the sentinels appears in the log file or the captured log. An unhandled error logs its type and route only. The log folder is 700 and the file 600, and configuring twice adds no second handler.
+
+**Automated tests:** `test_logging.py::test_every_response_has_a_request_id_and_a_time_and_one_log_line`, `test_logging.py::test_the_log_has_the_route_and_never_the_query_text_or_the_ids`, `test_logging.py::test_no_password_or_token_reaches_the_log`, `test_logging.py::test_an_unhandled_error_logs_its_type_and_route_but_not_its_message`, `test_logging.py::test_the_log_files_are_private`, `test_logging.py::test_configuring_twice_adds_no_second_handler`
+
+**Latest:** Owner: not recorded.
+
+
+<a id="tc-ops-05"></a>
+
+### TC-OPS-05: Extra security headers are sent, and HSTS only when HTTPS is really on
+
+**Priority:** Medium · **How:** Automated · **Refs:** engineering review: TLS, headers
+
+**Steps**
+
+1. Covered by the tests named.
+
+**Expected:** Permissions-Policy and Cross-Origin-Opener-Policy are on every response. Strict-Transport-Security is absent on plain HTTP and present when the https setting is on.
+
+**Automated tests:** `test_gate.py::test_security_headers_are_on_public_responses`, `test_gate.py::test_hsts_is_sent_only_when_https_is_on`
 
 **Latest:** Owner: not recorded.

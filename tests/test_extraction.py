@@ -80,6 +80,24 @@ def test_a_failed_call_raises_an_error_without_the_document_text(monkeypatch: py
         assert secret not in str(problem.value)
 
 
+def test_a_server_that_is_not_there_is_unavailable_not_a_failed_document(monkeypatch: pytest.MonkeyPatch) -> None:
+    for refusal in (httpx.ConnectError("refused"), httpx.ConnectTimeout("slow")):
+        fake_post(monkeypatch, refusal)
+        with pytest.raises(llm.ModelUnavailable):
+            llm.extract(Settings(), "text")
+    fake_post(monkeypatch, httpx.Response(500))
+    with pytest.raises(llm.ModelError) as problem:
+        llm.extract(Settings(), "text")
+    assert not isinstance(problem.value, llm.ModelUnavailable)  # a server error is not "not there"
+
+
+def test_only_the_wait_for_an_answer_is_long(monkeypatch: pytest.MonkeyPatch) -> None:
+    sent = fake_post(monkeypatch, httpx.Response(200, json={"message": {"content": "{}"}}))
+    llm.extract(Settings(), "text")
+    wait = sent[0]["timeout"]
+    assert wait.connect == llm.CONNECT_TIMEOUT == 5.0 and wait.read == llm.EXTRACT_TIMEOUT
+
+
 def test_a_reply_that_is_not_json_is_a_model_error(monkeypatch: pytest.MonkeyPatch) -> None:
     fake_post(monkeypatch, httpx.Response(200, json={"message": {"content": "Sure! Here you go"}}))
     with pytest.raises(llm.ModelError):

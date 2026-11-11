@@ -14,12 +14,19 @@ from po_dashboard.extraction import prompts, schema
 
 # The first call after Ollama loads a 14b model can take minutes (CLAUDE.md).
 EXTRACT_TIMEOUT = 600.0
+# A dead server fails in seconds; only the wait for an answer is long.
+CONNECT_TIMEOUT = 5.0
 CONTEXT_TOKENS = 8192
 MAX_REPLY_TOKENS = 2048  # a runaway reply stops here instead of running for minutes
 
 
 class ModelError(RuntimeError):
     """The model server did not give a usable answer. The message holds no document text."""
+
+
+class ModelUnavailable(ModelError):
+    """The model server could not be reached at all (not running, or still starting). The document is not at fault:
+    the scanner leaves it waiting and tries again next time, instead of marking it failed."""
 
 
 @dataclass(frozen=True)
@@ -53,9 +60,12 @@ def extract(
     }
     started = time.monotonic()
     try:
-        response = httpx.post(f"{settings.ollama_url}/api/chat", json=body, timeout=timeout)
+        wait = httpx.Timeout(timeout, connect=CONNECT_TIMEOUT)
+        response = httpx.post(f"{settings.ollama_url}/api/chat", json=body, timeout=wait)
         response.raise_for_status()
         raw = response.json()["message"]["content"]
+    except (httpx.ConnectError, httpx.ConnectTimeout) as problem:
+        raise ModelUnavailable("the model server is not reachable") from problem
     except (httpx.HTTPError, ValueError, KeyError, TypeError) as problem:
         raise ModelError(f"the model server gave no answer ({type(problem).__name__})") from problem
     seconds = time.monotonic() - started
@@ -70,7 +80,7 @@ def unload(settings: Settings, model: str) -> None:
     """Ask the server to free the model's memory. Best effort."""
     try:
         free = {"model": model, "messages": [], "keep_alive": 0}
-        httpx.post(f"{settings.ollama_url}/api/chat", json=free, timeout=60)
+        httpx.post(f"{settings.ollama_url}/api/chat", json=free, timeout=httpx.Timeout(60, connect=CONNECT_TIMEOUT))
     except httpx.HTTPError:
         pass
 

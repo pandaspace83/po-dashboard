@@ -1,0 +1,40 @@
+# The checks that must pass before a change is trusted (PD-0.5). Nothing here deploys: the app runs on one office Mac
+# and is updated by hand (DEC-28). Nothing here needs the model server, the Keychain or any real document.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: macos-latest   # the app is macOS-only (Keychain, launchd); the tests should run where it runs
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          python-version: "3.13"
+      - name: The lock file matches pyproject.toml
+        run: uv lock --check
+      - name: Install exactly what the lock file says
+        run: uv sync --locked
+      - name: Ruff (style, imports, security rules)
+        run: uv run ruff check .
+      - name: Mypy (strict)
+        run: uv run mypy
+      - name: Tests
+        run: uv run pytest
+      - name: No real documents or secrets in the tree (DEC-13)
+        run: git ls-files -z | xargs -0 python3 scripts/check_no_real_docs.py
+      - name: The test record pages are up to date
+        run: uv run python scripts/test_record.py --check

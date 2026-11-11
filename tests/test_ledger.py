@@ -306,7 +306,8 @@ def test_an_invoice_number_is_unique_per_po_not_across_pos(db: Session) -> None:
     first, second = po(db, "PO-1"), po(db, "PO-2")
     db.add_all([L.Invoice(po_id=first.id, invoice_number="INV-1"), L.Invoice(po_id=second.id, invoice_number="INV-1")])
     db.commit()  # the same number on a different PO is fine
-    refused(db, L.Invoice(po_id=first.id, invoice_number="INV-1"), "invoice.po_id, invoice.invoice_number")
+    # the case-blind index (migration 0006) fires before the exact-match constraint
+    refused(db, L.Invoice(po_id=first.id, invoice_number="INV-1"), "uq_invoice_po_id_lower_invoice_number")
 
 
 def test_money_totals_and_shipment_dates_round_trip(db: Session) -> None:

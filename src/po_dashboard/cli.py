@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import getpass
 import sys
+from pathlib import Path
 
 import uvicorn
 from sqlalchemy import select
@@ -14,6 +15,7 @@ from po_dashboard.auth import passwords, service
 from po_dashboard.config import Settings
 from po_dashboard.db.migrate import upgrade
 from po_dashboard.db.models import AppUser
+from po_dashboard.ops import backup, logs
 from po_dashboard.web import create_app
 
 
@@ -69,6 +71,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="po-dashboard")
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("serve", help="start the app")
+    backup_cmd = commands.add_parser("backup", help="copy the database and every stored original to a folder")
+    backup_cmd.add_argument("--to", required=True, type=Path, help="a folder on this Mac, outside iCloud")
+    restore_cmd = commands.add_parser("restore", help="restore a backup into a new, empty data folder")
+    restore_cmd.add_argument("backup", type=Path)
+    restore_cmd.add_argument("--into", required=True, type=Path, help="a data folder that has no database yet")
     user = commands.add_parser("user", help="manage sign-in accounts, at this Mac")
     actions = user.add_subparsers(dest="user_command", required=True)
     actions.add_parser("create-admin", help="the first admin, before anyone has signed in").add_argument("email")
@@ -81,12 +88,33 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def run_backup_command(settings: Settings, args: argparse.Namespace) -> int:
+    """backup and restore never start the app and never run migrations, so they are safe on a damaged data folder."""
+    try:
+        if args.command == "backup":
+            report = backup.create_backup(settings, args.to)
+            print(f"Backed up to {report.folder}: the database and {report.files} stored originals, checked.")
+        else:
+            report = backup.restore_backup(args.backup, args.into)
+            print(f"Restored {report.files} stored originals and the database into {args.into}. Start the app with "
+                  f"PO_DASHBOARD_DATA={args.into} to use it.")
+    except backup.BackupError as problem:
+        print(problem, file=sys.stderr)
+        return 1
+    return 0
+
+
 def main(argv: list[str] | None = None) -> None:
     args = build_parser().parse_args(argv)
     settings = Settings.from_env()
+    if args.command in ("backup", "restore"):
+        sys.exit(run_backup_command(settings, args))
     engine = upgrade(settings)
     if args.command == "serve":
-        uvicorn.run(create_app(settings, engine), host=settings.host, port=settings.port, access_log=False)
+        logs.configure(settings.data_dir)
+        uvicorn.run(
+            create_app(settings, engine), host=settings.host, port=settings.port, access_log=False, log_config=None
+        )
         return
     try:
         with Session(engine) as db:

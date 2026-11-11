@@ -6,8 +6,10 @@ paths in PUBLIC answer without a session. Pure ASGI, so it can read a form body 
 
 from __future__ import annotations
 
+import logging
 import re
 import secrets
+import time
 from collections.abc import Awaitable, Callable, MutableMapping
 from http.cookies import SimpleCookie
 from typing import Any
@@ -19,6 +21,7 @@ from sqlalchemy.orm import Session
 from po_dashboard.auth import service
 from po_dashboard.config import Settings
 from po_dashboard.db.models import AppUser
+from po_dashboard.ops import logs
 
 Scope = MutableMapping[str, Any]
 Receive = Callable[[], Awaitable[MutableMapping[str, Any]]]
@@ -45,7 +48,10 @@ HEADERS = {
     b"content-security-policy": CSP.encode(),
     b"x-content-type-options": b"nosniff",
     b"referrer-policy": b"same-origin",
+    b"permissions-policy": b"camera=(), microphone=(), geolocation=(), payment=(), usb=()",
+    b"cross-origin-opener-policy": b"same-origin",
 }
+HSTS = b"max-age=31536000"  # sent only when HTTPS is really on (settings.https)
 
 
 def cookie_value(headers: dict[bytes, bytes], name: str) -> str | None:
@@ -58,6 +64,9 @@ def cookie_value(headers: dict[bytes, bytes], name: str) -> str | None:
     except Exception:  # a malformed cookie header is treated as no cookie
         return None
     return jar[name].value if name in jar else None
+
+
+log = logging.getLogger("po_dashboard.request")
 
 
 class Gate:
@@ -74,6 +83,26 @@ class Gate:
             return
         headers = {k.lower(): v for k, v in scope["headers"]}
         path = scope["path"]
+        started = time.perf_counter()
+        rid = logs.request_id()
+        status_seen = 0
+        send_plain = send
+
+        async def send_logged(message: MutableMapping[str, Any]) -> None:
+            """Adds the request id and the time taken to every response, and writes one log line when it starts."""
+            nonlocal status_seen
+            if message["type"] == "http.response.start":
+                status_seen = int(message["status"])
+                ms = (time.perf_counter() - started) * 1000
+                message = {**message, "headers": [
+                    *message.get("headers", []), (b"x-request-id", rid.encode()),
+                    (b"server-timing", f"app;dur={ms:.0f}".encode()),
+                ]}
+                log.info("request id=%s %s %s status=%s ms=%.0f", rid, scope["method"], logs.route_of(path),
+                         status_seen, ms)
+            await send_plain(message)
+
+        send = send_logged
 
         async def respond(status: int, body: bytes = b"", extra: list[tuple[bytes, bytes]] | None = None) -> None:
             out = [(b"content-type", b"text/plain; charset=utf-8"), (b"content-length", str(len(body)).encode())]
@@ -134,7 +163,12 @@ class Gate:
                 message["headers"] = self._headers(path, extra)
             await send(message)
 
-        await self.app(scope, receive, wrapped_send)
+        try:
+            await self.app(scope, receive, wrapped_send)
+        except Exception as problem:
+            # the type and the route only: an error message can quote the data it choked on
+            log.error("unhandled id=%s %s %s %s", rid, method, logs.route_of(path), type(problem).__name__)
+            raise
 
     async def _deny(self, scope: Scope, headers: dict[bytes, bytes], respond: Any) -> None:
         wants_page = b"text/html" in headers.get(b"accept", b"") and b"hx-request" not in headers
@@ -184,6 +218,8 @@ class Gate:
         for key, value in HEADERS.items():
             if key not in names:
                 out.append((key, value))
+        if self.settings.https and b"strict-transport-security" not in names:
+            out.append((b"strict-transport-security", HSTS))
         if path not in CACHEABLE and b"cache-control" not in names:
             out.append((b"cache-control", b"no-store"))
         return out
