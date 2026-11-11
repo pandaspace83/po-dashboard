@@ -4,7 +4,7 @@
 
 PO Dashboard (RaceSpec Internal Dashboard). Scope: Phase 0 and Phase 1: sign-in, people, vendors, purchase orders, imports, the QuickBooks starting load, entries by hand, Home, Open items, Audit, page behaviour, security and speed.
 
-**86 cases:** 41 Critical, 33 High, 12 Medium; 2 terminal, 24 automated, 59 browser, 1 owner only.
+**90 cases:** 42 Critical, 35 High, 13 Medium; 2 terminal, 28 automated, 59 browser, 1 owner only.
 
 Latest Chrome run: 11/07/2026, Google Chrome 156.0.8078.81, by Claude, scripts/browser_evidence.py, on commit 7f2d081 with uncommitted changes: **59 of 59** browser cases pass. Automated tests: `uv run pytest`. Defects: [DEFECTS.md](DEFECTS.md). Sign-off: [SIGN_OFF.md](SIGN_OFF.md).
 
@@ -108,6 +108,10 @@ Latest Chrome run: 11/07/2026, Google Chrome 156.0.8078.81, by Claude, scripts/b
 | [TC-AI-01](#tc-ai-01) | The golden set is rebuilt exactly from its seed, and has the mix the owner asked for | High | Automated | Automated tests | — |
 | [TC-AI-02](#tc-ai-02) | Each scoring rule gives the verdict SCORING.md says, with made-up model answers | Critical | Automated | Automated tests | — |
 | [TC-AI-03](#tc-ai-03) | The document is fenced as data, and the model call is local, repeatable and leaks no text | Critical | Automated | Automated tests | — |
+| [TC-MAIL-01](#tc-mail-01) | Mail is read-only: nothing in the app can send, move, flag or delete a message | Critical | Automated | Automated tests | — |
+| [TC-MAIL-02](#tc-mail-02) | Every mail source passes the same contract (folder now; Gmail and Microsoft 365 later) | High | Automated | Automated tests | — |
+| [TC-MAIL-03](#tc-mail-03) | The folder reader ignores what is not mail and cannot be tricked out of its folder | High | Automated | Automated tests | — |
+| [TC-MAIL-04](#tc-mail-04) | The mailbox table keeps its own rules | Medium | Automated | Automated tests | — |
 
 ## Set-up and running
 
@@ -2008,5 +2012,76 @@ Latest Chrome run: 11/07/2026, Google Chrome 156.0.8078.81, by Claude, scripts/b
 **Expected:** The document sits between markers and cannot close its own fence. The prompt says a document is never an instruction. The call goes to this Mac, at temperature 0 with a fixed seed and schema v1. When the call fails, the error holds no document text.
 
 **Automated tests:** `test_extraction.py::test_the_document_is_fenced_as_data_and_cannot_close_its_own_fence`, `test_extraction.py::test_the_prompt_says_a_document_is_never_an_instruction`, `test_extraction.py::test_the_call_is_local_deterministic_and_carries_the_schema`, `test_extraction.py::test_a_failed_call_raises_an_error_without_the_document_text`, `test_extraction.py::test_a_reply_is_read_with_exact_decimals`
+
+**Latest:** Owner: not recorded.
+
+
+## Mail sources
+
+<a id="tc-mail-01"></a>
+
+### TC-MAIL-01: Mail is read-only: nothing in the app can send, move, flag or delete a message
+
+**Priority:** Critical · **How:** Automated · **Refs:** DEC-07, REQ-IN-02, PD-3.1
+
+**Steps**
+
+1. Covered by the tests named. They read the source code of the whole app and of the mail package.
+2. Checked by deliberate breaks on 2026-11-10: a mail-sending import, a call to trash a message and a Gmail trash address each made the test fail.
+
+**Expected:** No module imports a mail-sending library. The mail package calls nothing that changes a mailbox or writes a file, names no write address or write permission, and no mail source has a method that could.
+
+**Automated tests:** `test_mail_readonly.py::test_no_module_in_the_app_can_send_mail`, `test_mail_readonly.py::test_the_mail_package_calls_nothing_that_changes_a_mailbox_or_a_file`, `test_mail_readonly.py::test_the_mail_package_names_no_write_address_or_scope`, `test_mail_folder.py::TestFolderSource::test_it_has_no_way_to_change_a_mailbox`, `test_mail_folder.py::TestFolderSource::test_reading_changes_nothing`, `test_mail_folder.py::TestFolderSource::test_a_folder_can_be_read_without_permission_to_write`
+
+**Latest:** Owner: not recorded.
+
+
+<a id="tc-mail-02"></a>
+
+### TC-MAIL-02: Every mail source passes the same contract (folder now; Gmail and Microsoft 365 later)
+
+**Priority:** High · **How:** Automated · **Refs:** REQ-IN-06, REQ-IN-01, PD-3.1
+
+**Steps**
+
+1. Covered by the tests named: one shared contract run against the folder provider.
+
+**Expected:** Inbox and Sent Items are scanned. Each message comes once and a later one comes once. Bytes arrive unchanged. A batch limit loses nothing and repeats nothing. A position the source does not understand means start again. Health says what is wrong without raising.
+
+**Automated tests:** `test_mail_folder.py::TestFolderSource::test_each_message_comes_once`, `test_mail_folder.py::TestFolderSource::test_a_message_that_arrives_later_is_returned_once`, `test_mail_folder.py::TestFolderSource::test_the_bytes_are_handed_over_unchanged`, `test_mail_folder.py::TestFolderSource::test_a_batch_limit_loses_nothing_and_repeats_nothing`, `test_mail_folder.py::TestFolderSource::test_the_two_folders_are_separate`, `test_mail_folder.py::TestFolderSource::test_a_position_it_does_not_understand_means_start_again`, `test_mail_folder.py::TestFolderSource::test_health_is_ok_and_then_says_what_is_wrong_without_raising`, `test_mail_folder.py::TestFolderSource::test_the_golden_emails_are_read`
+
+**Latest:** Owner: not recorded.
+
+
+<a id="tc-mail-03"></a>
+
+### TC-MAIL-03: The folder reader ignores what is not mail and cannot be tricked out of its folder
+
+**Priority:** High · **How:** Automated · **Refs:** PD-3.1, PD-3.6
+
+**Steps**
+
+1. Covered by the tests named.
+
+**Expected:** Only visible .eml files directly in the folder are read. A symbolic link is not followed. A copy under another name is not read twice, a changed file is a new message, and a message over 50 MB is skipped with a reason and not retried.
+
+**Automated tests:** `test_mail_folder.py::TestFolderSource::test_only_eml_files_are_read`, `test_mail_folder.py::TestFolderSource::test_a_symbolic_link_is_not_followed`, `test_mail_folder.py::TestFolderSource::test_a_copy_under_another_name_is_not_read_twice`, `test_mail_folder.py::TestFolderSource::test_a_changed_file_is_a_new_message`, `test_mail_folder.py::TestFolderSource::test_a_huge_message_is_skipped_with_a_reason_and_not_read_again`, `test_mail_folder.py::TestFolderSource::test_a_missing_folder_is_not_an_error`
+
+**Latest:** Owner: not recorded.
+
+
+<a id="tc-mail-04"></a>
+
+### TC-MAIL-04: The mailbox table keeps its own rules
+
+**Priority:** Medium · **How:** Automated · **Refs:** PD-3.1, ARCHITECTURE §4
+
+**Steps**
+
+1. Covered by the tests named, and by the migration test that compares the table with the code.
+
+**Expected:** A known provider and state only, lower-case address, one row per address; removing the person who connected a mailbox keeps the mailbox.
+
+**Automated tests:** `test_mailbox_table.py::test_a_mailbox_is_stored_and_read_back`, `test_mailbox_table.py::test_unknown_providers_and_states_and_upper_case_addresses_are_refused`, `test_mailbox_table.py::test_one_row_per_address`, `test_mailbox_table.py::test_removing_the_person_who_connected_it_keeps_the_mailbox`, `test_database.py::test_migration_matches_the_models`
 
 **Latest:** Owner: not recorded.

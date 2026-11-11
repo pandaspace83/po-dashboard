@@ -92,7 +92,7 @@ Tables, with the fields that matter. Every table has `id`, `created_at`; accepte
 | `vendor` | name, contact name and email, `vendor_domain` (many), notes |
 | `purchase_order` | po_number (unique), vendor_id, date_sent, currency, buyer, source (manual, csv, document, quickbooks), created_by; po_date, the PO's own date in QuickBooks from the starting load (DEC-46, migration 0003), never used as the date sent. No status column: status is computed (§5) |
 | `po_line` | po_id, line_no, item, description, ordered_qty, unit, unit_price, requested_date; customer, the customer a line is for when QuickBooks names one (DEC-46); closed_reason (received, short, cancelled), closed_at, closed_by and close_note, all empty while the line is open and all required together once it is closed by hand |
-| `mailbox` | address, provider, connected_by, connected_at, state (connected, needs reconnect, disconnected). Its token or secret is in the Keychain, never here |
+| `mailbox` | address (lower case, unique), provider (gmail, graph, folder), location (the folder a folder mailbox reads), connected_by (emptied if that person is removed), connected_at, state (connected, needs_reconnect, disconnected), read_since (only mail from then on is read, DEC-51). Its token or secret is in the Keychain, never here. Built in PD-3.1 (migration 0004) |
 | `source_message` | mailbox_id, folder, provider message id, sender, subject, received_at, raw_path, content_hash |
 | `source_document` | message_id, filename, kind, stored_path, content_hash, text_path, pages |
 | `extraction` | document_id, model, prompt_version, raw JSON, doc_type, po_number, vendor_match, validation flags, state (pending, accepted, rejected, unmatched) |

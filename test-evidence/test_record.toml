@@ -1140,6 +1140,53 @@ expected = "The document sits between markers and cannot close its own fence. Th
 tests = ["test_extraction.py::test_the_document_is_fenced_as_data_and_cannot_close_its_own_fence", "test_extraction.py::test_the_prompt_says_a_document_is_never_an_instruction", "test_extraction.py::test_the_call_is_local_deterministic_and_carries_the_schema", "test_extraction.py::test_a_failed_call_raises_an_error_without_the_document_text", "test_extraction.py::test_a_reply_is_read_with_exact_decimals"]
 
 # =====================================================================================================================
+# Mail sources and intake (Phase 3)
+
+[[case]]
+id = "TC-MAIL-01"
+area = "Mail sources"
+title = "Mail is read-only: nothing in the app can send, move, flag or delete a message"
+priority = "Critical"
+kind = "automated"
+refs = ["DEC-07", "REQ-IN-02", "PD-3.1"]
+steps = ["Covered by the tests named. They read the source code of the whole app and of the mail package.", "Checked by deliberate breaks on 2026-11-10: a mail-sending import, a call to trash a message and a Gmail trash address each made the test fail."]
+expected = "No module imports a mail-sending library. The mail package calls nothing that changes a mailbox or writes a file, names no write address or write permission, and no mail source has a method that could."
+tests = ["test_mail_readonly.py::test_no_module_in_the_app_can_send_mail", "test_mail_readonly.py::test_the_mail_package_calls_nothing_that_changes_a_mailbox_or_a_file", "test_mail_readonly.py::test_the_mail_package_names_no_write_address_or_scope", "test_mail_folder.py::TestFolderSource::test_it_has_no_way_to_change_a_mailbox", "test_mail_folder.py::TestFolderSource::test_reading_changes_nothing", "test_mail_folder.py::TestFolderSource::test_a_folder_can_be_read_without_permission_to_write"]
+
+[[case]]
+id = "TC-MAIL-02"
+area = "Mail sources"
+title = "Every mail source passes the same contract (folder now; Gmail and Microsoft 365 later)"
+priority = "High"
+kind = "automated"
+refs = ["REQ-IN-06", "REQ-IN-01", "PD-3.1"]
+steps = ["Covered by the tests named: one shared contract run against the folder provider."]
+expected = "Inbox and Sent Items are scanned. Each message comes once and a later one comes once. Bytes arrive unchanged. A batch limit loses nothing and repeats nothing. A position the source does not understand means start again. Health says what is wrong without raising."
+tests = ["test_mail_folder.py::TestFolderSource::test_each_message_comes_once", "test_mail_folder.py::TestFolderSource::test_a_message_that_arrives_later_is_returned_once", "test_mail_folder.py::TestFolderSource::test_the_bytes_are_handed_over_unchanged", "test_mail_folder.py::TestFolderSource::test_a_batch_limit_loses_nothing_and_repeats_nothing", "test_mail_folder.py::TestFolderSource::test_the_two_folders_are_separate", "test_mail_folder.py::TestFolderSource::test_a_position_it_does_not_understand_means_start_again", "test_mail_folder.py::TestFolderSource::test_health_is_ok_and_then_says_what_is_wrong_without_raising", "test_mail_folder.py::TestFolderSource::test_the_golden_emails_are_read"]
+
+[[case]]
+id = "TC-MAIL-03"
+area = "Mail sources"
+title = "The folder reader ignores what is not mail and cannot be tricked out of its folder"
+priority = "High"
+kind = "automated"
+refs = ["PD-3.1", "PD-3.6"]
+steps = ["Covered by the tests named."]
+expected = "Only visible .eml files directly in the folder are read. A symbolic link is not followed. A copy under another name is not read twice, a changed file is a new message, and a message over 50 MB is skipped with a reason and not retried."
+tests = ["test_mail_folder.py::TestFolderSource::test_only_eml_files_are_read", "test_mail_folder.py::TestFolderSource::test_a_symbolic_link_is_not_followed", "test_mail_folder.py::TestFolderSource::test_a_copy_under_another_name_is_not_read_twice", "test_mail_folder.py::TestFolderSource::test_a_changed_file_is_a_new_message", "test_mail_folder.py::TestFolderSource::test_a_huge_message_is_skipped_with_a_reason_and_not_read_again", "test_mail_folder.py::TestFolderSource::test_a_missing_folder_is_not_an_error"]
+
+[[case]]
+id = "TC-MAIL-04"
+area = "Mail sources"
+title = "The mailbox table keeps its own rules"
+priority = "Medium"
+kind = "automated"
+refs = ["PD-3.1", "ARCHITECTURE §4"]
+steps = ["Covered by the tests named, and by the migration test that compares the table with the code."]
+expected = "A known provider and state only, lower-case address, one row per address; removing the person who connected a mailbox keeps the mailbox."
+tests = ["test_mailbox_table.py::test_a_mailbox_is_stored_and_read_back", "test_mailbox_table.py::test_unknown_providers_and_states_and_upper_case_addresses_are_refused", "test_mailbox_table.py::test_one_row_per_address", "test_mailbox_table.py::test_removing_the_person_who_connected_it_keeps_the_mailbox", "test_database.py::test_migration_matches_the_models"]
+
+# =====================================================================================================================
 # Defects. Logged the moment they are found (owner, 2026-11-07).
 
 [[defect]]

@@ -42,9 +42,17 @@ def load() -> tuple[dict[str, Any], dict[str, Any]]:
 
 
 def test_names() -> dict[str, set[str]]:
+    """Test names by file. Methods count too, and a file that imports a shared contract (tests/mail_contract.py) also
+    runs that contract's tests. A case names them as file::name or file::Class::name."""
+    pattern = r"^\s*(?:async )?def (test_\w+)"
     names: dict[str, set[str]] = {}
     for path in TESTS.glob("test_*.py"):
-        names[path.name] = set(re.findall(r"^(?:async )?def (test_\w+)", path.read_text(encoding="utf-8"), re.M))
+        text = path.read_text(encoding="utf-8")
+        found = set(re.findall(pattern, text, re.M))
+        for contract in TESTS.glob("*_contract.py"):
+            if f"from {contract.stem} import" in text:
+                found |= set(re.findall(pattern, contract.read_text(encoding="utf-8"), re.M))
+        names[path.name] = found
     return names
 
 
@@ -69,6 +77,7 @@ def problems(record: dict[str, Any], run: dict[str, Any]) -> list[str]:
             found.append(f"{c['id']} is automated but names no test")
         for ref in c.get("tests", []):
             file, _, name = ref.partition("::")
+            name = name.rsplit("::", 1)[-1]
             if name not in names.get(file, set()):
                 found.append(f"{c['id']}: no test {ref}")
         if c["kind"] == "browser" and run.get("cases"):

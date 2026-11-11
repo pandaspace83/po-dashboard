@@ -159,7 +159,7 @@ the model is wired in.*
 - [x] PD-3.0 Documentation pass (DEC-25), 2026-11-10. OPEN-04 answered (DEC-50: Gmail API, `gmail.readonly`, Google's
   sign-in page); the Mailboxes screen stays in Phase 3; ARCHITECTURE §6 corrected (a charge is never a flag, OPEN-21);
   DEC-51 proposed: how each kind of document is read, the limits, and "only mail after connecting" on first connection.
-- [ ] PD-3.1 `MailSource` interface, the `mailbox` table (one row in v1, more in v2, DEC-33; Inbox and Sent Items) and the folder provider; contract tests every provider must pass.
+- [x] PD-3.1 `MailSource` interface, the `mailbox` table (one row in v1, more in v2, DEC-33; Inbox and Sent Items) and the folder provider; contract tests every provider must pass. Done 2026-11-10 (TC-MAIL-01 to 04): migration 0004; a read-only guard that reads the whole app's source (checked by three deliberate breaks); the contract in `tests/mail_contract.py` that Gmail must also pass.
 - [ ] PD-3.2 Intake: store originals, hashes, dedupe, message and document tables (REQ-IN-04, -05).
 - [ ] PD-3.3 Text extraction (DEC-51): HTML body, text PDF, OCR, XLSX/CSV, DOCX, quoted-thread marking (REQ-IN-03).
   Checked against the golden set: each document's text must be close to its `text.txt`.
