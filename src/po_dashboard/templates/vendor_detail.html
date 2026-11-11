@@ -30,6 +30,7 @@
   <h2>Details</h2>
   <form method="post" action="/vendors/{{ vendor.id }}/update">
     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <input type="hidden" name="version" value="{{ vendor.version }}">
     <div class="form-row">
       <div><label for="name">Name</label><input id="name" name="name" required maxlength="200" value="{{ form.name if 'name' in form else vendor.name }}"></div>
     </div>

@@ -11,7 +11,7 @@ from starlette.datastructures import FormData
 
 from po_dashboard.db.ledger import POLine, PurchaseOrder
 from po_dashboard.ledger import closing, events
-from po_dashboard.ledger.errors import LedgerError
+from po_dashboard.ledger.errors import LedgerError, parse_seen
 from po_dashboard.ledger.status import line_states
 from po_dashboard.pages.common import CurrentUser, Db, client_address, render
 from po_dashboard.pages.orders import missing_order, order_view
@@ -186,13 +186,15 @@ async def close_lines(request: Request, db: Db, user: CurrentUser, po_id: int) -
     form = await request.form(max_fields=1000)
     ids = [str(v) for v in form.getlist("line_id")]
     actions = [str(v) for v in form.getlist("line_action")]
-    if len(ids) != len(actions) or not all(i.isascii() and i.isdigit() for i in ids):
+    versions = [parse_seen(v) for v in form.getlist("line_version")]
+    if len(ids) != len(actions) or len(ids) != len(versions) or not all(i.isascii() and i.isdigit() for i in ids):
         return order_view(request, db, user, order, error="The form was incomplete. Reload it and try again.",
                           status=400)  # fmt: skip
     try:
         picks = {int(i): a for i, a in zip(ids, actions, strict=True)}
+        seen = {int(i): v for i, v in zip(ids, versions, strict=True)}
         closing.close_lines(db, order, picks, str(form.get("reason", "")), actor=user,
-                            client_address=client_address(request))  # fmt: skip
+                            client_address=client_address(request), seen=seen)  # fmt: skip
         db.commit()
     except LedgerError as problem:
         db.rollback()
@@ -208,7 +210,8 @@ async def reopen_line(request: Request, db: Db, user: CurrentUser, po_id: int, l
     form = await request.form(max_fields=20)
     try:
         closing.reopen_line(db, order, line_id, str(form.get("reason", "")), actor=user,
-                            client_address=client_address(request))  # fmt: skip
+                            client_address=client_address(request), seen=parse_seen(form.get("version")),
+                            check=True)  # fmt: skip
         db.commit()
     except LedgerError as problem:
         db.rollback()

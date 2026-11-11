@@ -72,7 +72,12 @@ def test_late_slipped_and_update_flags_are_counted_from_the_same_list(client: Te
 
 
 def test_a_closed_or_cancelled_line_is_not_an_open_item(client: TestClient, env, po) -> None:  # noqa: ANN001
-    done = {"line_id": [str(po[1]), str(po[2])], "line_action": ["cancelled", "received"], "reason": "Done"}
+    done = {
+        "line_id": [str(po[1]), str(po[2])],
+        "line_action": ["cancelled", "received"],
+        "line_version": ["1", "1"],
+        "reason": "Done",
+    }
     post(client, f"/orders/{po[0]}/close", done)
     with Session(env[1]) as db:
         assert reports.counts(db, LATER).open_lines == 0 and reports.counts(db, LATER).open_pos == 0
@@ -133,7 +138,6 @@ def test_the_report_needs_a_sign_in(env) -> None:  # noqa: ANN001
     anonymous = new_client(env[0])
     for path in ("/reports/open-items", "/reports/open-items.csv"):
         assert anonymous.get(path, headers=ORIGIN, follow_redirects=False).status_code in (303, 401, 403)
-
 
 
 def test_the_to_do_list_puts_the_most_urgent_first_and_says_what_to_do(client: TestClient, env, po) -> None:  # noqa: ANN001

@@ -15,7 +15,7 @@ from po_dashboard.db.ledger import PurchaseOrder, Vendor, VendorDomain
 from po_dashboard.ledger import orders as order_rules
 from po_dashboard.ledger import vendor_import
 from po_dashboard.ledger import vendors as rules
-from po_dashboard.ledger.errors import LedgerError
+from po_dashboard.ledger.errors import LedgerError, parse_seen
 from po_dashboard.pages import tables
 from po_dashboard.pages.common import CurrentUser, Db, client_address, render
 
@@ -165,16 +165,19 @@ def vendor_page(request: Request, db: Db, user: CurrentUser, vendor_id: int, sav
 
 @router.post("/{vendor_id}/update", response_class=HTMLResponse, response_model=None)
 def update(request: Request, db: Db, user: CurrentUser, vendor_id: int, name: Field, contact_name: Field = "",
-           contact_email: Field = "", notes: Field = "") -> HTMLResponse | RedirectResponse:  # fmt: skip
+           contact_email: Field = "", notes: Field = "",
+           version: Field = "") -> HTMLResponse | RedirectResponse:  # fmt: skip
     vendor = db.get(Vendor, vendor_id)
     if vendor is None:
         return _missing(request, db, user)
     try:
         rules.update_vendor(db, vendor, name=name, contact_name=contact_name, contact_email=contact_email, notes=notes,
-                            actor=user, client_address=client_address(request))  # fmt: skip
+                            actor=user, client_address=client_address(request), seen=parse_seen(version),
+                            check=True)  # fmt: skip
         db.commit()
     except LedgerError as problem:
         db.rollback()
+        db.refresh(vendor)
         entered = {"name": name, "contact_name": contact_name, "contact_email": contact_email, "notes": notes}
         return _detail(request, db, user, vendor, error=str(problem), form=entered, status=400)
     return RedirectResponse(f"/vendors/{vendor_id}?saved=1", status_code=303)

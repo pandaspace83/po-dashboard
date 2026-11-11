@@ -48,6 +48,7 @@
       {% if line.closed_reason %}<p class="muted">Settled by hand: {{ actions[line.closed_reason]|lower }}. {{ line.close_note }}</p>
       <form method="post" action="/orders/{{ order.id }}/lines/{{ line.id }}/reopen" class="inline-form">
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <input type="hidden" name="version" value="{{ line.version }}">
         <input name="reason" required maxlength="500" placeholder="Why reopen?" aria-label="Reason for reopening line {{ line.line_no }}">
         <button type="submit" class="small">{{ icon("refresh") }}Reopen</button>
       </form>{% endif %}
@@ -68,7 +69,7 @@
       <thead><tr><th>#</th><th>Item</th><th class="num">Open</th><th>What happened</th></tr></thead>
       <tbody>
       {% for line in lines if not states[line.id].status.done %}
-      <tr><td>{{ line.line_no }}<input type="hidden" name="line_id" value="{{ line.id }}"></td><td>{{ line.item }}</td>
+      <tr><td>{{ line.line_no }}<input type="hidden" name="line_id" value="{{ line.id }}"><input type="hidden" name="line_version" value="{{ line.version }}"></td><td>{{ line.item }}</td>
         <td class="num">{{ states[line.id].open_qty|quantity }}</td>
         <td><select name="line_action" aria-label="What happened to line {{ line.line_no }}"><option value="">Leave as it is</option>
           {% for key, label in actions.items() %}<option value="{{ key }}">{{ label }}</option>{% endfor %}</select></td></tr>

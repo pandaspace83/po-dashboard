@@ -61,7 +61,7 @@ def rows(data_dir: Path) -> list[tuple[int, str]]:
 def test_a_backup_restores_to_exactly_what_was_backed_up(live: Settings, tmp_path: Path) -> None:
     sent = populate(live)
     report = create_backup(live, tmp_path / "Backups", now=NOW)
-    assert report.files == 3 and report.revision == "0006"
+    assert report.files == 3 and report.revision == "0007"
     assert verify_backup(report.folder).files == 3
     restored = tmp_path / "restored"
     restore_backup(report.folder, restored)

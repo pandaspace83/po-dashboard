@@ -7,11 +7,12 @@ import re
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
+from sqlalchemy.orm.exc import StaleDataError
 
 from po_dashboard.auth.service import audit
 from po_dashboard.db.ledger import PurchaseOrder, Vendor, VendorDomain
 from po_dashboard.db.models import AppUser
-from po_dashboard.ledger.errors import LedgerError, text
+from po_dashboard.ledger.errors import LedgerError, check_seen, text
 
 DOMAIN = re.compile(r"(?=.{1,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}")
 EMAIL = re.compile(r"[^@\s]+@[^@\s]+\.[^@\s]+")
@@ -93,7 +94,10 @@ def create_vendor(
 def update_vendor(
     db: Session, vendor: Vendor, *, name: str | None, contact_name: str | None, contact_email: str | None,
     notes: str | None, actor: AppUser | None = None, client_address: str | None = None,
+    seen: int | None = None, check: bool = False,
 ) -> None:  # fmt: skip
+    if check:  # a form says which version it was drawn from; code that is not a form skips this (DEC-52)
+        check_seen(vendor.version, seen, "This vendor")
     fields = _fields(name, contact_name, contact_email, notes)
     if _name_taken(db, fields["name"] or "", except_id=vendor.id):
         raise LedgerError("A vendor with that name already exists.")
@@ -102,7 +106,10 @@ def update_vendor(
         return
     for key, value in fields.items():
         setattr(vendor, key, value)
-    db.flush()
+    try:
+        db.flush()
+    except StaleDataError:
+        raise LedgerError("This vendor was changed by someone else. Reload the page.") from None
     audit(db, "vendor.update", actor, f"vendor:{vendor.id}", client_address, before=before, after=fields)
 
 

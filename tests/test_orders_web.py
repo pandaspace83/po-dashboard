@@ -136,7 +136,7 @@ def test_adding_a_domain_already_held_in_any_case_says_so(client: TestClient) ->
 
 def test_a_save_shows_a_fixed_saved_note_that_cannot_be_forged(client: TestClient) -> None:
     vendor_id = make_vendor(client)
-    response = post(client, f"/vendors/{vendor_id}/update", {"name": "Acme Fasteners"})
+    response = post(client, f"/vendors/{vendor_id}/update", {"name": "Acme Fasteners", "version": "1"})
     assert response.headers["location"].endswith("?saved=1")
     assert "Saved" in client.get(f"/vendors/{vendor_id}?saved=1").text
     assert 'role="status"' not in client.get(f"/vendors/{vendor_id}").text
@@ -147,7 +147,9 @@ def test_a_save_shows_a_fixed_saved_note_that_cannot_be_forged(client: TestClien
 def test_a_vendor_can_be_edited_and_the_change_is_audited_with_who_and_where(client: TestClient, env) -> None:  # noqa: ANN001
     vendor_id = make_vendor(client)
     response = post(
-        client, f"/vendors/{vendor_id}/update", {"name": "Acme Fasteners", "contact_name": "Pat", "notes": "Net 30"}
+        client,
+        f"/vendors/{vendor_id}/update",
+        {"name": "Acme Fasteners", "contact_name": "Pat", "notes": "Net 30", "version": "1"},
     )
     assert response.status_code == 303 and "Net 30" in client.get(f"/vendors/{vendor_id}").text
     with Session(env[1]) as db:
@@ -386,3 +388,21 @@ def test_the_import_page_script_is_a_local_file_the_policy_allows(client: TestCl
     assert "script-src" not in page.headers["content-security-policy"]  # default-src 'self' covers it
     script = client.get("/static/app.js")
     assert script.status_code == 200 and "X-CSRF-Token" in script.text
+
+
+def test_a_vendor_save_from_a_stale_page_is_refused(client: TestClient) -> None:
+    vendor_id = make_vendor(client)
+    page = client.get(f"/vendors/{vendor_id}").text
+    assert 'name="version" value="1"' in page
+    assert (
+        post(
+            client, f"/vendors/{vendor_id}/update", {"name": "Acme Fasteners", "notes": "first", "version": "1"}
+        ).status_code
+        == 303
+    )
+    stale = post(client, f"/vendors/{vendor_id}/update", {"name": "Acme Fasteners", "notes": "second", "version": "1"})
+    assert stale.status_code == 400 and "changed by someone else" in stale.text
+    assert (
+        "first" in client.get(f"/vendors/{vendor_id}").text
+        and 'name="version" value="2"' in client.get(f"/vendors/{vendor_id}").text
+    )

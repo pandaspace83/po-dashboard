@@ -103,6 +103,6 @@ strip. Not applicable: API versioning (internal; the extraction prompt and schem
   (PD-3.4) and measure.
 - **A polling pause for hidden tabs:** HTMX's filter expression needs script evaluation, which the strict page policy
   forbids (`allowEval` is off).
-- **A `version` column for optimistic locking:** a schema and behaviour change that wants the owner's yes.
+- ~~A `version` column for optimistic locking~~ **Done 2026-11-11 (DEC-52, TC-OPS-06):** on `vendor` and `po_line`; migration 0007.
 - **Pruning old backups:** removing files needs the owner's yes (global rule).
 - **Pinning CI actions to commit SHAs:** needs network access to read the SHAs; do it at the first push.

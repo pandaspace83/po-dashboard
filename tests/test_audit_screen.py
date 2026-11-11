@@ -51,7 +51,9 @@ def test_the_screen_only_reads(boss: TestClient) -> None:
 
 def test_filters_narrow_the_list_and_a_wrong_date_is_reported(boss: TestClient, client: TestClient, po) -> None:  # noqa: ANN001
     post(
-        client, f"/orders/{po[0]}/close", {"line_id": [str(po[1])], "line_action": ["short"], "reason": "Vendor short"}
+        client,
+        f"/orders/{po[0]}/close",
+        {"line_id": [str(po[1])], "line_action": ["short"], "line_version": ["1"], "reason": "Vendor short"},
     )
     only = boss.get("/admin/audit?action=line.close").text
     assert "line.close" in only and "vendor.update" not in only and "Vendor short" in only
@@ -92,7 +94,7 @@ def test_every_change_to_the_ledger_writes_an_audit_record(env, client: TestClie
     bill = {"invoice_number": "INV-1", "line_id": [str(first)], "line_qty": ["1"], "line_price": ["2.5"]}
     steps = [
         ("create vendor", "/vendors/create", {"name": "Guard Co", "domains": "guard.example"}),
-        ("update vendor", f"/vendors/{vendor_id}/update", {"name": "Acme Fasteners", "notes": "n"}),
+        ("update vendor", f"/vendors/{vendor_id}/update", {"name": "Acme Fasteners", "notes": "n", "version": "1"}),
         ("add domain", f"/vendors/{vendor_id}/domains/add", {"domains": "more.example"}),
         ("acknowledgement", f"/orders/{po_id}/ack", ack(po, [("10", "", "2026-12-01"), NONE])),
         ("shipment", f"/orders/{po_id}/shipments", ship),
@@ -100,9 +102,9 @@ def test_every_change_to_the_ledger_writes_an_audit_record(env, client: TestClie
         (
             "close by hand",
             f"/orders/{po_id}/close",
-            {"line_id": [str(second)], "line_action": ["short"], "reason": "r"},
+            {"line_id": [str(second)], "line_action": ["short"], "line_version": ["1"], "reason": "r"},
         ),
-        ("reopen", f"/orders/{po_id}/lines/{second}/reopen", {"reason": "r"}),
+        ("reopen", f"/orders/{po_id}/lines/{second}/reopen", {"reason": "r", "version": "2"}),
     ]
     for label, path, data in steps:
         before = rows(env)

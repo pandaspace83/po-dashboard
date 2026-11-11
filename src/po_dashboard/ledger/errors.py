@@ -64,3 +64,16 @@ def when(value: str | None, field: str) -> date | None:
     if not 1990 <= parsed.year <= 2100:
         raise LedgerError(f"{field}: the year {parsed.year} looks wrong.")
     return parsed
+
+
+def parse_seen(value: object) -> int | None:
+    """The version number a form carried, or None when it carried none (a form from before the page was drawn)."""
+    raw = str(value or "").strip()
+    return int(raw) if raw.isascii() and raw.isdigit() and len(raw) < 10 else None
+
+
+def check_seen(current: int, seen: int | None, what: str) -> None:
+    """Refuse a save made from a page that is out of date (DEC-52). `seen` is what the form was drawn from."""
+    if seen != current:
+        raise LedgerError(f"{what} was changed by someone else (or in another tab) after this page was drawn. "
+                          "Reload the page to see the current version, then make your change again.")  # fmt: skip

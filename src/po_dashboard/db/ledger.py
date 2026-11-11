@@ -30,6 +30,10 @@ class Vendor(Base):
     contact_name: Mapped[str | None] = mapped_column(String(200), default=None)
     contact_email: Mapped[str | None] = mapped_column(String(254), default=None)
     notes: Mapped[str | None] = mapped_column(Text, default=None)
+    # Counts saves. A form carries the number it was drawn from, so a save from a stale page is refused (DEC-52).
+    version: Mapped[int] = mapped_column(Integer, server_default="1")
+
+    __mapper_args__ = {"version_id_col": version}
 
 
 class VendorDomain(Base):
@@ -93,6 +97,9 @@ class POLine(Base):
     closed_at: Mapped[datetime | None] = mapped_column(UTCDateTime, default=None)
     closed_by: Mapped[int | None] = mapped_column(ForeignKey("app_user.id", ondelete="SET NULL"), default=None)
     close_note: Mapped[str | None] = mapped_column(Text, default=None)
+    version: Mapped[int] = mapped_column(Integer, server_default="1")  # see Vendor.version
+
+    __mapper_args__ = {"version_id_col": version}
 
 
 class Acknowledgement(Base):

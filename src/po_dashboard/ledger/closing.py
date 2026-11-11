@@ -12,12 +12,13 @@ from typing import Any, cast
 from sqlalchemy import select, update
 from sqlalchemy.engine import CursorResult
 from sqlalchemy.orm import Session
+from sqlalchemy.orm.exc import StaleDataError
 
 from po_dashboard.auth.service import audit
 from po_dashboard.db.base import utcnow
 from po_dashboard.db.ledger import POLine, PurchaseOrder
 from po_dashboard.db.models import AppUser
-from po_dashboard.ledger.errors import LedgerError, text
+from po_dashboard.ledger.errors import LedgerError, check_seen, text
 from po_dashboard.ledger.status import line_states
 
 ACTIONS = {"received": "Received", "short": "Closed short", "cancelled": "Cancelled"}
@@ -30,8 +31,12 @@ def close_lines(
     reason: str | None,
     actor: AppUser | None = None,
     client_address: str | None = None,
+    seen: dict[int, int | None] | None = None,
 ) -> int:
-    """Close the picked open lines of this PO. `picks` maps a line id to received, short or cancelled."""
+    """Close the picked open lines of this PO. `picks` maps a line id to received, short or cancelled.
+
+    `seen` maps a line id to the version the form was drawn from; a line changed since is refused (DEC-52).
+    None skips the check, for code that is not a form."""
     why = text(reason, "Reason", longest=500, required=True) or ""
     chosen = {line_id: action for line_id, action in picks.items() if action}
     if not chosen:
@@ -46,12 +51,15 @@ def close_lines(
             raise LedgerError(f"Line {line.line_no}: '{action[:20]}' is not one of the choices.")
         if states[line_id].status.done:
             raise LedgerError(f"Line {line.line_no} is already closed.")
+        if seen is not None:
+            check_seen(line.version, seen.get(line_id), f"Line {line.line_no}")
     now = utcnow()
     for line_id, action in chosen.items():
         line = lines[line_id]
         taken = cast("CursorResult[Any]", db.execute(
             update(POLine).where(POLine.id == line_id, POLine.closed_reason.is_(None)).values(
-                closed_reason=action, closed_at=now, closed_by=actor.id if actor else None, close_note=why
+                closed_reason=action, closed_at=now, closed_by=actor.id if actor else None, close_note=why,
+                version=POLine.version + 1,
             )
         ))
         if taken.rowcount != 1:  # someone closed it between our check and now
@@ -70,6 +78,8 @@ def reopen_line(
     reason: str | None,
     actor: AppUser | None = None,
     client_address: str | None = None,
+    seen: int | None = None,
+    check: bool = False,
 ) -> None:
     """Take back a hand-close. A line closed by its invoices stays closed: only the hand-close is removed."""
     why = text(reason, "Reason", longest=500, required=True) or ""
@@ -78,7 +88,12 @@ def reopen_line(
         raise LedgerError("That line was not found on this purchase order.")
     if line.closed_reason is None:
         raise LedgerError(f"Line {line.line_no} was not closed by hand.")
+    if check:
+        check_seen(line.version, seen, f"Line {line.line_no}")
     before = {"closed": line.closed_reason, "reason": line.close_note}
     line.closed_reason = line.closed_at = line.closed_by = line.close_note = None
-    db.flush()
+    try:
+        db.flush()
+    except StaleDataError:
+        raise LedgerError(f"Line {line.line_no} was changed by someone else. Reload the page.") from None
     audit(db, "line.reopen", actor, f"po_line:{line_id}", client_address, before=before, after={"reason": why})

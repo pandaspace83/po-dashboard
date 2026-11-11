@@ -15,8 +15,16 @@ from test_orders_web import client, make_vendor, order_form, place  # noqa: F401
 
 
 def settle(client: TestClient, po, actions: tuple[str, str], reason: str = "Spoke to the vendor"):  # noqa: ANN001, ANN201
-    return post(client, f"/orders/{po[0]}/close",
-                {"line_id": [str(po[1]), str(po[2])], "line_action": list(actions), "reason": reason})  # fmt: skip
+    return post(
+        client,
+        f"/orders/{po[0]}/close",
+        {
+            "line_id": [str(po[1]), str(po[2])],
+            "line_action": list(actions),
+            "line_version": ["1", "1"],
+            "reason": reason,
+        },
+    )
 
 
 def status(env, po, which: int) -> LineStatus:  # noqa: ANN001
@@ -49,12 +57,14 @@ def test_one_bad_pick_changes_nothing(client: TestClient, env, po) -> None:  # n
 def test_a_closed_line_cannot_be_settled_again_and_is_not_offered(client: TestClient, env, po) -> None:  # noqa: ANN001
     settle(client, po, ("short", ""))
     assert "already closed" in settle(client, po, ("received", "")).text
-    assert f'value="{po[1]}"' not in client.get(f"/orders/{po[0]}").text.split("Settle lines by hand")[1]
+    assert f'name="line_id" value="{po[1]}"' not in client.get(f"/orders/{po[0]}").text.split("Settle lines by hand")[1]
 
 
 def test_a_line_that_is_not_on_this_po_is_refused(client: TestClient, po) -> None:  # noqa: ANN001
     response = post(
-        client, f"/orders/{po[0]}/close", {"line_id": ["999999"], "line_action": ["received"], "reason": "x"}
+        client,
+        f"/orders/{po[0]}/close",
+        {"line_id": ["999999"], "line_action": ["received"], "line_version": ["1"], "reason": "x"},
     )
     assert response.status_code == 400 and "does not belong" in response.text
 
@@ -69,13 +79,13 @@ def test_a_tampered_form_is_refused(client: TestClient, po) -> None:  # noqa: AN
 def test_reopening_needs_a_reason_and_puts_the_line_back(client: TestClient, env, po) -> None:  # noqa: ANN001
     settle(client, po, ("received", ""))
     url = f"/orders/{po[0]}/lines/{po[1]}/reopen"
-    assert "Reason is needed" in post(client, url, {"reason": ""}).text
-    assert post(client, url, {"reason": "Wrong line"}).status_code == 303
+    assert "Reason is needed" in post(client, url, {"reason": "", "version": "2"}).text
+    assert post(client, url, {"reason": "Wrong line", "version": "2"}).status_code == 303
     assert status(env, po, 1) is LineStatus.SENT
     with Session(env[1]) as db:
         reopened = db.scalars(select(AuditLog).where(AuditLog.action == "line.reopen")).one()
         assert "received" in (reopened.before or "") and "Wrong line" in (reopened.after or "")
-    assert "was not closed by hand" in post(client, url, {"reason": "again"}).text
+    assert "was not closed by hand" in post(client, url, {"reason": "again", "version": "3"}).text
 
 
 def test_a_cancelled_line_does_not_hold_the_po_open(client: TestClient, env, po) -> None:  # noqa: ANN001
@@ -115,7 +125,7 @@ def timeline_of(client: TestClient, po) -> str:  # noqa: ANN001
 
 def test_the_timeline_keeps_a_hand_close_and_its_reopen_after_the_line_is_reopened(client: TestClient, po) -> None:  # noqa: ANN001
     settle(client, po, ("cancelled", ""), reason="Vendor dropped it")
-    post(client, f"/orders/{po[0]}/lines/{po[1]}/reopen", {"reason": "Closed the wrong line"})
+    post(client, f"/orders/{po[0]}/lines/{po[1]}/reopen", {"reason": "Closed the wrong line", "version": "2"})
     section = timeline_of(client, po)
     first = section.split("Line 2")[0]  # line 1's own steps
     assert "Settled by hand (cancelled): Vendor dropped it" in first
@@ -131,3 +141,30 @@ def test_the_timeline_keeps_an_entry_that_was_taken_back(client: TestClient, po)
     section = timeline_of(client, po)
     assert "Vendor acknowledged" not in section  # it is no longer a live entry...
     assert "Entry taken back: Acknowledgement" in section and "Typed on the wrong PO" in section  # ...but not lost
+
+
+# ---- a page that is out of date is refused (DEC-52, TC-OPS-06)
+
+
+def test_a_settle_from_a_stale_page_is_refused_and_changes_nothing(client: TestClient, env, po) -> None:  # noqa: ANN001
+    settle(client, po, ("short", ""))  # a first person settles line 1
+    post(client, f"/orders/{po[0]}/lines/{po[1]}/reopen", {"reason": "Wrong line", "version": "2"})  # and reopens it
+    stale = post(
+        client,
+        f"/orders/{po[0]}/close",
+        {"line_id": [str(po[1])], "line_action": ["received"], "line_version": ["1"], "reason": "From an old page"},
+    )
+    assert stale.status_code == 400 and "changed by someone else" in stale.text
+    assert status(env, po, 1) is LineStatus.SENT
+
+
+def test_a_reopen_from_a_stale_page_is_refused(client: TestClient, env, po) -> None:  # noqa: ANN001
+    settle(client, po, ("received", ""))
+    url = f"/orders/{po[0]}/lines/{po[1]}/reopen"
+    assert "changed by someone else" in post(client, url, {"reason": "x", "version": "1"}).text
+    assert "changed by someone else" in post(client, url, {"reason": "x"}).text  # no version at all
+    assert status(env, po, 1) is LineStatus.CLOSED
+
+
+def test_the_pages_carry_the_version_they_were_drawn_from(client: TestClient, po) -> None:  # noqa: ANN001
+    assert 'name="line_version" value="1"' in client.get(f"/orders/{po[0]}").text
