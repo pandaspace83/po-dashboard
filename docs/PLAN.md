@@ -150,17 +150,26 @@ the owner except the go-ahead.*
 
 ## Phase 3: Mail sources and intake
 
-*Needs: OPEN-04 (Gmail method) and the dedicated Gmail test account from the owner (DEC-31). It holds only synthetic mail. Its address and password never go in the repo, a log or the chat: the owner enters them.*
+*Sonnet for building; Opus for the hostile-attachment review (PD-3.6) before anything real is read. Needs from the owner:
+the go-ahead on DEC-51, and, at PD-3.5, a free Google Cloud project and the dedicated Gmail test account (DEC-31),
+which holds only synthetic mail. Its address and password never go in the repo, a log or the chat: the owner enters
+them. The Review screen and the Unmatched queue are Phase 4 (PD-4.3, PD-4.4): they show extractions, and none exist until
+the model is wired in.*
 
-- [ ] PD-3.0 Documentation pass (DEC-25).
+- [x] PD-3.0 Documentation pass (DEC-25), 2026-11-10. OPEN-04 answered (DEC-50: Gmail API, `gmail.readonly`, Google's
+  sign-in page); the Mailboxes screen stays in Phase 3; ARCHITECTURE §6 corrected (a charge is never a flag, OPEN-21);
+  DEC-51 proposed: how each kind of document is read, the limits, and "only mail after connecting" on first connection.
 - [ ] PD-3.1 `MailSource` interface, the `mailbox` table (one row in v1, more in v2, DEC-33; Inbox and Sent Items) and the folder provider; contract tests every provider must pass.
 - [ ] PD-3.2 Intake: store originals, hashes, dedupe, message and document tables (REQ-IN-04, -05).
-- [ ] PD-3.3 Text extraction: HTML body, text PDF, OCR, XLSX/CSV, DOCX, quoted-thread marking (REQ-IN-03).
+- [ ] PD-3.3 Text extraction (DEC-51): HTML body, text PDF, OCR, XLSX/CSV, DOCX, quoted-thread marking (REQ-IN-03).
+  Checked against the golden set: each document's text must be close to its `text.txt`.
 - [ ] PD-3.4 The scanner loop with a saved position, one scan at a time, and the crash test (kill mid-scan, no loss,
   no duplicate).
-- [ ] PD-3.5 The Gmail provider (read-only) and a test that proves it cannot write (REQ-IN-02).
+- [ ] PD-3.5 The Gmail provider (read-only, DEC-50) and a test that proves it cannot write (REQ-IN-02). The Keychain
+  entries go through `keyring`.
 - [ ] PD-3.6 Hostile-attachment tests: oversize, wrong type, a PDF bomb, a spreadsheet with formulas.
-- [ ] PD-3.7 The Mailboxes screen: connect, reconnect, disconnect the one mailbox, with the wording in ARCHITECTURE §7 (REQ-IN-07).
+- [ ] PD-3.7 The Mailboxes screen: connect, reconnect, disconnect the one mailbox, show its state and last check, with
+  the wording in ARCHITECTURE §7 (REQ-IN-07).
 
 **Demo:** drop the golden `.eml` files in a folder, run the scanner, see every message and attachment stored once.
 Then the same through the Gmail test account.

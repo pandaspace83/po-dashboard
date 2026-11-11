@@ -214,8 +214,8 @@ so someone always decides about the missing quantity. A PO with no lines is Open
   document the PO number must be new, and the vendor is found from the recipient domain (DEC-17);
    - each line number exists on the PO; the item agrees with the PO line, else flagged;
    - quantity is a positive number and not above what is still open; dates parse and are plausible (not years away);
-   - where a total is given, the goods (quantity × price) plus the charges equal it to the cent (DEC-48); freight or a
-     tariff the PO did not list is flagged for the purchaser;
+   - where a total is given, the goods (quantity × price) plus the charges equal it to the cent, else the invoice is
+     flagged (DEC-48). A charge itself is never a flag: freight and tariffs are information only (OPEN-21);
    - a value present in the document text. The extracted PO number and each date must appear in the source text,
      so a value the model invented cannot pass;
    - differences against the PO (price, quantity, date) are listed beside the line.
@@ -249,8 +249,14 @@ position and Keychain entry. The scanner reads mailboxes one at a time and the m
 All providers implement `MailSource`: `fetch_new(position) -> (messages, new_position)` and `health()`. No write methods
 exist. Once a provider is built, choosing it is a setting and the rest of the app cannot tell which one is in use.
 
-- **Gmail (the build and the demo, DEC-31).** A dedicated test account from the owner, holding only synthetic mail
-  (DEC-13). The method is OPEN-04. The position is the Gmail history id, or the last UID per folder with IMAP.
+- **Gmail (the build and the demo, DEC-31, DEC-50).** A dedicated test account from the owner, holding only synthetic
+  mail (DEC-13), read through the Gmail API with the `gmail.readonly` scope. Connecting: the Mailboxes screen sends the
+  person to Google's own sign-in page (authorisation code with PKCE) and Google returns them to
+  `http://127.0.0.1:<port>/mailboxes/callback`; the app checks the `state` value, swaps the code for tokens, and puts the
+  refresh token in the Keychain. The owner's OAuth client id and secret are also in the Keychain, entered once in
+  Terminal, never in a file. The position is the Gmail history id; if Google no longer has it, the scanner re-reads
+  a recent window and relies on dedupe. While the Google project is in testing mode the sign-in lapses after about a
+  week, so the mailbox shows "needs reconnect" until the person signs in again.
 - **Microsoft Graph (expected production, DEC-31).** Built at the switch, with the company admin's part. Messages are
   tracked with the folder delta query, and the saved delta link is the position. Delta tokens depend on a server-side
   cache, so if a token is refused the scanner re-reads a recent window and relies on dedupe. Access to the shared mailbox is to verify at PD-6.0 (a delegated sign-in token lasts 90 days and can end early, for
