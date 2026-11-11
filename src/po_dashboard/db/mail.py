@@ -91,3 +91,20 @@ class SourceDocument(Base):
     not_read_reason: Mapped[str | None] = mapped_column(String(200), default=None)
     text_path: Mapped[str | None] = mapped_column(String(200), default=None)
     pages: Mapped[int | None] = mapped_column(Integer, default=None)
+
+
+class ScanState(Base):
+    """Where the scanner has got to in one folder of one mailbox (PD-3.4). The position is opaque: it is saved in the
+    same transaction as the messages it covers, so a crash repeats work and never loses mail."""
+
+    __tablename__ = "scan_state"
+    __table_args__ = (UniqueConstraint("mailbox_id", "folder", name="uq_scan_state_mailbox_id_folder"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    mailbox_id: Mapped[int] = mapped_column(ForeignKey("mailbox.id", ondelete="CASCADE"))
+    folder: Mapped[str] = mapped_column(String(40))
+    position: Mapped[str | None] = mapped_column(Text, default=None)
+    last_attempt: Mapped[datetime | None] = mapped_column(UTCDateTime, default=None)
+    last_success: Mapped[datetime | None] = mapped_column(UTCDateTime, default=None)
+    last_error: Mapped[str | None] = mapped_column(String(200), default=None)  # a fixed reason, never mail text
+    failures: Mapped[int] = mapped_column(Integer, default=0)  # in a row

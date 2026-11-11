@@ -112,9 +112,8 @@ def main(argv: list[str] | None = None) -> None:
     engine = upgrade(settings)
     if args.command == "serve":
         logs.configure(settings.data_dir)
-        uvicorn.run(
-            create_app(settings, engine), host=settings.host, port=settings.port, access_log=False, log_config=None
-        )
+        app = create_app(settings, engine, start_scanner=True)
+        uvicorn.run(app, host=settings.host, port=settings.port, access_log=False, log_config=None)
         return
     try:
         with Session(engine) as db:

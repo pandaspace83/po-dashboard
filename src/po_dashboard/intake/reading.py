@@ -8,6 +8,8 @@ document stays `stored`, so it is read later, not lost. Nothing here commits: th
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -18,23 +20,43 @@ from po_dashboard.intake.text import NotReadable, ReaderUnavailable, extract_tex
 READ, NOT_READ, FAILED, WAITING = "read", "not_read", "failed", "stored"
 
 
+@dataclass(frozen=True)
+class Result:
+    state: str
+    text_path: str | None = None
+    pages: int | None = None
+    reason: str | None = None
+
+
+def read_stored(store: FileStore, kind: str, filename: str, stored_path: str) -> Result:
+    """Read one file and store its text. Touches no database, so it can take as long as OCR needs without holding a
+    lock; `apply` then records the result in a moment."""
+    try:
+        found = extract_text(kind, filename, store.read(stored_path))
+    except ReaderUnavailable:
+        return Result(WAITING)
+    except NotReadable as why:
+        return Result(NOT_READ, reason=str(why)[:200])
+    except Exception as problem:  # a hostile or broken file: the kind of error is kept, never its contents
+        return Result(FAILED, reason=f"could not be opened ({type(problem).__name__})"[:200])
+    _, path = store.put(found.text.encode("utf-8"))
+    return Result(READ, text_path=path, pages=found.pages)
+
+
+def apply(document: SourceDocument, result: Result) -> str:
+    if result.state == WAITING:
+        return WAITING
+    document.state, document.not_read_reason = result.state, result.reason
+    if result.state == READ:
+        document.text_path, document.pages = result.text_path, result.pages
+    return result.state
+
+
 def read_document(db: Session, store: FileStore, document: SourceDocument) -> str:
     """Read one document and record the result. Returns its new state."""
     if document.state != WAITING:
         return document.state
-    try:
-        result = extract_text(document.kind, document.filename, store.read(document.stored_path))
-    except ReaderUnavailable:
-        return WAITING
-    except NotReadable as why:
-        document.state, document.not_read_reason = NOT_READ, str(why)[:200]
-        return NOT_READ
-    except Exception as problem:  # a hostile or broken file: the kind of error is kept, never its contents
-        document.state, document.not_read_reason = FAILED, f"could not be opened ({type(problem).__name__})"[:200]
-        return FAILED
-    _, path = store.put(result.text.encode("utf-8"))
-    document.text_path, document.pages, document.state, document.not_read_reason = path, result.pages, READ, None
-    return READ
+    return apply(document, read_stored(store, document.kind, document.filename, document.stored_path))
 
 
 def read_pending(db: Session, store: FileStore, limit: int = 50) -> dict[str, int]:

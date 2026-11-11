@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import asyncio
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI
@@ -17,19 +20,38 @@ from po_dashboard.auth.gate import Gate
 from po_dashboard.config import Settings
 from po_dashboard.db.migrate import upgrade
 from po_dashboard.display import day, moment
+from po_dashboard.intake.store import FileStore
 from po_dashboard.pages import account, admin, audit, entries, errors, orders, quickbooks, reports, vendors
 from po_dashboard.pages.formats import money, quantity
 from po_dashboard.pages.tables import with_query
+from po_dashboard.scheduler.loop import run_forever
+from po_dashboard.scheduler.scanner import Scanner
 
 HERE = Path(__file__).parent
 APP_NAME = "RaceSpec Internal Dashboard"
 
 
-def create_app(settings: Settings | None = None, engine: Engine | None = None) -> FastAPI:
+def create_app(
+    settings: Settings | None = None, engine: Engine | None = None, *, start_scanner: bool = False
+) -> FastAPI:
+    """`start_scanner` is true only for `po-dashboard serve`: tests and tools build the app without a clock."""
     settings = settings or Settings.from_env()
     engine = engine or upgrade(settings)
+
+    @asynccontextmanager
+    async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
+        task = None
+        if start_scanner:
+            scanner = Scanner(engine, FileStore(settings.data_dir / "originals"))
+            task = asyncio.create_task(run_forever(scanner))
+        try:
+            yield
+        finally:
+            if task is not None:
+                task.cancel()
+
     app = FastAPI(
-        title="PO Dashboard", version=__version__, docs_url=None, redoc_url=None, openapi_url=None
+        title="PO Dashboard", version=__version__, docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan
     )
     app.state.settings = settings
     app.state.engine = engine

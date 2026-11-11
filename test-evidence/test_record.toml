@@ -1252,6 +1252,50 @@ steps = ["Covered by the tests named."]
 expected = "A PDF over 50 pages, a password-protected PDF, a damaged file, a zip bomb and an image with too many pixels are marked not read with a fixed reason. A Word or Excel file with an entity trick never leaks a local file, and openpyxl is pinned to the defusedxml parser even though lxml is installed. A reader that breaks marks the file failed with the kind of error only, never document text. If Tesseract is missing the document stays waiting and is read later. No document text reaches the logs."
 tests = ["test_text.py::test_a_pdf_over_the_page_limit_is_not_read", "test_text.py::test_a_password_protected_pdf_is_not_read", "test_text.py::test_a_zip_bomb_is_refused_before_it_is_opened", "test_text.py::test_an_image_with_too_many_pixels_is_refused", "test_text.py::test_a_word_file_with_an_entity_trick_does_not_leak_a_local_file", "test_text.py::test_a_spreadsheet_with_an_entity_trick_is_refused_by_the_text_step_too", "test_sheets.py::test_the_reader_uses_the_safe_xml_parser", "test_reading.py::test_a_refused_file_says_why_and_the_message_is_still_read", "test_reading.py::test_a_file_that_breaks_the_reader_is_marked_failed_with_the_kind_of_error_only", "test_reading.py::test_a_missing_program_leaves_the_document_waiting_and_it_is_read_later", "test_reading.py::test_no_document_text_reaches_the_logs"]
 
+[[case]]
+id = "TC-MAIL-11"
+area = "Scanner"
+title = "A scan stores and reads new mail once, in both folders, and finds nothing the second time"
+priority = "High"
+kind = "automated"
+refs = ["PD-3.4", "REQ-IN-04", "REQ-IN-05"]
+steps = ["Covered by the tests named."]
+expected = "New mail in the Inbox and Sent Items is stored and its text read. The saved position is per folder. A second scan stores and repeats nothing; mail that arrives later is stored once."
+tests = ["test_scanner.py::test_a_scan_stores_and_reads_new_mail_and_the_next_scan_finds_nothing", "test_scanner.py::test_both_folders_are_scanned_with_their_own_position"]
+
+[[case]]
+id = "TC-MAIL-12"
+area = "Scanner"
+title = "A crash mid-scan loses no mail and repeats none"
+priority = "High"
+kind = "automated"
+refs = ["PD-3.4", "REQ-IN-05"]
+steps = ["Covered by the tests named."]
+expected = "A failure part way through a batch stores nothing of that batch and leaves the position where it was; the next scan stores all of it once. A real process killed with no cleanup mid-batch leaves every message stored exactly once after the next run."
+tests = ["test_scanner.py::test_a_failure_part_way_through_a_batch_stores_nothing_of_it_and_the_retry_loses_and_repeats_nothing", "test_scanner.py::test_a_process_killed_mid_scan_loses_nothing_and_repeats_nothing"]
+
+[[case]]
+id = "TC-MAIL-13"
+area = "Scanner"
+title = "One scan at a time, a cap per scan, and errors recorded without mail text"
+priority = "High"
+kind = "automated"
+refs = ["PD-3.4", "DEC-13", "engineering review: queues, backpressure"]
+steps = ["Covered by the tests named."]
+expected = "A tick during a running scan is skipped at once, not queued. A burst larger than the cap is spread over several scans and nothing is stored twice; documents read per scan are capped too. A mailbox or folder that fails is recorded with a fixed reason and error type only (never mail text, in the table or the log), the others carry on, and a later success clears the error."
+tests = ["test_scanner.py::test_a_tick_during_a_running_scan_is_skipped_not_queued", "test_scanner.py::test_a_burst_is_spread_over_several_ticks", "test_scanner.py::test_documents_read_per_tick_are_capped_too", "test_scanner.py::test_a_mailbox_that_cannot_be_read_is_recorded_and_the_others_carry_on", "test_scanner.py::test_one_folder_failing_does_not_stop_the_other", "test_scanner.py::test_a_success_after_failures_clears_the_error"]
+
+[[case]]
+id = "TC-MAIL-14"
+area = "Scanner"
+title = "The scanner waits for the database lock, never holds it while reading, and the Home page shows the last scan"
+priority = "Medium"
+kind = "automated"
+refs = ["PD-3.4", "engineering review: locking, retries"]
+steps = ["Covered by the tests named."]
+expected = "A scan started while the web app holds the write lock waits and succeeds instead of failing with 'database is locked'. While a document is being read (OCR can take minutes) another writer is not blocked. The clock keeps scanning after a scan crashes. Home says 'no scan yet', 'just now' or 'N min ago'."
+tests = ["test_scanner.py::test_a_scan_waits_for_the_web_apps_write_lock_instead_of_failing", "test_scanner.py::test_a_scan_does_not_hold_the_write_lock_while_it_reads_a_document", "test_scanner.py::test_the_loop_scans_again_and_again_and_survives_a_crashing_scan", "test_scanner.py::test_the_home_page_says_when_the_last_scan_was"]
+
 # =====================================================================================================================
 # Operations (engineering review, 2026-11-10)
 

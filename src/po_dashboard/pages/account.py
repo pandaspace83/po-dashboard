@@ -10,6 +10,7 @@ from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 from po_dashboard import __version__
 from po_dashboard.auth import passwords, service
@@ -25,6 +26,7 @@ from po_dashboard.pages.common import (
     context,
     set_session_cookie,
 )
+from po_dashboard.scheduler.scanner import last_scan
 
 router = APIRouter()
 
@@ -106,11 +108,20 @@ def change_password(
     return response
 
 
+def scan_text(db: Session) -> str:
+    """The health strip's 'last scan': 'no scan yet', or how long ago in plain words."""
+    when = last_scan(db)
+    if when is None:
+        return "no scan yet"
+    minutes = int((utcnow() - when).total_seconds() // 60)
+    return "just now" if minutes < 1 else f"{minutes} min ago" if minutes < 120 else f"{minutes // 60} hours ago"
+
+
 @router.get("/", response_class=HTMLResponse)
 def home(request: Request, db: Db, user: CurrentUser) -> HTMLResponse:
     settings = request.app.state.settings
     health = {
-        "last_scan": "no scan yet",
+        "last_scan": scan_text(db),
         "model": "reachable" if llm.is_reachable(settings) else "not reachable",
         "model_name": settings.model,
     }

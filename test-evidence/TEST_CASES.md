@@ -4,7 +4,7 @@
 
 PO Dashboard (RaceSpec Internal Dashboard). Scope: Phase 0 and Phase 1: sign-in, people, vendors, purchase orders, imports, the QuickBooks starting load, entries by hand, Home, Open items, Audit, page behaviour, security and speed.
 
-**102 cases:** 46 Critical, 42 High, 14 Medium; 2 terminal, 40 automated, 59 browser, 1 owner only.
+**106 cases:** 46 Critical, 45 High, 15 Medium; 2 terminal, 44 automated, 59 browser, 1 owner only.
 
 Latest Chrome run: 11/07/2026, Google Chrome 156.0.8078.81, by Claude, scripts/browser_evidence.py, on commit 7f2d081 with uncommitted changes: **59 of 59** browser cases pass. Automated tests: `uv run pytest`. Defects: [DEFECTS.md](DEFECTS.md). Sign-off: [SIGN_OFF.md](SIGN_OFF.md).
 
@@ -118,6 +118,10 @@ Latest Chrome run: 11/07/2026, Google Chrome 156.0.8078.81, by Claude, scripts/b
 | [TC-MAIL-08](#tc-mail-08) | Every kind of document in the golden set becomes the expected text | High | Automated | Automated tests | — |
 | [TC-MAIL-09](#tc-mail-09) | HTML, earlier messages, scans, spreadsheets and Word are read the DEC-51 way | High | Automated | Automated tests | — |
 | [TC-MAIL-10](#tc-mail-10) | A file over a limit, a damaged file or a missing Tesseract never loses a document | High | Automated | Automated tests | — |
+| [TC-MAIL-11](#tc-mail-11) | A scan stores and reads new mail once, in both folders, and finds nothing the second time | High | Automated | Automated tests | — |
+| [TC-MAIL-12](#tc-mail-12) | A crash mid-scan loses no mail and repeats none | High | Automated | Automated tests | — |
+| [TC-MAIL-13](#tc-mail-13) | One scan at a time, a cap per scan, and errors recorded without mail text | High | Automated | Automated tests | — |
+| [TC-MAIL-14](#tc-mail-14) | The scanner waits for the database lock, never holds it while reading, and the Home page shows the last scan | Medium | Automated | Automated tests | — |
 | [TC-OPS-01](#tc-ops-01) | A backup restores to exactly what was backed up; it never overwrites, never deletes, and refuses unsafe places | Critical | Automated | Automated tests | — |
 | [TC-OPS-02](#tc-ops-02) | Two people, or a double click, cannot corrupt a record | High | Automated | Automated tests | — |
 | [TC-OPS-03](#tc-ops-03) | A model server that is down fails fast and leaves the document waiting; the health check sees a broken database | High | Automated | Automated tests | — |
@@ -2197,6 +2201,76 @@ Latest Chrome run: 11/07/2026, Google Chrome 156.0.8078.81, by Claude, scripts/b
 **Expected:** A PDF over 50 pages, a password-protected PDF, a damaged file, a zip bomb and an image with too many pixels are marked not read with a fixed reason. A Word or Excel file with an entity trick never leaks a local file, and openpyxl is pinned to the defusedxml parser even though lxml is installed. A reader that breaks marks the file failed with the kind of error only, never document text. If Tesseract is missing the document stays waiting and is read later. No document text reaches the logs.
 
 **Automated tests:** `test_text.py::test_a_pdf_over_the_page_limit_is_not_read`, `test_text.py::test_a_password_protected_pdf_is_not_read`, `test_text.py::test_a_zip_bomb_is_refused_before_it_is_opened`, `test_text.py::test_an_image_with_too_many_pixels_is_refused`, `test_text.py::test_a_word_file_with_an_entity_trick_does_not_leak_a_local_file`, `test_text.py::test_a_spreadsheet_with_an_entity_trick_is_refused_by_the_text_step_too`, `test_sheets.py::test_the_reader_uses_the_safe_xml_parser`, `test_reading.py::test_a_refused_file_says_why_and_the_message_is_still_read`, `test_reading.py::test_a_file_that_breaks_the_reader_is_marked_failed_with_the_kind_of_error_only`, `test_reading.py::test_a_missing_program_leaves_the_document_waiting_and_it_is_read_later`, `test_reading.py::test_no_document_text_reaches_the_logs`
+
+**Latest:** Owner: not recorded.
+
+
+## Scanner
+
+<a id="tc-mail-11"></a>
+
+### TC-MAIL-11: A scan stores and reads new mail once, in both folders, and finds nothing the second time
+
+**Priority:** High · **How:** Automated · **Refs:** PD-3.4, REQ-IN-04, REQ-IN-05
+
+**Steps**
+
+1. Covered by the tests named.
+
+**Expected:** New mail in the Inbox and Sent Items is stored and its text read. The saved position is per folder. A second scan stores and repeats nothing; mail that arrives later is stored once.
+
+**Automated tests:** `test_scanner.py::test_a_scan_stores_and_reads_new_mail_and_the_next_scan_finds_nothing`, `test_scanner.py::test_both_folders_are_scanned_with_their_own_position`
+
+**Latest:** Owner: not recorded.
+
+
+<a id="tc-mail-12"></a>
+
+### TC-MAIL-12: A crash mid-scan loses no mail and repeats none
+
+**Priority:** High · **How:** Automated · **Refs:** PD-3.4, REQ-IN-05
+
+**Steps**
+
+1. Covered by the tests named.
+
+**Expected:** A failure part way through a batch stores nothing of that batch and leaves the position where it was; the next scan stores all of it once. A real process killed with no cleanup mid-batch leaves every message stored exactly once after the next run.
+
+**Automated tests:** `test_scanner.py::test_a_failure_part_way_through_a_batch_stores_nothing_of_it_and_the_retry_loses_and_repeats_nothing`, `test_scanner.py::test_a_process_killed_mid_scan_loses_nothing_and_repeats_nothing`
+
+**Latest:** Owner: not recorded.
+
+
+<a id="tc-mail-13"></a>
+
+### TC-MAIL-13: One scan at a time, a cap per scan, and errors recorded without mail text
+
+**Priority:** High · **How:** Automated · **Refs:** PD-3.4, DEC-13, engineering review: queues, backpressure
+
+**Steps**
+
+1. Covered by the tests named.
+
+**Expected:** A tick during a running scan is skipped at once, not queued. A burst larger than the cap is spread over several scans and nothing is stored twice; documents read per scan are capped too. A mailbox or folder that fails is recorded with a fixed reason and error type only (never mail text, in the table or the log), the others carry on, and a later success clears the error.
+
+**Automated tests:** `test_scanner.py::test_a_tick_during_a_running_scan_is_skipped_not_queued`, `test_scanner.py::test_a_burst_is_spread_over_several_ticks`, `test_scanner.py::test_documents_read_per_tick_are_capped_too`, `test_scanner.py::test_a_mailbox_that_cannot_be_read_is_recorded_and_the_others_carry_on`, `test_scanner.py::test_one_folder_failing_does_not_stop_the_other`, `test_scanner.py::test_a_success_after_failures_clears_the_error`
+
+**Latest:** Owner: not recorded.
+
+
+<a id="tc-mail-14"></a>
+
+### TC-MAIL-14: The scanner waits for the database lock, never holds it while reading, and the Home page shows the last scan
+
+**Priority:** Medium · **How:** Automated · **Refs:** PD-3.4, engineering review: locking, retries
+
+**Steps**
+
+1. Covered by the tests named.
+
+**Expected:** A scan started while the web app holds the write lock waits and succeeds instead of failing with 'database is locked'. While a document is being read (OCR can take minutes) another writer is not blocked. The clock keeps scanning after a scan crashes. Home says 'no scan yet', 'just now' or 'N min ago'.
+
+**Automated tests:** `test_scanner.py::test_a_scan_waits_for_the_web_apps_write_lock_instead_of_failing`, `test_scanner.py::test_a_scan_does_not_hold_the_write_lock_while_it_reads_a_document`, `test_scanner.py::test_the_loop_scans_again_and_again_and_survives_a_crashing_scan`, `test_scanner.py::test_the_home_page_says_when_the_last_scan_was`
 
 **Latest:** Owner: not recorded.
 

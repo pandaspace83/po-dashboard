@@ -108,7 +108,7 @@ Tables, with the fields that matter. Every table has `id`, `created_at`; accepte
 | `session` | user_id, token hash, stage (pending, full), csrf_token (stored in clear on purpose: useless without the session cookie), created_at, last_seen_at, expires_at |
 | `recovery_code` | user_id, code hash, used_at |
 | `audit_log` | at, user_id (empty for a command-line action or an unknown account), client_address, action, object, before, after |
-| `scan_state` | mailbox_id, folder, saved position (delta link or last uid), last_success, last_error |
+| `scan_state` | mailbox_id, folder (one row each), saved position (opaque: a delta link, history id or file-hash set), last_attempt, last_success, last_error (a fixed reason), failures in a row. Built in PD-3.4 (migration 0008). |
 | `setting` | key, value (interval, thresholds, model name, allowed names) |
 
 **Built in PD-1.1b** (`db/ledger.py`, migration 0002): `vendor`, `vendor_domain`, `purchase_order`, `po_line`, `acknowledgement`,
