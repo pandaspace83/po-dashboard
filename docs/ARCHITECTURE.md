@@ -93,8 +93,8 @@ Tables, with the fields that matter. Every table has `id`, `created_at`; accepte
 | `purchase_order` | po_number (unique), vendor_id, date_sent, currency, buyer, source (manual, csv, document, quickbooks), created_by; po_date, the PO's own date in QuickBooks from the starting load (DEC-46, migration 0003), never used as the date sent. No status column: status is computed (§5) |
 | `po_line` | po_id, line_no, item, description, ordered_qty, unit, unit_price, requested_date; customer, the customer a line is for when QuickBooks names one (DEC-46); closed_reason (received, short, cancelled), closed_at, closed_by and close_note, all empty while the line is open and all required together once it is closed by hand |
 | `mailbox` | address (lower case, unique), provider (gmail, graph, folder), location (the folder a folder mailbox reads), connected_by (emptied if that person is removed), connected_at, state (connected, needs_reconnect, disconnected), read_since (only mail from then on is read, DEC-51). Its token or secret is in the Keychain, never here. Built in PD-3.1 (migration 0004) |
-| `source_message` | mailbox_id, folder, provider message id, sender, subject, received_at, raw_path, content_hash |
-| `source_document` | message_id, filename, kind, stored_path, content_hash, text_path, pages |
+| `source_message` | mailbox_id, folder, provider_id, sender, recipients (To and Cc), subject, received_at, message_id_header, raw_path, content_hash (unique: the same bytes are one message, even through another mailbox), size. Built in PD-3.2 (migration 0005) |
+| `source_document` | message_id, filename (display only, never a path), kind (body, pdf, image, spreadsheet, word, text, email, other), content_type, stored_path, content_hash, size, state (stored, not_read, read, failed), not_read_reason, text_path, pages. A message's body is a document that points at the raw message. An attachment with bytes already stored is not stored again (unique among non-bodies); a body is per message, because many say only "Thanks". Built in PD-3.2 |
 | `extraction` | document_id, model, prompt_version, raw JSON, doc_type, po_number, vendor_match, validation flags, state (pending, accepted, rejected, unmatched) |
 | `extraction_line` | extraction_id, line_no, item, qty, price, promised_date, flags |
 | `acknowledgement` / `ack_line` | accepted extraction: po_id, line_id, confirmed_qty, confirmed_price, promised_date, accepted_by, accepted_at |
@@ -519,6 +519,11 @@ The full runbook is [OPERATIONS.md](OPERATIONS.md). The design points that make 
   waking reads everything since the last success.
 - **Visible failure.** A failed scan, a missing model or a rejected mailbox credential shows as a banner and a
   `scan_stale` alert, never silently (NFR-05).
+- **The file store.** `originals/` in the data folder holds every raw message and attachment under its SHA-256
+  (`ab/ab12…`), owner-only (700 folders, 600 files), written to a temporary name and renamed, so a crash leaves no
+  half-written original. A file name from a message is shown but never used as a path. Files over 20 MB, attachments past
+  the 25th and kinds the app does not read (programs, macro spreadsheets) are stored and marked "not read" with the reason
+  (DEC-51).
 - **Data outside the repo.** The database, files, logs and backups sit in a per-user data folder, so `git pull` to
   update never touches them. Alembic migrates the database on start, after a backup.
 - **Backups.** A nightly copy of the database and stored files to a folder the user chooses, outside iCloud, with a

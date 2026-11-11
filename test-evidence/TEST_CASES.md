@@ -4,7 +4,7 @@
 
 PO Dashboard (RaceSpec Internal Dashboard). Scope: Phase 0 and Phase 1: sign-in, people, vendors, purchase orders, imports, the QuickBooks starting load, entries by hand, Home, Open items, Audit, page behaviour, security and speed.
 
-**90 cases:** 42 Critical, 35 High, 13 Medium; 2 terminal, 28 automated, 59 browser, 1 owner only.
+**93 cases:** 44 Critical, 36 High, 13 Medium; 2 terminal, 31 automated, 59 browser, 1 owner only.
 
 Latest Chrome run: 11/07/2026, Google Chrome 156.0.8078.81, by Claude, scripts/browser_evidence.py, on commit 7f2d081 with uncommitted changes: **59 of 59** browser cases pass. Automated tests: `uv run pytest`. Defects: [DEFECTS.md](DEFECTS.md). Sign-off: [SIGN_OFF.md](SIGN_OFF.md).
 
@@ -112,6 +112,9 @@ Latest Chrome run: 11/07/2026, Google Chrome 156.0.8078.81, by Claude, scripts/b
 | [TC-MAIL-02](#tc-mail-02) | Every mail source passes the same contract (folder now; Gmail and Microsoft 365 later) | High | Automated | Automated tests | — |
 | [TC-MAIL-03](#tc-mail-03) | The folder reader ignores what is not mail and cannot be tricked out of its folder | High | Automated | Automated tests | — |
 | [TC-MAIL-04](#tc-mail-04) | The mailbox table keeps its own rules | Medium | Automated | Automated tests | — |
+| [TC-MAIL-05](#tc-mail-05) | Every original message and attachment is kept unchanged, once, under its hash | Critical | Automated | Automated tests | — |
+| [TC-MAIL-06](#tc-mail-06) | A hostile message cannot hurt intake: odd file names, broken mail, huge or too many files | Critical | Automated | Automated tests | — |
+| [TC-MAIL-07](#tc-mail-07) | The store is private, never half-written, rolls back cleanly, keeps message text out of logs and honours the start date | High | Automated | Automated tests | — |
 
 ## Set-up and running
 
@@ -2083,5 +2086,56 @@ Latest Chrome run: 11/07/2026, Google Chrome 156.0.8078.81, by Claude, scripts/b
 **Expected:** A known provider and state only, lower-case address, one row per address; removing the person who connected a mailbox keeps the mailbox.
 
 **Automated tests:** `test_mailbox_table.py::test_a_mailbox_is_stored_and_read_back`, `test_mailbox_table.py::test_unknown_providers_and_states_and_upper_case_addresses_are_refused`, `test_mailbox_table.py::test_one_row_per_address`, `test_mailbox_table.py::test_removing_the_person_who_connected_it_keeps_the_mailbox`, `test_database.py::test_migration_matches_the_models`
+
+**Latest:** Owner: not recorded.
+
+
+<a id="tc-mail-05"></a>
+
+### TC-MAIL-05: Every original message and attachment is kept unchanged, once, under its hash
+
+**Priority:** Critical · **How:** Automated · **Refs:** REQ-IN-04, REQ-IN-05, PD-3.2
+
+**Steps**
+
+1. Covered by the tests named, including all 36 golden emails and golden PDFs, scans and spreadsheets sent as attachments.
+
+**Expected:** The stored bytes equal what arrived and their hash matches the row. The same message twice, or through another folder or mailbox, is one message. An attachment already stored is not stored again but the new message and its body are. Two messages that both say only 'Thanks' each keep their body. The database itself refuses a second copy of an attachment.
+
+**Automated tests:** `test_intake.py::test_a_message_is_stored_unchanged_with_its_facts`, `test_intake.py::test_an_attachment_is_stored_under_its_hash`, `test_intake.py::test_the_same_message_twice_is_stored_once`, `test_intake.py::test_the_same_bytes_from_another_folder_are_still_one_message`, `test_intake.py::test_an_attachment_already_stored_is_not_stored_again_but_the_new_message_is`, `test_intake.py::test_two_messages_with_the_same_words_each_keep_their_body`, `test_intake.py::test_the_database_itself_refuses_a_second_copy_of_an_attachment`, `test_intake.py::test_every_golden_email_is_stored_and_the_originals_are_unchanged`, `test_intake.py::test_attachments_in_the_golden_set_come_through`, `test_intake.py::test_the_original_is_hashed_after_storage_and_matches`
+
+**Latest:** Owner: not recorded.
+
+
+<a id="tc-mail-06"></a>
+
+### TC-MAIL-06: A hostile message cannot hurt intake: odd file names, broken mail, huge or too many files
+
+**Priority:** Critical · **How:** Automated · **Refs:** DEC-51, PD-3.2, PD-3.6
+
+**Steps**
+
+1. Covered by the tests named. File names include ../../etc/passwd, a Windows path, a NUL and line breaks sent in RFC 2231 form, a right-to-left override and a 1,000-character name.
+
+**Expected:** No file name ever becomes a path: every stored file is named by its hash, inside the store. Broken mail is still stored and does not stop intake. A file over 20 MB, an attachment past the 25th, a program or a macro spreadsheet is stored and marked not read with the reason. A forwarded message is kept as an attachment.
+
+**Automated tests:** `test_intake.py::test_a_hostile_file_name_never_becomes_a_path`, `test_intake.py::test_a_broken_message_is_stored_and_does_not_stop_intake`, `test_intake.py::test_files_the_app_does_not_read_are_stored_and_say_so`, `test_intake.py::test_a_file_over_the_size_limit_is_stored_and_not_read`, `test_intake.py::test_attachments_past_the_25th_are_stored_and_not_read`, `test_intake.py::test_a_forwarded_message_is_kept_as_an_attachment`, `test_intake.py::test_the_store_refuses_a_path_it_did_not_make`
+
+**Latest:** Owner: not recorded.
+
+
+<a id="tc-mail-07"></a>
+
+### TC-MAIL-07: The store is private, never half-written, rolls back cleanly, keeps message text out of logs and honours the start date
+
+**Priority:** High · **How:** Automated · **Refs:** DEC-13, DEC-51, PD-3.2
+
+**Steps**
+
+1. Covered by the tests named.
+
+**Expected:** Folders are 700 and files 600, with no temporary file left behind. A failure while writing rows leaves the database empty and a retry works. A subject, body and file name never appear in the logs. Mail from before the mailbox's start date is not stored; a message with no date is stored with the time it was read.
+
+**Automated tests:** `test_intake.py::test_the_store_is_owner_only_and_never_half_written`, `test_intake.py::test_a_failure_while_writing_rows_leaves_nothing_in_the_database_and_the_retry_works`, `test_intake.py::test_no_message_text_reaches_the_logs`, `test_intake.py::test_mail_from_before_the_start_date_is_not_stored`, `test_intake.py::test_a_message_with_no_date_is_stored_with_the_time_it_was_read`
 
 **Latest:** Owner: not recorded.

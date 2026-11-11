@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import CheckConstraint, ForeignKey, String
+from sqlalchemy import CheckConstraint, ForeignKey, Index, Integer, String, Text, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from po_dashboard.db.base import Base, UTCDateTime, utcnow
@@ -34,3 +34,56 @@ class Mailbox(Base):
     # Only mail that arrived on or after this time is read (DEC-51): the day the mailbox was connected, or earlier
     # if the admin chose to read the last N days.
     read_since: Mapped[datetime | None] = mapped_column(UTCDateTime, default=None)
+
+
+DOCUMENT_KINDS = ("body", "pdf", "image", "spreadsheet", "word", "text", "email", "other")
+DOCUMENT_STATES = ("stored", "not_read", "read", "failed")
+
+
+class SourceMessage(Base):
+    """One message exactly as received. The original is kept unchanged in the file store (REQ-IN-04); a message whose
+    bytes are already stored, even if it came through another mailbox, is never stored again (REQ-IN-05)."""
+
+    __tablename__ = "source_message"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+    mailbox_id: Mapped[int] = mapped_column(ForeignKey("mailbox.id", ondelete="RESTRICT"), index=True)
+    folder: Mapped[str] = mapped_column(String(40))
+    provider_id: Mapped[str] = mapped_column(String(200))
+    sender: Mapped[str | None] = mapped_column(String(500), default=None)
+    recipients: Mapped[str | None] = mapped_column(Text, default=None)  # To and Cc, as written
+    subject: Mapped[str | None] = mapped_column(String(1000), default=None)
+    received_at: Mapped[datetime] = mapped_column(UTCDateTime)
+    message_id_header: Mapped[str | None] = mapped_column(String(500), default=None)
+    raw_path: Mapped[str] = mapped_column(String(200))  # inside the file store
+    content_hash: Mapped[str] = mapped_column(String(64), unique=True)  # SHA-256 of the raw message
+    size: Mapped[int] = mapped_column(Integer)
+
+
+class SourceDocument(Base):
+    """A document inside a message: its body, or an attachment. Text is added by Phase 3's text step (PD-3.3)."""
+
+    __tablename__ = "source_document"
+    __table_args__ = (
+        CheckConstraint(
+            "kind in ('body', 'pdf', 'image', 'spreadsheet', 'word', 'text', 'email', 'other')", name="kind_known"
+        ),
+        CheckConstraint("state in ('stored', 'not_read', 'read', 'failed')", name="state_known"),
+        # an attachment with the same bytes is stored once; bodies are per message (many say only "Thanks")
+        Index("uq_source_document_attachment_hash", "content_hash", unique=True, sqlite_where=text("kind != 'body'")),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+    message_id: Mapped[int] = mapped_column(ForeignKey("source_message.id", ondelete="CASCADE"), index=True)
+    filename: Mapped[str] = mapped_column(String(255))  # for display only; never used as a path
+    kind: Mapped[str] = mapped_column(String(16))
+    content_type: Mapped[str | None] = mapped_column(String(200), default=None)
+    stored_path: Mapped[str] = mapped_column(String(200))  # a body points at the raw message
+    content_hash: Mapped[str] = mapped_column(String(64))
+    size: Mapped[int] = mapped_column(Integer)
+    state: Mapped[str] = mapped_column(String(16), default="stored")
+    not_read_reason: Mapped[str | None] = mapped_column(String(200), default=None)
+    text_path: Mapped[str | None] = mapped_column(String(200), default=None)
+    pages: Mapped[int | None] = mapped_column(Integer, default=None)
