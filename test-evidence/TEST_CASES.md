@@ -4,7 +4,7 @@
 
 PO Dashboard (RaceSpec Internal Dashboard). Scope: Phase 0 and Phase 1: sign-in, people, vendors, purchase orders, imports, the QuickBooks starting load, entries by hand, Home, Open items, Audit, page behaviour, security and speed.
 
-**111 cases:** 46 Critical, 50 High, 15 Medium; 2 terminal, 48 automated, 59 browser, 2 owner only.
+**116 cases:** 46 Critical, 55 High, 15 Medium; 2 terminal, 53 automated, 59 browser, 2 owner only.
 
 Latest Chrome run: 11/07/2026, Google Chrome 156.0.8078.81, by Claude, scripts/browser_evidence.py, on commit 7f2d081 with uncommitted changes: **59 of 59** browser cases pass. Automated tests: `uv run pytest`. Defects: [DEFECTS.md](DEFECTS.md). Sign-off: [SIGN_OFF.md](SIGN_OFF.md).
 
@@ -127,6 +127,11 @@ Latest Chrome run: 11/07/2026, Google Chrome 156.0.8078.81, by Claude, scripts/b
 | [TC-MAIL-17](#tc-mail-17) | Retries only where a retry helps, with backoff, and a lapsed sign-in needs a reconnect | High | Automated | Automated tests | — |
 | [TC-MAIL-18](#tc-mail-18) | The sign-in uses PKCE and a checked state on a loopback listener, and no secret is kept outside the Keychain | High | Automated | Automated tests | — |
 | [TC-MAIL-19](#tc-mail-19) | The real Gmail test account connects, is read, and is never changed (owner's check) | High | Owner only | — | Passed 2026-11-11 by the owner: connected the dedicated test account; both test emails (each with a PDF) were read by the scanner (2 messages, 2 bodies and 2 PDFs read); both stayed unread in Gmail. Reconnecting with --days 7 first showed the start date would not move (fixed the same day, tested). |
+| [TC-MAIL-20](#tc-mail-20) | A PDF bomb, a picture bomb, a looping PDF, a program named .pdf, a JBIG2 scan and oversize files are refused without harm | High | Automated | Automated tests | — |
+| [TC-MAIL-21](#tc-mail-21) | A picture is opened only as one of five formats, and a picture bomb is refused before it is decoded | High | Automated | Automated tests | — |
+| [TC-MAIL-22](#tc-mail-22) | A spreadsheet's formulas are never run or fetched, a macro is ignored, and a Word file with nested entities is refused | High | Automated | Automated tests | — |
+| [TC-MAIL-23](#tc-mail-23) | Each document is read in its own sandboxed process, and a hang, blow-up or crash costs that document only | High | Automated | Automated tests | — |
+| [TC-MAIL-24](#tc-mail-24) | A hostile message cannot exhaust the app while it is stored, and a silent connection cannot hold up the Gmail sign-in | High | Automated | Automated tests | — |
 | [TC-OPS-01](#tc-ops-01) | A backup restores to exactly what was backed up; it never overwrites, never deletes, and refuses unsafe places | Critical | Automated | Automated tests | — |
 | [TC-OPS-02](#tc-ops-02) | Two people, or a double click, cannot corrupt a record | High | Automated | Automated tests | — |
 | [TC-OPS-03](#tc-ops-03) | A model server that is down fails fast and leaves the document waiting; the health check sees a broken database | High | Automated | Automated tests | — |
@@ -2366,6 +2371,93 @@ Latest Chrome run: 11/07/2026, Google Chrome 156.0.8078.81, by Claude, scripts/b
 **Expected:** connect-gmail finishes with 'Connected <address>'. Home's Last scan says 'just now' or a few minutes. Gmail shows both emails exactly as before: still unread, not moved, not starred, nothing deleted.
 
 **Latest:** Owner: Passed 2026-11-11 by the owner: connected the dedicated test account; both test emails (each with a PDF) were read by the scanner (2 messages, 2 bodies and 2 PDFs read); both stayed unread in Gmail. Reconnecting with --days 7 first showed the start date would not move (fixed the same day, tested)..
+
+
+## Hostile mail
+
+<a id="tc-mail-20"></a>
+
+### TC-MAIL-20: A PDF bomb, a picture bomb, a looping PDF, a program named .pdf, a JBIG2 scan and oversize files are refused without harm
+
+**Priority:** High · **How:** Automated · **Refs:** PD-3.6, DEC-51, DEC-53
+
+**Steps**
+
+1. Covered by the tests named.
+
+**Expected:** An 80 MB compression bomb and a 144-million-pixel picture inside a PDF are not read (unsafe size) within seconds. A PDF whose pages loop and a program named invoice.pdf are not read (damaged or not what its name says). A JBIG2 scan never starts the jbig2dec program, even when pypdf is told where one is. A file over 20 MB, attachments past the 25th and a message over 50 MB are stored and not read.
+
+**Automated tests:** `test_hostile.py::test_a_pdf_compression_bomb_is_refused_without_a_blow_up`, `test_hostile.py::test_a_pdf_picture_bomb_is_refused`, `test_hostile.py::test_a_pdf_whose_pages_loop_is_refused_at_once`, `test_hostile.py::test_a_program_named_like_a_pdf_is_refused`, `test_hostile.py::test_a_jbig2_scan_never_starts_the_jbig2dec_program`, `test_intake.py::test_a_file_over_the_size_limit_is_stored_and_not_read`, `test_intake.py::test_attachments_past_the_25th_are_stored_and_not_read`, `test_mail_folder.py::TestFolderSource::test_a_huge_message_is_skipped_with_a_reason_and_not_read_again`
+
+**Latest:** Owner: not recorded.
+
+
+<a id="tc-mail-21"></a>
+
+### TC-MAIL-21: A picture is opened only as one of five formats, and a picture bomb is refused before it is decoded
+
+**Priority:** High · **How:** Automated · **Refs:** PD-3.6, DEC-53
+
+**Steps**
+
+1. Covered by the tests named.
+
+**Expected:** An EPS file named .png is never handed to Pillow's EPS reader (which would run Ghostscript if it were installed); the test first shows Pillow on its own would. A PNG claiming 50,000 x 50,000 pixels is not read (too large). A GIF with 3,000 frames is read ten frames at most.
+
+**Automated tests:** `test_hostile.py::test_an_eps_file_named_png_is_never_opened_as_eps`, `test_hostile.py::test_a_picture_claiming_billions_of_pixels_is_refused_before_it_is_decoded`, `test_hostile.py::test_a_gif_with_thousands_of_frames_is_read_ten_frames_at_most`
+
+**Latest:** Owner: not recorded.
+
+
+<a id="tc-mail-22"></a>
+
+### TC-MAIL-22: A spreadsheet's formulas are never run or fetched, a macro is ignored, and a Word file with nested entities is refused
+
+**Priority:** High · **How:** Automated · **Refs:** PD-3.6, DEC-51, DEC-53
+
+**Steps**
+
+1. Covered by the tests named.
+
+**Expected:** A cell with WEBSERVICE, a DDE command or HYPERLINK gives only its saved value; the formula text and the addresses never appear. A macro part inside a file named .xlsx is ignored and the values are read. Text that looks like a formula stays text for the model, and the CSV export neutralises it. A Word file with nested entities (billion laughs) is refused within seconds.
+
+**Automated tests:** `test_hostile.py::test_a_formula_gives_its_saved_value_only_and_is_never_run_or_fetched`, `test_hostile.py::test_a_macro_inside_a_file_named_xlsx_is_ignored_and_the_values_are_read`, `test_hostile.py::test_text_that_looks_like_a_formula_stays_text_and_the_export_neutralises_it`, `test_hostile.py::test_a_word_file_with_nested_entities_is_refused_at_once`, `test_text.py::test_a_formula_is_never_calculated_and_a_hidden_sheet_is_skipped`
+
+**Latest:** Owner: not recorded.
+
+
+<a id="tc-mail-23"></a>
+
+### TC-MAIL-23: Each document is read in its own sandboxed process, and a hang, blow-up or crash costs that document only
+
+**Priority:** High · **How:** Automated · **Refs:** PD-3.6, DEC-53, DEC-13
+
+**Steps**
+
+1. Covered by the tests named.
+
+**Expected:** A reader that hangs is stopped at the time limit together with the program it started. One past the memory limit stops and the file is not read. One that crashes, prints nonsense, floods its output or answers in the wrong shape marks the file failed with fixed words. Inside the sandbox the reader cannot reach the network, write a file, start a program or read the stored originals, but can read other files, and Tesseract still works. The app always reads through the sandbox with the originals and the Keychain files hidden; without sandbox-exec it still reads in a separate process and logs that once. A hostile file name never reaches the command.
+
+**Automated tests:** `test_hostile.py::test_a_reader_that_hangs_is_stopped_with_everything_it_started`, `test_hostile.py::test_a_reader_that_uses_too_much_memory_stops_and_the_file_is_not_read`, `test_hostile.py::test_a_reader_that_crashes_or_answers_wrongly_marks_the_file_failed`, `test_hostile.py::test_the_reader_cannot_use_the_network_write_files_start_programs_or_read_the_originals`, `test_hostile.py::test_the_app_reads_every_document_inside_the_sandbox_with_the_originals_hidden`, `test_hostile.py::test_tesseract_still_works_inside_the_sandbox`, `test_hostile.py::test_without_the_sandbox_the_reader_still_runs_apart_and_says_so_once`, `test_hostile.py::test_a_hostile_file_name_or_kind_never_reaches_the_reading_process_command`
+
+**Latest:** Owner: not recorded.
+
+
+<a id="tc-mail-24"></a>
+
+### TC-MAIL-24: A hostile message cannot exhaust the app while it is stored, and a silent connection cannot hold up the Gmail sign-in
+
+**Priority:** High · **How:** Automated · **Refs:** PD-3.6, DEC-53, DEC-50
+
+**Steps**
+
+1. Covered by the tests named.
+
+**Expected:** A Subject of 20,000 encoded words (which took the structured parser past 2 GB) is stored within a 500 MB cap and cut to 1,000 characters. A message with 2,500 parts, or nested 5,000 deep, is stored whole and not read; one nested 900 deep, or with 30 attachments, is read as normal. Encoded, RFC 2231 and raw Latin-1 names and senders are stored as readable text. A connection to the sign-in listener that never speaks is dropped and Google's return still arrives.
+
+**Automated tests:** `test_hostile.py::test_a_header_with_thousands_of_encoded_words_cannot_exhaust_memory`, `test_hostile.py::test_a_message_with_thousands_of_parts_is_stored_whole_and_not_taken_apart`, `test_hostile.py::test_a_deeply_nested_message_is_stored_whole_and_a_merely_deep_one_is_read`, `test_hostile.py::test_a_normal_message_with_attachments_is_still_taken_apart`, `test_hostile.py::test_raw_and_encoded_names_are_kept_as_readable_text`, `test_hostile.py::test_a_silent_connection_cannot_hold_up_the_sign_in`
+
+**Latest:** Owner: not recorded.
 
 
 ## Operations

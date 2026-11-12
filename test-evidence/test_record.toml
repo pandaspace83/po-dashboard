@@ -1352,6 +1352,61 @@ expected = "connect-gmail finishes with 'Connected <address>'. Home's Last scan 
 tests = []
 owner = "Passed 2026-11-11 by the owner: connected the dedicated test account; both test emails (each with a PDF) were read by the scanner (2 messages, 2 bodies and 2 PDFs read); both stayed unread in Gmail. Reconnecting with --days 7 first showed the start date would not move (fixed the same day, tested)."
 
+[[case]]
+id = "TC-MAIL-20"
+area = "Hostile mail"
+title = "A PDF bomb, a picture bomb, a looping PDF, a program named .pdf, a JBIG2 scan and oversize files are refused without harm"
+priority = "High"
+kind = "automated"
+refs = ["PD-3.6", "DEC-51", "DEC-53"]
+steps = ["Covered by the tests named."]
+expected = "An 80 MB compression bomb and a 144-million-pixel picture inside a PDF are not read (unsafe size) within seconds. A PDF whose pages loop and a program named invoice.pdf are not read (damaged or not what its name says). A JBIG2 scan never starts the jbig2dec program, even when pypdf is told where one is. A file over 20 MB, attachments past the 25th and a message over 50 MB are stored and not read."
+tests = ["test_hostile.py::test_a_pdf_compression_bomb_is_refused_without_a_blow_up", "test_hostile.py::test_a_pdf_picture_bomb_is_refused", "test_hostile.py::test_a_pdf_whose_pages_loop_is_refused_at_once", "test_hostile.py::test_a_program_named_like_a_pdf_is_refused", "test_hostile.py::test_a_jbig2_scan_never_starts_the_jbig2dec_program", "test_intake.py::test_a_file_over_the_size_limit_is_stored_and_not_read", "test_intake.py::test_attachments_past_the_25th_are_stored_and_not_read", "test_mail_folder.py::TestFolderSource::test_a_huge_message_is_skipped_with_a_reason_and_not_read_again"]
+
+[[case]]
+id = "TC-MAIL-21"
+area = "Hostile mail"
+title = "A picture is opened only as one of five formats, and a picture bomb is refused before it is decoded"
+priority = "High"
+kind = "automated"
+refs = ["PD-3.6", "DEC-53"]
+steps = ["Covered by the tests named."]
+expected = "An EPS file named .png is never handed to Pillow's EPS reader (which would run Ghostscript if it were installed); the test first shows Pillow on its own would. A PNG claiming 50,000 x 50,000 pixels is not read (too large). A GIF with 3,000 frames is read ten frames at most."
+tests = ["test_hostile.py::test_an_eps_file_named_png_is_never_opened_as_eps", "test_hostile.py::test_a_picture_claiming_billions_of_pixels_is_refused_before_it_is_decoded", "test_hostile.py::test_a_gif_with_thousands_of_frames_is_read_ten_frames_at_most"]
+
+[[case]]
+id = "TC-MAIL-22"
+area = "Hostile mail"
+title = "A spreadsheet's formulas are never run or fetched, a macro is ignored, and a Word file with nested entities is refused"
+priority = "High"
+kind = "automated"
+refs = ["PD-3.6", "DEC-51", "DEC-53"]
+steps = ["Covered by the tests named."]
+expected = "A cell with WEBSERVICE, a DDE command or HYPERLINK gives only its saved value; the formula text and the addresses never appear. A macro part inside a file named .xlsx is ignored and the values are read. Text that looks like a formula stays text for the model, and the CSV export neutralises it. A Word file with nested entities (billion laughs) is refused within seconds."
+tests = ["test_hostile.py::test_a_formula_gives_its_saved_value_only_and_is_never_run_or_fetched", "test_hostile.py::test_a_macro_inside_a_file_named_xlsx_is_ignored_and_the_values_are_read", "test_hostile.py::test_text_that_looks_like_a_formula_stays_text_and_the_export_neutralises_it", "test_hostile.py::test_a_word_file_with_nested_entities_is_refused_at_once", "test_text.py::test_a_formula_is_never_calculated_and_a_hidden_sheet_is_skipped"]
+
+[[case]]
+id = "TC-MAIL-23"
+area = "Hostile mail"
+title = "Each document is read in its own sandboxed process, and a hang, blow-up or crash costs that document only"
+priority = "High"
+kind = "automated"
+refs = ["PD-3.6", "DEC-53", "DEC-13"]
+steps = ["Covered by the tests named."]
+expected = "A reader that hangs is stopped at the time limit together with the program it started. One past the memory limit stops and the file is not read. One that crashes, prints nonsense, floods its output or answers in the wrong shape marks the file failed with fixed words. Inside the sandbox the reader cannot reach the network, write a file, start a program or read the stored originals, but can read other files, and Tesseract still works. The app always reads through the sandbox with the originals and the Keychain files hidden; without sandbox-exec it still reads in a separate process and logs that once. A hostile file name never reaches the command."
+tests = ["test_hostile.py::test_a_reader_that_hangs_is_stopped_with_everything_it_started", "test_hostile.py::test_a_reader_that_uses_too_much_memory_stops_and_the_file_is_not_read", "test_hostile.py::test_a_reader_that_crashes_or_answers_wrongly_marks_the_file_failed", "test_hostile.py::test_the_reader_cannot_use_the_network_write_files_start_programs_or_read_the_originals", "test_hostile.py::test_the_app_reads_every_document_inside_the_sandbox_with_the_originals_hidden", "test_hostile.py::test_tesseract_still_works_inside_the_sandbox", "test_hostile.py::test_without_the_sandbox_the_reader_still_runs_apart_and_says_so_once", "test_hostile.py::test_a_hostile_file_name_or_kind_never_reaches_the_reading_process_command"]
+
+[[case]]
+id = "TC-MAIL-24"
+area = "Hostile mail"
+title = "A hostile message cannot exhaust the app while it is stored, and a silent connection cannot hold up the Gmail sign-in"
+priority = "High"
+kind = "automated"
+refs = ["PD-3.6", "DEC-53", "DEC-50"]
+steps = ["Covered by the tests named."]
+expected = "A Subject of 20,000 encoded words (which took the structured parser past 2 GB) is stored within a 500 MB cap and cut to 1,000 characters. A message with 2,500 parts, or nested 5,000 deep, is stored whole and not read; one nested 900 deep, or with 30 attachments, is read as normal. Encoded, RFC 2231 and raw Latin-1 names and senders are stored as readable text. A connection to the sign-in listener that never speaks is dropped and Google's return still arrives."
+tests = ["test_hostile.py::test_a_header_with_thousands_of_encoded_words_cannot_exhaust_memory", "test_hostile.py::test_a_message_with_thousands_of_parts_is_stored_whole_and_not_taken_apart", "test_hostile.py::test_a_deeply_nested_message_is_stored_whole_and_a_merely_deep_one_is_read", "test_hostile.py::test_a_normal_message_with_attachments_is_still_taken_apart", "test_hostile.py::test_raw_and_encoded_names_are_kept_as_readable_text", "test_hostile.py::test_a_silent_connection_cannot_hold_up_the_sign_in"]
+
 # =====================================================================================================================
 # Operations (engineering review, 2026-11-10)
 
@@ -1461,6 +1516,102 @@ fix_commit = "e0bdb3e"
 retest = "11/07/2026, Claude in Chrome: pass (TC-SIGN-06, TC-WEB-06). Owner's retest: waiting."
 retest_evidence = "screenshots/TC-SIGN-06.png"
 status = "Fixed, waiting for the owner's retest"
+
+[[defect]]
+id = "DEF-003"
+found = "11/11/2026"
+found_by = "Claude, PD-3.6 security probe on Opus"
+case = "TC-MAIL-24"
+browser = "Not a browser case (made-up hostile files run through the real code)"
+severity = "High"
+title = "One email with a long encoded Subject could exhaust the app's memory"
+steps = ["Store a message whose Subject is 20,000 encoded words (=?utf-8?q?...?=), 0.3 MB in all.", "Watch the app's memory while intake reads the Subject."]
+expected = "The message is stored in moments with its Subject cut to 1,000 characters."
+actual = "The process passed 2 GB and was stopped by the probe's own 2 GB guard; an earlier run without the guard was killed by macOS. 4,000 words used 180 MB and 8,000 used 612 MB: the memory grows with the square of the number of words. This runs inside the app, so one email could stop it."
+cause = "Intake parsed headers with Python's structured email parser (policy.default), whose memory for a header of many encoded words grows with the square of their number (Python 3.13.15)."
+fix = "Intake now uses the plain parser and reads each header from its raw bytes, cut to 10,000 characters, then decodes the encoded words (DEC-53)."
+retest = "11/11/2026, Claude: pass. The same Subject is stored under a 500 MB cap (TC-MAIL-24)."
+status = "Fixed, not committed yet"
+
+[[defect]]
+id = "DEF-004"
+found = "11/11/2026"
+found_by = "Claude, PD-3.6 security probe on Opus"
+case = "TC-MAIL-24"
+browser = "Not a browser case (made-up hostile files run through the real code)"
+severity = "Medium"
+title = "A message with 300,000 tiny attachments held the scanner for minutes and would write a file and a row for each"
+steps = ["Store a 33 MB message with 300,000 different one-line attachments."]
+expected = "The message is stored whole and not taken apart, in moments."
+actual = "Parsing and walking the parts alone took 105 seconds and 518 MB inside the app; storing would then have written 300,000 files and rows in one transaction."
+cause = "Nothing limited the number of MIME parts below the 50 MB message limit."
+fix = "A message with more than 2,000 lines starting with \"--\" is stored whole, its body marked not read with a reason, and not parsed (DEC-53)."
+retest = "11/11/2026, Claude: pass with 2,500 parts (TC-MAIL-24)."
+status = "Fixed, not committed yet"
+
+[[defect]]
+id = "DEF-005"
+found = "11/11/2026"
+found_by = "Claude, PD-3.6 security probe on Opus"
+case = "TC-MAIL-23"
+browser = "Not a browser case (made-up hostile files run through the real code)"
+severity = "Medium"
+title = "A slow or broken document could hold the scanner without limit or stop the app"
+steps = ["Read a PDF with no text and 150 page images (3 on each of 50 pages).", "Consider a reader that crashes inside C code (Pillow, lxml, zlib)."]
+expected = "A document is stopped after a set time, and a crash costs that document only."
+actual = "Blank page images took 24 s; a page of noise takes Tesseract about 3.4 s, so 150 noisy images about 9 minutes, and each image was allowed 120 s (5 hours in all). No crash was produced, but a crash in a C parser would have stopped the whole app, and the same document would have been read again, and crashed it again, on every restart."
+cause = "Documents were read inside the app's own process with only a per-image OCR limit."
+fix = "Each document is read by a fresh process in the macOS sandbox, stopped after 10 minutes with anything it started, and stopped past 1.5 GB; a crash or a wrong answer marks it failed (DEC-53)."
+retest = "11/11/2026, Claude: pass (TC-MAIL-23: hang, memory, crash and wrong answers)."
+status = "Fixed, not committed yet"
+
+[[defect]]
+id = "DEF-006"
+found = "11/11/2026"
+found_by = "Claude, PD-3.6 security probe on Opus"
+case = "TC-MAIL-21"
+browser = "Not a browser case (made-up hostile files run through the real code)"
+severity = "Low"
+title = "A file named .png that is really EPS reached Pillow's EPS reader"
+steps = ["Attach a small EPS (PostScript) file named a.png and read it."]
+expected = "It is refused as not a picture the app reads, without Pillow's EPS reader."
+actual = "Pillow recognised it as EPS and failed only because Ghostscript is not installed on this Mac (OSError). With Ghostscript installed, the attachment would have been run by it."
+cause = "Pillow was asked to open any format it knows."
+fix = "Pillow now opens PNG, JPEG, GIF, TIFF and BMP only, and the sandbox allows no program but Tesseract (DEC-53)."
+retest = "11/11/2026, Claude: pass (TC-MAIL-21)."
+status = "Fixed, not committed yet"
+
+[[defect]]
+id = "DEF-007"
+found = "11/11/2026"
+found_by = "Claude, PD-3.6 security probe on Opus"
+case = "TC-MAIL-24"
+browser = "Not a browser case (made-up hostile files run through the real code)"
+severity = "Low"
+title = "A silent connection to the Gmail sign-in listener could hold up the sign-in"
+steps = ["During connect-gmail, open a connection to the loopback listener and send nothing.", "Let Google's return arrive."]
+expected = "The silent connection is dropped and the sign-in finishes."
+actual = "Found by reading the code: the listener handles one request at a time with no time limit, so it would wait on the silent connection until the 5-minute sign-in wait ran out. Only a program on this Mac could do it."
+cause = "The request handler had no socket timeout."
+fix = "Each connection may stay silent for 10 seconds at most."
+retest = "11/11/2026, Claude: pass (TC-MAIL-24)."
+status = "Fixed, not committed yet"
+
+[[defect]]
+id = "DEF-008"
+found = "11/11/2026"
+found_by = "Claude, PD-3.6 security probe on Opus"
+case = "TC-MAIL-10"
+browser = "Not a browser case (made-up hostile files run through the real code)"
+severity = "Low"
+title = "A test lowered Pillow's pixel limit for the whole test run, so another test failed when the files ran in a different order"
+steps = ["Run tests/test_text.py before tests/test_golden_set.py."]
+expected = "Each test passes whatever order the files run in."
+actual = "test_the_generator_rebuilds_the_committed_set_exactly failed: Pillow refused a 2,629-pixel picture as a bomb, because its limit was still 1,000."
+cause = "image_text set Pillow's process-wide limit from the app's constant, and a test lowers that constant. The normal order hid it."
+fix = "The app no longer changes Pillow's process-wide limit; it checks the size itself before decoding."
+retest = "11/11/2026, Claude: pass with the files in that order."
+status = "Fixed, not committed yet"
 
 # =====================================================================================================================
 # User sign-off: the checks that matter most before go-live. "Ready" items can be tested now; "Not built" items are

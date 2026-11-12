@@ -203,7 +203,9 @@ so someone always decides about the missing quantity. A PO with no lines is Open
    mailbox, because the data is company-wide.
    The saved position moves only after the message is safely stored, so a crash repeats work instead of losing mail.
 3. **Text.** Body (HTML → text), PDF text, OCR for scanned pages or images, spreadsheet rows, Word text. Quoted
-   earlier messages in a thread are marked so they are not mistaken for the current message.
+   earlier messages in a thread are marked so they are not mistaken for the current message. Each document is read
+   in its own short-lived process in the macOS sandbox, with a time and memory limit (DEC-53), so a hostile file
+   costs that document and nothing else.
 4. **Extract.** One model call per document with the system prompt below, the fenced text and the JSON schema:
    the fields of extraction schema v1 ([SCORING.md](SCORING.md) §2): `doc_type` (including `purchase_order`),
    `po_number`, the vendor's own order number, invoice number and date, carrier and tracking numbers, shipment-level
@@ -374,9 +376,12 @@ accessibility test (NFR-12).
 - Each mailbox's token or secret is in the Keychain, never in the repo, the database or a log. Logs hold ids and counts, not document text.
 - Originals are served only through the app, with the content type set from the stored file and a download header, so an
   attachment cannot run in the page.
-- A 25 MB limit per attachment, an allowed list of file types, and a page limit on PDFs, so a hostile attachment cannot
-  exhaust the machine. Attachments are never executed or opened by an external program except Tesseract and the
-  parsers above. A malware scan is **Open** (ClamAV is what LegalLens used).
+- Limits so a hostile message cannot exhaust the machine (DEC-51, DEC-53): 50 MB per message, 20 MB per attachment,
+  25 attachments read per message, 50 pages per PDF, 2,000 MIME parts per message, an allowed list of file types and
+  image formats. Attachments are never executed. Each one is read in a separate process in the macOS sandbox (no
+  network, no writes, no program but Tesseract, the other originals hidden), stopped after 10 minutes or 1.5 GB.
+  Headers are parsed from their raw bytes, never by the structured parser. A malware scan is **Open** (ClamAV is what
+  LegalLens used).
 - The audit trail covers every change (NFR-03).
 - Real vendor documents are never committed (DEC-13); tests use synthetic data only.
 
@@ -600,3 +605,5 @@ po-dashboard/
 | RISK-11 | The office Mac restarts or loses power. Scans stop and laptops cannot reach the app, until someone logs in at that Mac | Runbook (OPERATIONS §3), catch-up scan, a Mac on a battery backup. Laptops see a plain connection error, because the app is down. Check for real in PD-6.4 |
 | RISK-12 | The office network blocks laptop-to-laptop traffic or `.local` names (Wi-Fi isolation, separate networks), or a guest network can reach the app | Test on the real network in PD-6.3a; a fixed address as fallback; ask the company's admin about guest Wi-Fi |
 | RISK-13 | There is no always-on Mac after all (the owner: "hoping") | Revisit DEC-28. Only where the app runs changes; a copy on each laptop would lose the shared view |
+| RISK-14 | Apple removes `sandbox-exec` (deprecated for years, still shipped), or a parser has a flaw the sandbox does not cover | Documents are still read in a separate process with time and memory limits, and the log says the sandbox is missing; a test fails on any Mac without it. Keep pypdf, Pillow, openpyxl, python-docx and lxml current (CI) |
+| RISK-15 | A burst of hostile documents, each held to the 10-minute limit, delays new mail by hours | At most 25 documents per scan; each refused document is not tried again. Lower `DOCUMENT_SECONDS` if real scans are always short |

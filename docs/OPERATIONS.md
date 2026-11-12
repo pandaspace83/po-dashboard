@@ -62,6 +62,8 @@ for 30 minutes.
 | Slow extraction | machine short of memory | Close other apps; or choose a smaller model in Settings (lower accuracy) |
 | Wrong data was accepted | a person accepted a misread document | Edit the facts on the PO (recorded in the audit trail); report the document so it joins the golden set |
 | The Mac was off for days | | Start it; the catch-up scan reads everything since the last success |
+| A document says "not read" or "failed" with a reason | it is over a limit, damaged, or hostile; it is kept as it came (DEC-51, DEC-53) | Open the original from the message. If a real vendor's file is refused, report it (name the file, not its contents) so the limit can be looked at |
+| The log says "The macOS sandbox (sandbox-exec) is missing" | a macOS update removed it (RISK-14) | Documents are still read in a separate process with limits. Tell the developer: the sandbox needs replacing |
 
 ## 6. Backup and restore (PD-6.5)
 

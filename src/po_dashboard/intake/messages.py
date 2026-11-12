@@ -2,7 +2,12 @@
 then the rows are written in one transaction. A crash between the two leaves a stored file nobody refers to, which
 does no harm, and the scanner repeats the message because its position has not moved (PD-3.4).
 
-Nothing here puts message text in a log or an error (DEC-13): only ids, counts and reasons."""
+Nothing here puts message text in a log or an error (DEC-13): only ids, counts and reasons.
+
+Hostile mail is expected (PD-3.6). This runs inside the app, not in the reader's locked-down process, so it uses the
+plain email parser (`compat32`) and reads each header from its raw bytes, cut to size: the structured parser's memory
+grows with the square of the number of encoded words in a header. A message with more MIME parts than any real one
+is stored whole but not taken apart."""
 
 from __future__ import annotations
 
@@ -10,8 +15,8 @@ import email
 import re
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from email import policy
-from email.message import EmailMessage, Message
+from email.message import Message
+from email.parser import BytesParser
 from email.utils import parsedate_to_datetime
 from pathlib import PurePosixPath
 
@@ -20,10 +25,15 @@ from sqlalchemy.orm import Session
 
 from po_dashboard.db.mail import Mailbox, SourceDocument, SourceMessage
 from po_dashboard.intake.store import FileStore
+from po_dashboard.intake.text import RAW_HEADERS, decode_words, header_value, unescape
 from po_dashboard.mail.source import RawMessage
 
 MAX_FILE_BYTES = 20 * 1024 * 1024
 MAX_ATTACHMENTS = 25
+# Lines that start with "--" (MIME boundaries, mostly). A real message has a few dozen at most; 300,000 tiny parts in a
+# 33 MB message took 105 seconds just to parse, then a file and a row each (PD-3.6).
+MAX_BOUNDARY_LINES = 2000
+TOO_MANY_PARTS = "the message has too many parts to be a normal message; it is stored whole and not read"
 
 STORED, DUPLICATE, TOO_OLD = "stored", "duplicate", "too_old"
 
@@ -52,7 +62,7 @@ def clean(value: object, limit: int) -> str | None:
     """A header value or file name made safe to keep and show: no control characters, no line breaks, cut to size."""
     if value is None:
         return None
-    text = re.sub(r"[\x00-\x1f\x7f  ‪-‮]", " ", str(value)).strip()
+    text = re.sub(r"[\x00-\x1f\x7f  ‪-‮]", " ", unescape(str(value))).strip()
     return text[:limit] or None
 
 
@@ -73,23 +83,29 @@ def kind_of(filename: str, content_type: str) -> str:
     return "image" if content_type.startswith("image/") else "other"
 
 
+def too_many_parts(raw: bytes) -> bool:
+    return raw.count(b"\n--") > MAX_BOUNDARY_LINES
+
+
 def parse(raw: bytes) -> Message:
     try:
-        return email.message_from_bytes(raw, policy=policy.default)
+        if too_many_parts(raw):  # the headers only: the parts are never taken apart
+            return BytesParser(policy=RAW_HEADERS).parsebytes(raw, headersonly=True)
+        return email.message_from_bytes(raw, policy=RAW_HEADERS)
     except Exception:  # a hostile message must never stop intake; it is still stored
-        return EmailMessage()
+        return Message()
 
 
 def header(msg: Message, name: str) -> str | None:
     try:
-        return clean(msg[name], 1000)
+        return clean(header_value(msg, name), 1000)
     except Exception:
         return None
 
 
 def received_at(msg: Message) -> datetime:
     try:
-        value = parsedate_to_datetime(str(msg["Date"]))
+        value = parsedate_to_datetime((header_value(msg, "Date") or "")[:200])
         return value.astimezone(UTC) if value.tzinfo else value.replace(tzinfo=UTC)
     except (TypeError, ValueError, IndexError, AttributeError, OverflowError):
         return datetime.now(UTC)
@@ -98,7 +114,7 @@ def received_at(msg: Message) -> datetime:
 def part_file(part: Message) -> tuple[str, str, bytes] | None:
     """(file name, content type, bytes) if the part is a file; None for the text or HTML body and for anything odd."""
     try:
-        filename = part.get_filename() or ""
+        filename = decode_words((part.get_filename() or "")[:1000])  # the plain parser leaves =?utf-8?...?= names as is
         disposition = part.get_content_disposition()
         content_type = part.get_content_type()
         if content_type == "message/rfc822":  # a forwarded message: its payload is the inner message
@@ -145,10 +161,14 @@ def store_message(db: Session, store: FileStore, mailbox: Mailbox, message: RawM
     )
     db.add(row)
     db.flush()
+    jumbled = too_many_parts(message.raw)
     db.add(SourceDocument(
         message_id=row.id, filename="Message body", kind="body", content_type="message/rfc822",
-        stored_path=raw_path, content_hash=digest, size=len(message.raw), state="stored",
+        stored_path=raw_path, content_hash=digest, size=len(message.raw),
+        state="not_read" if jumbled else "stored", not_read_reason=TOO_MANY_PARTS if jumbled else None,
     ))
+    if jumbled:
+        return Outcome(STORED, row.id, 1, 0, 1)
     written, duplicates, unread = 1, 0, 0
     for n, (name, content_type, data) in enumerate(attachments(msg), 1):
         file_digest = store.digest(data)

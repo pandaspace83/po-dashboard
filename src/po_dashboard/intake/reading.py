@@ -4,6 +4,9 @@ A document in state `stored` is read once: its text goes to the file store, and 
 be read (password, too many pages, too large) becomes `not_read` with a fixed reason; a file that fails to open becomes
 `failed` with the kind of error only (never document text, DEC-13). If a program the reader needs is missing the
 document stays `stored`, so it is read later, not lost. Nothing here commits: the scanner (PD-3.4) does.
+
+Each file is read in a separate, sandboxed process with a time and memory limit (`intake/worker.py`, PD-3.6), which
+cannot read the other stored documents.
 """
 
 from __future__ import annotations
@@ -15,7 +18,8 @@ from sqlalchemy.orm import Session
 
 from po_dashboard.db.mail import SourceDocument
 from po_dashboard.intake.store import FileStore
-from po_dashboard.intake.text import NotReadable, ReaderUnavailable, extract_text
+from po_dashboard.intake.text import NotReadable, ReaderUnavailable
+from po_dashboard.intake.worker import ReaderFailed, read_isolated
 
 READ, NOT_READ, FAILED, WAITING = "read", "not_read", "failed", "stored"
 
@@ -32,11 +36,13 @@ def read_stored(store: FileStore, kind: str, filename: str, stored_path: str) ->
     """Read one file and store its text. Touches no database, so it can take as long as OCR needs without holding a
     lock; `apply` then records the result in a moment."""
     try:
-        found = extract_text(kind, filename, store.read(stored_path))
+        found = read_isolated(kind, filename, store.read(stored_path), hidden=[store.root])
     except ReaderUnavailable:
         return Result(WAITING)
     except NotReadable as why:
         return Result(NOT_READ, reason=str(why)[:200])
+    except ReaderFailed as why:
+        return Result(FAILED, reason=str(why)[:200])
     except Exception as problem:  # a hostile or broken file: the kind of error is kept, never its contents
         return Result(FAILED, reason=f"could not be opened ({type(problem).__name__})"[:200])
     _, path = store.put(found.text.encode("utf-8"))

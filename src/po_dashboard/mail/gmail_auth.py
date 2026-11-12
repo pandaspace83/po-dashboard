@@ -142,6 +142,7 @@ def exchange_code(client: Client, code: str, verifier: str, redirect_uri: str,
 
 class _Receiver(http.server.BaseHTTPRequestHandler):
     server: _Server
+    timeout = 10  # seconds a connection may stay silent: one that never speaks cannot hold up Google's return (PD-3.6)
 
     def do_GET(self) -> None:
         url = urlparse(self.path)

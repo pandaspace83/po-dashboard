@@ -12,7 +12,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from po_dashboard.db.mail import SourceDocument
-from po_dashboard.intake import reading, text
+from po_dashboard.intake import reading, text, worker
 from po_dashboard.intake.reading import FAILED, NOT_READ, READ, WAITING, read_pending
 from po_dashboard.intake.store import FileStore
 from test_gate import env  # noqa: F401
@@ -74,10 +74,10 @@ def test_a_file_that_breaks_the_reader_is_marked_failed_with_the_kind_of_error_o
 ) -> None:
     put(db, store, mail(files=(("a.txt", "text/plain", b"SECRET DOCUMENT WORDS"),)))
 
-    def boom(kind: str, filename: str, data: bytes) -> text.Text:
+    def boom(kind: str, filename: str, data: bytes, **_limits: object) -> text.Text:
         raise RuntimeError("SECRET DOCUMENT WORDS")
 
-    monkeypatch.setattr(reading, "extract_text", boom)
+    monkeypatch.setattr(reading, "read_isolated", boom)
     read_pending(db, store)
     failed = docs(db)["a.txt"]
     assert failed.state == FAILED and failed.not_read_reason == "could not be opened (RuntimeError)"
@@ -97,7 +97,7 @@ def test_a_missing_program_leaves_the_document_waiting_and_it_is_read_later(
 ) -> None:
     put(db, store, mail(files=(("a.png", "image/png", png()),)))
     with monkeypatch.context() as patch:
-        patch.setattr(text.shutil, "which", lambda _name: None)
+        patch.setattr(worker, "PATH", "/usr/bin:/bin")  # the reading process looks for Tesseract on this path only
         assert read_pending(db, store) == {READ: 1, NOT_READ: 0, FAILED: 0, WAITING: 1}
     assert docs(db)["a.png"].state == WAITING
     assert read_pending(db, store)[WAITING] + read_pending(db, store)[READ] <= 1  # Tesseract is back: it is read now

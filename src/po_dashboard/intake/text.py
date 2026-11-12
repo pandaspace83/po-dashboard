@@ -3,8 +3,9 @@
 Every reader works on bytes in memory and returns text. Nothing is fetched, nothing is run: HTML links are dropped and
 images are never loaded, a spreadsheet gives its stored values (formulas are never calculated, macros never run), and
 the one program called, Tesseract, gets the image on its standard input and has no network use. Hostile files are
-expected (PD-3.6): zip-based files are size-checked before they are opened, and a file over a limit is refused with a
-fixed reason. Reasons never contain document text (DEC-13).
+expected (PD-3.6): zip-based files are size-checked before they are opened, Pillow opens five formats only, pypdf never
+runs another program, and a file over a limit is refused with a fixed reason. Reasons never contain document text
+(DEC-13). The app calls these readers through `worker.py`, which runs them in a separate, sandboxed process (DEC-53).
 """
 
 from __future__ import annotations
@@ -21,13 +22,14 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import date, datetime
 from decimal import Decimal
-from email import policy
 from email.message import Message
+from email.policy import Compat32
 from html.parser import HTMLParser
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from PIL.Image import Image as PILImage
+    from pypdf import PdfReader
 
 MAX_PDF_PAGES = 50  # DEC-51
 MAX_TEXT_CHARS = 200_000  # more than any purchasing document needs; the rest is cut and said so
@@ -35,6 +37,11 @@ MAX_SHEETS, MAX_ROWS, MAX_COLUMNS = 20, 5000, 60
 MAX_ZIP_ENTRIES, MAX_ZIP_BYTES, MAX_ZIP_RATIO = 2000, 150 * 1024 * 1024, 200
 MAX_IMAGE_PIXELS = 40_000_000
 MAX_FRAMES = 10  # pages of a multi-page TIFF
+MAX_HEADER_INPUT = 10_000  # characters of one header decoded; the rest is never parsed (PD-3.6)
+# Pillow knows dozens of formats, and EPS among them would run Ghostscript if it were ever installed. Only these are
+# opened (PD-3.6). Page images inside a PDF come out of pypdf, which has already decoded JPEG 2000 itself.
+IMAGE_FORMATS = ("PNG", "JPEG", "GIF", "TIFF", "BMP")
+PDF_IMAGE_FORMATS = (*IMAGE_FORMATS, "JPEG2000")
 OCR_SECONDS = 120
 THIN_PDF = 25  # fewer characters than this per page and the PDF is a scan
 QUOTE_NOTE = "[EARLIER MESSAGE: everything below was quoted from before and is not the current message]"
@@ -83,6 +90,64 @@ def _decode(data: bytes) -> str:
         except UnicodeDecodeError:
             continue
     return data.decode("utf-8", errors="replace")
+
+
+class _RawHeaders(Compat32):
+    """The plain email parser, giving each header as it came. Plain `compat32` turns a header with raw 8-bit bytes
+    into a Header object that has already replaced "ü" with "?"; this keeps the bytes for `unescape` to decode."""
+
+    def header_fetch_parse(self, name: str, value: str) -> str:
+        return value
+
+
+RAW_HEADERS = _RawHeaders()
+
+
+def unescape(value: str) -> str:
+    """Text the email parser kept as escaped raw bytes, as real text: UTF-8 if it is, else Windows-1252. Never returns
+    a lone surrogate, which the database would refuse (and a refused batch would be tried again on every scan)."""
+    try:
+        data = value.encode("utf-8", "surrogateescape")
+    except UnicodeEncodeError:
+        return value.encode("utf-8", "replace").decode("utf-8")
+    try:
+        return data.decode("utf-8")
+    except UnicodeDecodeError:
+        return data.decode("cp1252", "replace")
+
+
+def decode_words(value: str) -> str:
+    """=?utf-8?q?...?= encoded words decoded. If the whole header will not decode (raw accented text next to an
+    encoded word, say), each word is decoded on its own; a word that will not decode is kept as it came."""
+    if "=?" not in value:
+        return value
+    try:
+        return str(email.header.make_header(email.header.decode_header(value)))
+    except Exception:  # a hostile or sloppy header: word by word
+        return _ENCODED_WORD.sub(_one_word, _BETWEEN_WORDS.sub(r"\1", value))
+
+
+_ENCODED_WORD = re.compile(r"=\?[^?\s]+\?[bBqQ]\?[^?\s]*\?=")
+_BETWEEN_WORDS = re.compile(r"(\?=)\s+(?==\?)")  # the space between two encoded words is not text (RFC 2047)
+
+
+def _one_word(match: re.Match[str]) -> str:
+    try:
+        ((data, charset),) = email.header.decode_header(match.group(0))
+        return data.decode(charset or "ascii", "replace") if isinstance(data, bytes) else str(data)
+    except Exception:
+        return match.group(0)
+
+
+def header_value(msg: Message, name: str) -> str | None:
+    """One header as text, from the raw header and never the structured parser: `policy.default` needs memory that
+    grows with the square of the number of encoded words, and 20,000 of them in a 0.3 MB Subject took over 2 GB
+    (PD-3.6). Only the first MAX_HEADER_INPUT characters are decoded."""
+    wanted = name.lower()
+    for key, value in msg.raw_items():
+        if key.lower() == wanted:
+            return decode_words(unescape(str(value)[:MAX_HEADER_INPUT]))
+    return None
 
 
 def _check_zip(data: bytes) -> None:
@@ -197,15 +262,11 @@ def _body_part(msg: Message) -> str:
 def message_text(raw: bytes) -> Text:
     """A message as the model sees it: the From, To, Subject, Date and Cc lines, then the body (the plain part, or the
     HTML part turned into text), with any quoted earlier message marked. Attachments are separate documents."""
-    msg = email.message_from_bytes(raw, policy=policy.compat32)
+    msg = email.message_from_bytes(raw, policy=RAW_HEADERS)
     heads = []
     for name in ("From", "To", "Subject", "Date", "Cc"):
-        value = msg.get(name)
+        value = header_value(msg, name)
         if value:
-            try:
-                value = str(email.header.make_header(email.header.decode_header(str(value))))
-            except Exception:  # a hostile header is shown as it came
-                value = str(value)
             heads.append(f"{name}: {' '.join(value.split())}")
     return Text(_tidy("\n".join(heads) + "\n\n" + mark_quoted(_body_part(msg).replace("\r\n", "\n"))))
 
@@ -245,9 +306,9 @@ def _png_of(image: PILImage) -> bytes:
 def image_text(data: bytes) -> Text:
     from PIL import Image, UnidentifiedImageError
 
-    Image.MAX_IMAGE_PIXELS = MAX_IMAGE_PIXELS
+    # Pillow's own bomb limit is left as it is (a process-wide setting); the size is checked here before decoding.
     try:
-        with Image.open(io.BytesIO(data)) as image:
+        with Image.open(io.BytesIO(data), formats=IMAGE_FORMATS) as image:
             frames = min(getattr(image, "n_frames", 1), MAX_FRAMES)
             pages = []
             for n in range(frames):
@@ -266,9 +327,23 @@ def image_text(data: bytes) -> Text:
 
 
 def pdf_text(data: bytes) -> Text:
-    from pypdf import PdfReader
+    from pypdf import PdfReader, apply_configuration
+    from pypdf.errors import DependencyError, LimitReachedError, PdfReadError
 
-    reader = PdfReader(io.BytesIO(data), strict=False)
+    # pypdf would run the jbig2dec program on a JBIG2 scan if it were ever installed: never (PD-3.6). Its own limits
+    # (75 MB per stream, a budget for parsing) stop compression bombs; they are reported as such.
+    with apply_configuration(jbig2dec_binary=None):
+        try:
+            return _pdf_text(PdfReader(io.BytesIO(data), strict=False))
+        except LimitReachedError:
+            raise NotReadable("the file would expand to an unsafe size") from None
+        except DependencyError:
+            raise NotReadable("the scan uses a picture format the app does not read") from None
+        except PdfReadError:  # not a PDF at all (an .exe named invoice.pdf), or a broken one
+            raise NotReadable("the file is damaged or is not what its name says") from None
+
+
+def _pdf_text(reader: PdfReader) -> Text:
     if reader.is_encrypted and not reader.decrypt(""):
         raise NotReadable("the PDF is password protected")
     count = len(reader.pages)
@@ -285,8 +360,7 @@ def pdf_text(data: bytes) -> Text:
 def _open(data: bytes) -> PILImage:
     from PIL import Image
 
-    Image.MAX_IMAGE_PIXELS = MAX_IMAGE_PIXELS
-    image = Image.open(io.BytesIO(data))
+    image = Image.open(io.BytesIO(data), formats=PDF_IMAGE_FORMATS)
     if image.width * image.height > MAX_IMAGE_PIXELS:
         raise NotReadable("the image is too large to read")
     return image

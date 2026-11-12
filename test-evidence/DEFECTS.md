@@ -8,6 +8,12 @@ Every failure is logged here the moment it is found, by whoever finds it: the ca
 |---|---|---|---|---|---|
 | [DEF-001](#def-001) | 11/07/2026 | [TC-QB-01](TEST_CASES.md#tc-qb-01) | Medium | The QuickBooks report uploaded on Import CSV or Excel was refused with a list of missing columns | Fixed, waiting for the owner's retest |
 | [DEF-002](#def-002) | 11/07/2026 | [TC-SIGN-06](TEST_CASES.md#tc-sign-06) | Low | A buyer opening an admin address saw raw code instead of a page | Fixed, waiting for the owner's retest |
+| [DEF-003](#def-003) | 11/11/2026 | [TC-MAIL-24](TEST_CASES.md#tc-mail-24) | High | One email with a long encoded Subject could exhaust the app's memory | Fixed, not committed yet |
+| [DEF-004](#def-004) | 11/11/2026 | [TC-MAIL-24](TEST_CASES.md#tc-mail-24) | Medium | A message with 300,000 tiny attachments held the scanner for minutes and would write a file and a row for each | Fixed, not committed yet |
+| [DEF-005](#def-005) | 11/11/2026 | [TC-MAIL-23](TEST_CASES.md#tc-mail-23) | Medium | A slow or broken document could hold the scanner without limit or stop the app | Fixed, not committed yet |
+| [DEF-006](#def-006) | 11/11/2026 | [TC-MAIL-21](TEST_CASES.md#tc-mail-21) | Low | A file named .png that is really EPS reached Pillow's EPS reader | Fixed, not committed yet |
+| [DEF-007](#def-007) | 11/11/2026 | [TC-MAIL-24](TEST_CASES.md#tc-mail-24) | Low | A silent connection to the Gmail sign-in listener could hold up the sign-in | Fixed, not committed yet |
+| [DEF-008](#def-008) | 11/11/2026 | [TC-MAIL-10](TEST_CASES.md#tc-mail-10) | Low | A test lowered Pillow's pixel limit for the whole test run, so another test failed when the files ran in a different order | Fixed, not committed yet |
 
 <a id="def-001"></a>
 
@@ -63,3 +69,132 @@ Every failure is logged here the moment it is found, by whoever finds it: the ca
 **Retest:** 11/07/2026, Claude in Chrome: pass (TC-SIGN-06, TC-WEB-06). Owner's retest: waiting.
 
 ![DEF-002 retested](screenshots/TC-SIGN-06.png)
+
+
+<a id="def-003"></a>
+
+## DEF-003: One email with a long encoded Subject could exhaust the app's memory
+
+**Found:** 11/11/2026 by Claude, PD-3.6 security probe on Opus · **Case:** TC-MAIL-24 · **Browser:** Not a browser case (made-up hostile files run through the real code) · **Severity:** High · **Status:** Fixed, not committed yet
+
+**Steps to reproduce**
+
+1. Store a message whose Subject is 20,000 encoded words (=?utf-8?q?...?=), 0.3 MB in all.
+2. Watch the app's memory while intake reads the Subject.
+
+**Expected:** The message is stored in moments with its Subject cut to 1,000 characters.
+
+**Actual:** The process passed 2 GB and was stopped by the probe's own 2 GB guard; an earlier run without the guard was killed by macOS. 4,000 words used 180 MB and 8,000 used 612 MB: the memory grows with the square of the number of words. This runs inside the app, so one email could stop it.
+
+**Cause:** Intake parsed headers with Python's structured email parser (policy.default), whose memory for a header of many encoded words grows with the square of their number (Python 3.13.15).
+
+**Fix:** Intake now uses the plain parser and reads each header from its raw bytes, cut to 10,000 characters, then decodes the encoded words (DEC-53). Not committed yet.
+
+**Retest:** 11/11/2026, Claude: pass. The same Subject is stored under a 500 MB cap (TC-MAIL-24).
+
+
+<a id="def-004"></a>
+
+## DEF-004: A message with 300,000 tiny attachments held the scanner for minutes and would write a file and a row for each
+
+**Found:** 11/11/2026 by Claude, PD-3.6 security probe on Opus · **Case:** TC-MAIL-24 · **Browser:** Not a browser case (made-up hostile files run through the real code) · **Severity:** Medium · **Status:** Fixed, not committed yet
+
+**Steps to reproduce**
+
+1. Store a 33 MB message with 300,000 different one-line attachments.
+
+**Expected:** The message is stored whole and not taken apart, in moments.
+
+**Actual:** Parsing and walking the parts alone took 105 seconds and 518 MB inside the app; storing would then have written 300,000 files and rows in one transaction.
+
+**Cause:** Nothing limited the number of MIME parts below the 50 MB message limit.
+
+**Fix:** A message with more than 2,000 lines starting with "--" is stored whole, its body marked not read with a reason, and not parsed (DEC-53). Not committed yet.
+
+**Retest:** 11/11/2026, Claude: pass with 2,500 parts (TC-MAIL-24).
+
+
+<a id="def-005"></a>
+
+## DEF-005: A slow or broken document could hold the scanner without limit or stop the app
+
+**Found:** 11/11/2026 by Claude, PD-3.6 security probe on Opus · **Case:** TC-MAIL-23 · **Browser:** Not a browser case (made-up hostile files run through the real code) · **Severity:** Medium · **Status:** Fixed, not committed yet
+
+**Steps to reproduce**
+
+1. Read a PDF with no text and 150 page images (3 on each of 50 pages).
+2. Consider a reader that crashes inside C code (Pillow, lxml, zlib).
+
+**Expected:** A document is stopped after a set time, and a crash costs that document only.
+
+**Actual:** Blank page images took 24 s; a page of noise takes Tesseract about 3.4 s, so 150 noisy images about 9 minutes, and each image was allowed 120 s (5 hours in all). No crash was produced, but a crash in a C parser would have stopped the whole app, and the same document would have been read again, and crashed it again, on every restart.
+
+**Cause:** Documents were read inside the app's own process with only a per-image OCR limit.
+
+**Fix:** Each document is read by a fresh process in the macOS sandbox, stopped after 10 minutes with anything it started, and stopped past 1.5 GB; a crash or a wrong answer marks it failed (DEC-53). Not committed yet.
+
+**Retest:** 11/11/2026, Claude: pass (TC-MAIL-23: hang, memory, crash and wrong answers).
+
+
+<a id="def-006"></a>
+
+## DEF-006: A file named .png that is really EPS reached Pillow's EPS reader
+
+**Found:** 11/11/2026 by Claude, PD-3.6 security probe on Opus · **Case:** TC-MAIL-21 · **Browser:** Not a browser case (made-up hostile files run through the real code) · **Severity:** Low · **Status:** Fixed, not committed yet
+
+**Steps to reproduce**
+
+1. Attach a small EPS (PostScript) file named a.png and read it.
+
+**Expected:** It is refused as not a picture the app reads, without Pillow's EPS reader.
+
+**Actual:** Pillow recognised it as EPS and failed only because Ghostscript is not installed on this Mac (OSError). With Ghostscript installed, the attachment would have been run by it.
+
+**Cause:** Pillow was asked to open any format it knows.
+
+**Fix:** Pillow now opens PNG, JPEG, GIF, TIFF and BMP only, and the sandbox allows no program but Tesseract (DEC-53). Not committed yet.
+
+**Retest:** 11/11/2026, Claude: pass (TC-MAIL-21).
+
+
+<a id="def-007"></a>
+
+## DEF-007: A silent connection to the Gmail sign-in listener could hold up the sign-in
+
+**Found:** 11/11/2026 by Claude, PD-3.6 security probe on Opus · **Case:** TC-MAIL-24 · **Browser:** Not a browser case (made-up hostile files run through the real code) · **Severity:** Low · **Status:** Fixed, not committed yet
+
+**Steps to reproduce**
+
+1. During connect-gmail, open a connection to the loopback listener and send nothing.
+2. Let Google's return arrive.
+
+**Expected:** The silent connection is dropped and the sign-in finishes.
+
+**Actual:** Found by reading the code: the listener handles one request at a time with no time limit, so it would wait on the silent connection until the 5-minute sign-in wait ran out. Only a program on this Mac could do it.
+
+**Cause:** The request handler had no socket timeout.
+
+**Fix:** Each connection may stay silent for 10 seconds at most. Not committed yet.
+
+**Retest:** 11/11/2026, Claude: pass (TC-MAIL-24).
+
+
+<a id="def-008"></a>
+
+## DEF-008: A test lowered Pillow's pixel limit for the whole test run, so another test failed when the files ran in a different order
+
+**Found:** 11/11/2026 by Claude, PD-3.6 security probe on Opus · **Case:** TC-MAIL-10 · **Browser:** Not a browser case (made-up hostile files run through the real code) · **Severity:** Low · **Status:** Fixed, not committed yet
+
+**Steps to reproduce**
+
+1. Run tests/test_text.py before tests/test_golden_set.py.
+
+**Expected:** Each test passes whatever order the files run in.
+
+**Actual:** test_the_generator_rebuilds_the_committed_set_exactly failed: Pillow refused a 2,629-pixel picture as a bomb, because its limit was still 1,000.
+
+**Cause:** image_text set Pillow's process-wide limit from the app's constant, and a test lowers that constant. The normal order hid it.
+
+**Fix:** The app no longer changes Pillow's process-wide limit; it checks the size itself before decoding. Not committed yet.
+
+**Retest:** 11/11/2026, Claude: pass with the files in that order.

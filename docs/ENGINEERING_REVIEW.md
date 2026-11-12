@@ -87,10 +87,12 @@ the slowest extraction (Phase 4). Not applicable: distributed tracing, error bud
 postmortems: the defect log is the blameless record; add a live-incident section at go-live; name who restarts and logs in
 to the office Mac (OPERATIONS §3).
 
-**8. Security.** Done and strong: access control, CSRF, SQL injection, XSS, SSRF, private files. Needed later: TLS and
-encryption in transit (PD-6.3a, with the coupling checks listed there); OAuth (PD-3.5: `state`, PKCE, fixed redirect); a
-FileVault check; the Keychain through `keyring` (PD-3.5). Not applicable: JWT rotation (server-side sessions), IAM beyond
-the two roles.
+**8. Security.** Done and strong: access control, CSRF, SQL injection, XSS, SSRF, private files; OAuth (PD-3.5:
+`state`, PKCE, fixed redirect, re-checked on Opus in PD-3.6); the Keychain through `keyring` (PD-3.5); hostile mail and
+attachments (PD-3.6, DEC-53: each document read in a sandboxed process with time and memory limits, headers parsed
+from raw bytes, a cap on MIME parts, five image formats only). Needed later: TLS and encryption in transit (PD-6.3a,
+with the coupling checks listed there); a FileVault check; a malware scan is still open (ARCHITECTURE §10). Not
+applicable: JWT rotation (server-side sessions), IAM beyond the two roles.
 
 **9. Data lifecycle and versioning.** Done: online backup, restore test, safety copy before an upgrade, a refusal of a
 newer database, dependency upper bounds. Later: nightly schedule, off-Mac copy and pruning with the owner's yes (PD-6.5);
