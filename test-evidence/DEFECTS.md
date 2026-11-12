@@ -16,6 +16,7 @@ Every failure is logged here the moment it is found, by whoever finds it: the ca
 | [DEF-008](#def-008) | 11/11/2026 | [TC-MAIL-10](TEST_CASES.md#tc-mail-10) | Low | A test lowered Pillow's pixel limit for the whole test run, so another test failed when the files ran in a different order | Fixed, not committed yet |
 | [DEF-009](#def-009) | 11/11/2026 | [TC-SIGN-01](TEST_CASES.md#tc-sign-01) | Low | The browser check for the cursor in Email failed on a slow first page load, though the cursor was there | Fixed, not committed yet |
 | [DEF-010](#def-010) | 11/12/2026 | [TC-MAIL-27](TEST_CASES.md#tc-mail-27) | Low | After connecting, the message gave a different start date from the table on the same page | Fixed, Chrome retest waiting |
+| [DEF-011](#def-011) | 11/12/2026 | [TC-MAIL-23](TEST_CASES.md#tc-mail-23) | High | With python.org's Python, every document failed: the sandbox refused Python's own restart | Fixed, CI retest waiting |
 
 <a id="def-001"></a>
 
@@ -249,3 +250,25 @@ Every failure is logged here the moment it is found, by whoever finds it: the ca
 **Fix:** The message and the Terminal command use the same date display as the table. A test pins the time to 2 AM UTC with the Mac in New York, and the browser check now compares the message date with the table date. Not committed yet.
 
 **Retest:** 11/12/2026, Claude: pass in the tests (the new test fails on the old code). Chrome retest: waiting for the next browser evidence run.
+
+
+<a id="def-011"></a>
+
+## DEF-011: With python.org's Python, every document failed: the sandbox refused Python's own restart
+
+**Found:** 11/12/2026 by GitHub Actions CI, its first run (macOS runner) · **Case:** TC-MAIL-23 · **Browser:** Not a browser case (the test suite on GitHub's Mac, python.org Python 3.13) · **Severity:** High · **Status:** Fixed, CI retest waiting
+
+**Steps to reproduce**
+
+1. Run the tests on a Mac whose Python is the python.org (framework) build, as GitHub's runners use.
+2. Read any document through the reading process.
+
+**Expected:** The document is read inside the sandbox, as on this Mac.
+
+**Actual:** Every read ended as failed: the reader stopped unexpectedly. 20 tests failed in CI (reading, scanner, hostile files). On this Mac they passed, because uv's own Python does not restart itself.
+
+**Cause:** python.org's Python starts by running a second program inside its installation (Resources/Python.app/Contents/MacOS/Python). The sandbox rules allowed only the python file itself to run, so that restart was refused before any code ran. Reproduced here with the python.org Python 3.14 installed on this Mac.
+
+**Fix:** The sandbox also allows programs inside the running Python's own installation folder (sys.base_prefix). Every other program, apart from Tesseract, is still refused. A new test runs python.org's Python under the real rules whenever one is installed, and first shows the old rules failing. Not committed yet.
+
+**Retest:** 11/12/2026, Claude: pass on this Mac with python.org Python 3.14 and with uv's Python 3.13. CI retest: waiting for the next push.

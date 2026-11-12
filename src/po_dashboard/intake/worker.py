@@ -59,9 +59,16 @@ def _quoted(path: str) -> str:
     return '"' + path.replace("\\", "\\\\").replace('"', '\\"') + '"'
 
 
-def profile(programs: Sequence[str], hidden: Sequence[Path]) -> str:
-    """The sandbox rules. Everything not named here is allowed, so Python and the readers work unchanged."""
+def profile(programs: Sequence[str], hidden: Sequence[Path], python_home: str | None = None) -> str:
+    """The sandbox rules. Everything not named here is allowed, so Python and the readers work unchanged.
+
+    `python_home` is the Python installation's own folder (`sys.base_prefix`): its programs may run too, because the
+    python.org build of Python restarts itself through `Python.app` inside that folder, and the sandbox refused it
+    (DEF-011, seen on GitHub's Macs). No program outside it, except those named, can run."""
     allowed = sorted({p for program in programs for p in (program, os.path.realpath(program))})
+    may_run = " ".join(f"(literal {_quoted(p)})" for p in allowed)
+    if python_home:
+        may_run += f" (subpath {_quoted(os.path.realpath(python_home))})"
     rules = [
         "(version 1)",
         "(allow default)",
@@ -69,7 +76,7 @@ def profile(programs: Sequence[str], hidden: Sequence[Path]) -> str:
         "(deny file-write*)",
         '(allow file-write* (literal "/dev/null"))',
         "(deny process-exec*)",
-        "(allow process-exec* " + " ".join(f"(literal {_quoted(p)})" for p in allowed) + ")",
+        f"(allow process-exec* {may_run})",
     ]
     rules += [f"(deny file-read* (subpath {_quoted(os.path.realpath(folder))}))" for folder in hidden]
     return "\n".join(rules)
@@ -84,7 +91,7 @@ def command(kind: str, extension: str, memory: int, hidden: Sequence[Path]) -> l
         return inner
     tesseract = shutil.which("tesseract", path=PATH)
     programs = [sys.executable, *([tesseract] if tesseract else [])]
-    return [SANDBOX, "-p", profile(programs, [*hidden, KEYCHAINS]), *inner]
+    return [SANDBOX, "-p", profile(programs, [*hidden, KEYCHAINS], sys.base_prefix), *inner]
 
 
 def _stop(child: subprocess.Popen[bytes]) -> None:

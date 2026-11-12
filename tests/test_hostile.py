@@ -406,12 +406,36 @@ print(json.dumps({{"network": attempt(connect), "write": attempt(write), "progra
     assert not (tmp_path / "written.txt").exists()
 
 
+FRAMEWORK_PYTHONS = sorted(Path("/Library/Frameworks/Python.framework/Versions").glob("3.*/bin/python3.*[0-9]"))
+
+
+@needs_sandbox
+@pytest.mark.skipif(not FRAMEWORK_PYTHONS, reason="no python.org (framework) Python on this Mac")
+def test_a_python_that_restarts_itself_still_runs_in_the_sandbox() -> None:
+    """DEF-011: python.org's Python restarts itself through Python.app; a profile naming only the python file refused
+    that, so every document failed on GitHub's Macs. Run here whenever such a Python is installed."""
+    python = str(FRAMEWORK_PYTHONS[-1])
+    home = subprocess.run([python, "-I", "-c", "import sys; print(sys.base_prefix)"],  # noqa: S603
+                          capture_output=True, text=True, check=True).stdout.strip()  # fmt: skip
+    for rules, works in ((worker.profile([python], []), False), (worker.profile([python], [], home), True)):
+        done = subprocess.run([worker.SANDBOX, "-p", rules, python, "-I", "-c", "print('ran')"],  # noqa: S603
+                              capture_output=True, text=True, timeout=60)  # fmt: skip
+        assert (done.stdout.strip() == "ran") is works, (works, done.stderr[-200:])
+    blocked = subprocess.run(
+        [worker.SANDBOX, "-p", worker.profile([python], [], home), python, "-I", "-c",
+         "import subprocess; subprocess.run(['/bin/echo', 'x'], check=True)"],
+        capture_output=True, text=True, timeout=60,
+    )  # noqa: S603  # fmt: skip
+    assert blocked.returncode != 0  # programs outside the Python installation are still refused
+
+
 @needs_sandbox
 def test_the_app_reads_every_document_inside_the_sandbox_with_the_originals_hidden(tmp_path: Path) -> None:
     store = FileStore(tmp_path / "originals")
     built = worker.command("pdf", "pdf", worker.MEMORY_BYTES, [store.root])
     assert built[0] == worker.SANDBOX
     assert str(store.root.resolve()) in built[2] and str(worker.KEYCHAINS) in built[2]
+    assert f'(subpath "{os.path.realpath(sys.base_prefix)}")' in built[2]  # DEF-011
     assert "(deny network*)" in built[2] and "(deny file-write*)" in built[2]
     _, path = store.put(b"PO 4521 shipped")
     assert read_stored(store, "text", "a.txt", path).state == READ

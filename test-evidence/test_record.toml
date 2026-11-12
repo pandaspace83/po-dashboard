@@ -1394,7 +1394,7 @@ kind = "automated"
 refs = ["PD-3.6", "DEC-53", "DEC-13"]
 steps = ["Covered by the tests named."]
 expected = "A reader that hangs is stopped at the time limit together with the program it started. One past the memory limit stops and the file is not read. One that crashes, prints nonsense, floods its output or answers in the wrong shape marks the file failed with fixed words. Inside the sandbox the reader cannot reach the network, write a file, start a program or read the stored originals, but can read other files, and Tesseract still works. The app always reads through the sandbox with the originals and the Keychain files hidden; without sandbox-exec it still reads in a separate process and logs that once. A hostile file name never reaches the command."
-tests = ["test_hostile.py::test_a_reader_that_hangs_is_stopped_with_everything_it_started", "test_hostile.py::test_a_reader_that_uses_too_much_memory_stops_and_the_file_is_not_read", "test_hostile.py::test_a_reader_that_crashes_or_answers_wrongly_marks_the_file_failed", "test_hostile.py::test_the_reader_cannot_use_the_network_write_files_start_programs_or_read_the_originals", "test_hostile.py::test_the_app_reads_every_document_inside_the_sandbox_with_the_originals_hidden", "test_hostile.py::test_tesseract_still_works_inside_the_sandbox", "test_hostile.py::test_without_the_sandbox_the_reader_still_runs_apart_and_says_so_once", "test_hostile.py::test_a_hostile_file_name_or_kind_never_reaches_the_reading_process_command"]
+tests = ["test_hostile.py::test_a_reader_that_hangs_is_stopped_with_everything_it_started", "test_hostile.py::test_a_reader_that_uses_too_much_memory_stops_and_the_file_is_not_read", "test_hostile.py::test_a_reader_that_crashes_or_answers_wrongly_marks_the_file_failed", "test_hostile.py::test_the_reader_cannot_use_the_network_write_files_start_programs_or_read_the_originals", "test_hostile.py::test_the_app_reads_every_document_inside_the_sandbox_with_the_originals_hidden", "test_hostile.py::test_tesseract_still_works_inside_the_sandbox", "test_hostile.py::test_without_the_sandbox_the_reader_still_runs_apart_and_says_so_once", "test_hostile.py::test_a_hostile_file_name_or_kind_never_reaches_the_reading_process_command", "test_hostile.py::test_a_python_that_restarts_itself_still_runs_in_the_sandbox"]
 
 [[case]]
 id = "TC-MAIL-24"
@@ -1692,6 +1692,22 @@ cause = "The message printed the stored time, which is in UTC, as a date; the ta
 fix = "The message and the Terminal command use the same date display as the table. A test pins the time to 2 AM UTC with the Mac in New York, and the browser check now compares the message date with the table date."
 retest = "11/12/2026, Claude: pass in the tests (the new test fails on the old code). Chrome retest: waiting for the next browser evidence run."
 status = "Fixed, Chrome retest waiting"
+
+[[defect]]
+id = "DEF-011"
+found = "11/12/2026"
+found_by = "GitHub Actions CI, its first run (macOS runner)"
+case = "TC-MAIL-23"
+browser = "Not a browser case (the test suite on GitHub's Mac, python.org Python 3.13)"
+severity = "High"
+title = "With python.org's Python, every document failed: the sandbox refused Python's own restart"
+steps = ["Run the tests on a Mac whose Python is the python.org (framework) build, as GitHub's runners use.", "Read any document through the reading process."]
+expected = "The document is read inside the sandbox, as on this Mac."
+actual = "Every read ended as failed: the reader stopped unexpectedly. 20 tests failed in CI (reading, scanner, hostile files). On this Mac they passed, because uv's own Python does not restart itself."
+cause = "python.org's Python starts by running a second program inside its installation (Resources/Python.app/Contents/MacOS/Python). The sandbox rules allowed only the python file itself to run, so that restart was refused before any code ran. Reproduced here with the python.org Python 3.14 installed on this Mac."
+fix = "The sandbox also allows programs inside the running Python's own installation folder (sys.base_prefix). Every other program, apart from Tesseract, is still refused. A new test runs python.org's Python under the real rules whenever one is installed, and first shows the old rules failing."
+retest = "11/12/2026, Claude: pass on this Mac with python.org Python 3.14 and with uv's Python 3.13. CI retest: waiting for the next push."
+status = "Fixed, CI retest waiting"
 
 # =====================================================================================================================
 # User sign-off: the checks that matter most before go-live. "Ready" items can be tested now; "Not built" items are
