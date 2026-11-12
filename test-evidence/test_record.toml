@@ -1706,7 +1706,7 @@ expected = "The document is read inside the sandbox, as on this Mac."
 actual = "Every read ended as failed: the reader stopped unexpectedly. 20 tests failed in CI (reading, scanner, hostile files). On this Mac they passed, because uv's own Python does not restart itself."
 cause = "python.org's Python starts by running a second program inside its installation (Resources/Python.app/Contents/MacOS/Python). The sandbox rules allowed only the python file itself to run, so that restart was refused before any code ran. Reproduced here with the python.org Python 3.14 installed on this Mac."
 fix = "The sandbox also allows programs inside the running Python's own installation folder (sys.base_prefix). Every other program, apart from Tesseract, is still refused. A new test runs python.org's Python under the real rules whenever one is installed, and first shows the old rules failing."
-retest = "11/12/2026, Claude: pass on this Mac with python.org Python 3.14 and with uv's Python 3.13. CI retest: waiting for the next push."
+retest = "11/12/2026, Claude: pass on this Mac with python.org Python 3.14 and with uv's Python 3.13. First CI retest: 17 of the 18 failures were fixed; the last was the sandbox test building its own rules without the new allowance (fixed). CI retest: waiting for the next push."
 status = "Fixed, CI retest waiting"
 
 # =====================================================================================================================

@@ -271,4 +271,4 @@ Every failure is logged here the moment it is found, by whoever finds it: the ca
 
 **Fix:** The sandbox also allows programs inside the running Python's own installation folder (sys.base_prefix). Every other program, apart from Tesseract, is still refused. A new test runs python.org's Python under the real rules whenever one is installed, and first shows the old rules failing. Not committed yet.
 
-**Retest:** 11/12/2026, Claude: pass on this Mac with python.org Python 3.14 and with uv's Python 3.13. CI retest: waiting for the next push.
+**Retest:** 11/12/2026, Claude: pass on this Mac with python.org Python 3.14 and with uv's Python 3.13. First CI retest: 17 of the 18 failures were fixed; the last was the sandbox test building its own rules without the new allowance (fixed). CI retest: waiting for the next push.

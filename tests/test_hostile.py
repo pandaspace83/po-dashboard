@@ -396,7 +396,7 @@ print(json.dumps({{"network": attempt(connect), "write": attempt(write), "progra
                    "originals": attempt(peek), "other files": attempt(look)}}))
 """
     tesseract = shutil.which("tesseract", path=worker.PATH)
-    rules = worker.profile([sys.executable, *([tesseract] if tesseract else [])], [hidden])
+    rules = worker.profile([sys.executable, *([tesseract] if tesseract else [])], [hidden], sys.base_prefix)
     done = subprocess.run([worker.SANDBOX, "-p", rules, sys.executable, "-I", "-c", script],  # noqa: S603
                           capture_output=True, text=True, timeout=60, check=True)  # fmt: skip
     listener.close()
