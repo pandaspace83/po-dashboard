@@ -23,6 +23,7 @@ from starlette.datastructures import UploadFile
 from po_dashboard.customers import config
 from po_dashboard.db.customers import (
     Customer,
+    CustomerPO,
     SalesImport,
     SalesImportRow,
     SalesInvoice,
@@ -31,12 +32,13 @@ from po_dashboard.db.customers import (
 )
 from po_dashboard.db.models import AppUser
 from po_dashboard.intake.store import FileStore
-from po_dashboard.ledger.errors import LedgerError, when
+from po_dashboard.ledger.errors import LedgerError, parse_seen, when
 from po_dashboard.ledger.sheets import MAX_BYTES
 from po_dashboard.pages import tables
 from po_dashboard.pages.common import CurrentUser, Db, client_address, render
 from po_dashboard.quickbooks.importers import mapping as mp
 from po_dashboard.quickbooks.importers.sales import ImportProblem
+from po_dashboard.quickbooks.reconciliation import decisions, views
 from po_dashboard.quickbooks.reconciliation import store as reconciliation
 from po_dashboard.quickbooks.snapshots import imports
 
@@ -352,11 +354,9 @@ def import_file(request: Request, db: Db, user: CurrentUser, import_id: int) -> 
     )
 
 
-@router.get("/{invoice_id}", response_class=HTMLResponse)
-def invoice_page(request: Request, db: Db, user: CurrentUser, invoice_id: int) -> HTMLResponse:
-    invoice = db.get(SalesInvoice, invoice_id)
-    if invoice is None:
-        return render(request, "error.html", user, 404, title="Page not found", message="That invoice was not found.")
+def _invoice_page(
+    request: Request, db: Db, user: CurrentUser, invoice: SalesInvoice, error: str | None = None, status: int = 200
+) -> HTMLResponse:
     customer = db.get(Customer, invoice.customer_id) if invoice.customer_id else None
     lines = list(
         db.scalars(
@@ -382,17 +382,82 @@ def invoice_page(request: Request, db: Db, user: CurrentUser, invoice_id: int) -
                 "total": content["record"]["total"],
             }
         )
+    result = reconciliation.current(db)
+    counted = [
+        (link, order) for order in result.orders.values() for link in order.links if link.invoice_id == invoice.id
+    ]
+    mine = [p for p in result.problems() if p.invoice_id == invoice.id]
+    orders = [o for o in result.orders.values() if invoice.customer_id and o.po.customer_id == invoice.customer_id]
     return render(
         request,
         "sales_invoice_detail.html",
         user,
+        status,
         invoice=invoice,
         customer=customer,
         lines=lines,
         seen=seen,
         counts=Counter(s["obs"].outcome for s in seen),
         default_currency=config.text(db, "default_currency"),
+        counted=counted,
+        problems=mine,
+        orders=sorted(orders, key=lambda o: o.po.number.lower()),
+        levels=views.LEVELS,
+        error=error,
     )
+
+
+@router.get("/{invoice_id}", response_class=HTMLResponse)
+def invoice_page(request: Request, db: Db, user: CurrentUser, invoice_id: int) -> HTMLResponse:
+    invoice = db.get(SalesInvoice, invoice_id)
+    if invoice is None:
+        return render(request, "error.html", user, 404, title="Page not found", message="That invoice was not found.")
+    return _invoice_page(request, db, user, invoice)
+
+
+@router.post("/{invoice_id}/resolve", response_class=HTMLResponse, response_model=None)
+def resolve(
+    request: Request, db: Db, user: CurrentUser, invoice_id: int, action: Field = "", reason: Field = "",
+    upload: Field = "", version: Field = "",
+) -> HTMLResponse | RedirectResponse:  # fmt: skip
+    invoice = db.get(SalesInvoice, invoice_id)
+    if invoice is None:
+        return render(request, "error.html", user, 404, title="Page not found", message="That invoice was not found.")
+    try:
+        imports.resolve_invoice(
+            db, invoice, action, reason, observation_id=_count(upload), actor=user,
+            client_address=client_address(request), seen=parse_seen(version), check=True,
+        )  # fmt: skip
+        reconciliation.run(db, cause="person", cause_ref=invoice.id)
+        db.commit()
+    except LedgerError as problem:
+        db.rollback()
+        db.refresh(invoice)
+        return _invoice_page(request, db, user, invoice, str(problem), 400)
+    return RedirectResponse(f"/sales-invoices/{invoice_id}", status_code=303)
+
+
+@router.post("/{invoice_id}/place", response_class=HTMLResponse, response_model=None)
+def place(
+    request: Request, db: Db, user: CurrentUser, invoice_id: int, po_id: Field = "", what: Field = "",
+    reason: Field = "",
+) -> HTMLResponse | RedirectResponse:  # fmt: skip
+    invoice = db.get(SalesInvoice, invoice_id)
+    if invoice is None:
+        return render(request, "error.html", user, 404, title="Page not found", message="That invoice was not found.")
+    order = db.get(CustomerPO, _count(po_id) or 0)
+    try:
+        if order is None:
+            raise LedgerError("Choose an order from the list.")
+        act = decisions.reject if what == "reject" else decisions.link
+        if what not in ("link", "reject"):
+            raise LedgerError("Choose whether the invoice belongs to the order or not.")
+        act(db, invoice, order, reason=reason, actor=user, client_address=client_address(request))
+        db.commit()
+    except LedgerError as problem:
+        db.rollback()
+        return _invoice_page(request, db, user, invoice, str(problem), 400)
+    return RedirectResponse(f"/customer-orders/{order.id}", status_code=303)
 
 
 __all__ = ["router"]

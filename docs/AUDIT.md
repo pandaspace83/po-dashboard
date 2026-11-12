@@ -13,11 +13,13 @@ test; **HT** is a step in `test-evidence/HUMAN_TEST_CHECKLIST.md`; **SOAK** is t
 | | Count |
 |---|---|
 | Requirements (49 REQ and 14 NFR) | 63 |
-| Met | 12 |
+| Met | 26 |
 | Partly met | 22 |
 | Not met | 0 |
-| Not built or not measured yet | 29 (including REQ-FU-04 and REQ-CO-16, which are Later) |
-| Targets (T-1 to T-7) met | 0 of 7 |
+| Not built or not measured yet | 15 (including REQ-FU-04 and REQ-CO-16, which are Later, and REQ-CO-15, which waits for Phase 4) |
+| Targets (T-1 to T-7) met | 1 of 7 (T-7, on synthetic records) |
+
+Updated at the end of Phase 8 (PD-8.7, 2026-11-12): REQ-CO-01 to 14 are met on synthetic records and T-7 is met; the real QuickBooks export (OPEN-22) has not been seen, so the sales import is proven against made-up samples shaped like the owner's description. REQ-CO-15 waits for Phase 4 (PD-8.8).
 
 Updated at the documentation pass before Phase 4 (PD-4.0, 2026-11-12): Phases 0 to 3 are built (PD-3.7 waits for
 the owner's real-Google check). It had not been updated since Phase 0, so this brings it in line. 12 requirements are
@@ -62,20 +64,20 @@ measured yet: the owner skipped the full Phase 2 score, and the first one is PD-
 | REQ-FU-02 | Contacted, snooze, dismiss, reopen | Not built (Phase 5) | | |
 | REQ-FU-03 | Drafted follow-up message | Not built (Phase 5) | | |
 | REQ-FU-04 | Automatic vendor email | Later (DEC-10) | | |
-| REQ-CO-01 | Customers and their QuickBooks names | Not built (Phase 8) | | |
-| REQ-CO-02 | Customer PO by hand | Not built (Phase 8) | | |
-| REQ-CO-03 | Customer PO import | Not built (Phase 8) | | |
-| REQ-CO-04 | Revisions kept, approved by a person | Not built (Phase 8) | | |
-| REQ-CO-05 | One intake service; unknown customer waits | Not built (Phase 8) | | |
-| REQ-CO-06 | QuickBooks sales import with mapping, preview, history | Not built (Phase 8) | | |
-| REQ-CO-07 | Repeated uploads safe | Not built (Phase 8) | | |
-| REQ-CO-08 | Credit memos and charges apart | Not built (Phase 8) | | |
-| REQ-CO-09 | Deterministic matching, ambiguity to a person | Not built (Phase 8) | | |
-| REQ-CO-10 | Reconciliation status from evidence | Not built (Phase 8) | | |
-| REQ-CO-11 | Exception queue, confirmed or preliminary | Not built (Phase 8) | | |
-| REQ-CO-12 | Possibly unbilled after 30 days, when covered | Not built (Phase 8) | | |
-| REQ-CO-13 | Overrides with a reason, audited | Not built (Phase 8) | | |
-| REQ-CO-14 | Customer orders section and CSV | Not built (Phase 8) | | |
+| REQ-CO-01 | Customers and their QuickBooks names | Met | TC-CO-04, TC-CO-12; synthetic only until the real export (OPEN-22) | |
+| REQ-CO-02 | Customer PO by hand | Met | TC-CO-04, TC-CO-08 | |
+| REQ-CO-03 | Customer PO import | Met | TC-CO-07, TC-CO-19 | |
+| REQ-CO-04 | Revisions kept, approved by a person | Met | TC-CO-05, TC-CO-19 | |
+| REQ-CO-05 | One intake service; unknown customer waits | Met | TC-CO-05 to 07 | |
+| REQ-CO-06 | QuickBooks sales import with mapping, preview, history | Met | TC-CO-09 to 11; synthetic samples only (OPEN-22) | |
+| REQ-CO-07 | Repeated uploads safe | Met | TC-CO-11, TC-CO-19 | |
+| REQ-CO-08 | Credit memos and charges apart | Met | TC-CO-10, TC-CO-13, TC-CO-14 | |
+| REQ-CO-09 | Deterministic matching, ambiguity to a person | Met | TC-CO-13, TC-CO-14 | |
+| REQ-CO-10 | Reconciliation status from evidence | Met | TC-CO-13, TC-CO-14, TC-CO-19 | |
+| REQ-CO-11 | Exception queue, confirmed or preliminary | Met | TC-CO-16, TC-CO-17, TC-CO-19 | |
+| REQ-CO-12 | Possibly unbilled after 30 days, when covered | Met | TC-CO-13, TC-CO-14, TC-CO-19 | |
+| REQ-CO-13 | Overrides with a reason, audited | Met | TC-CO-15, TC-CO-16, TC-CO-18 | |
+| REQ-CO-14 | Customer orders section and CSV | Met | TC-CO-16, TC-CO-17, TC-CO-18 | |
 | REQ-CO-15 | Customer POs from email | Not built (PD-8.8, after Phase 4) | | |
 | REQ-CO-16 | Payments and ageing | Later | | |
 
@@ -108,4 +110,4 @@ measured yet: the owner skipped the full Phase 2 score, and the first one is PD-
 | T-4 | Planted instructions followed: 0 | Not measured (PD-4.7) | 0 in the 3-document check; the trial: 0 on the 14b model, 1 of 1 on the others |
 | T-5 | Wrong-PO matches the validator missed | Not measured (PD-4.7) | The validator is PD-4.2 |
 | T-6 | 24 hour run, no loss or duplicate | Not measured (Phase 6) | |
-| T-7 | Reconciliation set: every case right | Not measured (PD-8.4) | |
+| T-7 | Reconciliation set: every case right | Met, on synthetic records (PD-8.4, PD-8.7) | The owner's ten scenarios and their variants, TC-CO-14, and end to end through the screens, TC-CO-19. Not yet tried on a real export (OPEN-22) |

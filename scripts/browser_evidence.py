@@ -1353,6 +1353,110 @@ def sales_invoices(r: Run) -> None:
     r.shot(r.a)
 
 
+@case("TC-CO-17")
+def reconciliation_screens(r: Run) -> None:
+    from decimal import Decimal
+
+    from po_dashboard.customers import intake
+    from po_dashboard.customers import service as customers
+    from po_dashboard.customers.intake import LineData, PoData
+    from po_dashboard.quickbooks.reconciliation import store
+
+    with Session(r.engine) as db:  # the customer and its order are set up; what is under test is what a person sees
+        customer = customers.create_customer(db, name="Reconcile Co")
+        order = intake.file_po(
+            db, PoData("RC-1", "USD", (LineData("Bolts:M8", Decimal(10), Decimal("2.50")),), customer_id=customer.id)
+        ).po
+        check(order is not None, "the order was not filed")
+        store.run(db, cause="po_change")
+        db.commit()
+    head = ",Type,Date,Num,P. O. #,Name,Memo,Item,Qty,Sales Price,Amount"
+
+    def export(name: str, *rows: str) -> Path:
+        path = r.work / name
+        path.write_text(
+            "\n".join(
+                ["Test Co (made up)", "Sales by Customer Detail", "November 2026", "", head, "Reconcile Co", *rows]
+            )
+            + "\n"
+        )
+        return path
+
+    def keep(path: Path) -> None:
+        r.go(r.a, "/sales-invoices/upload")
+        r.upload(r.a, path, "button:has-text('Show what it would do')")
+        r.a.wait_for_selector("text=What the file would do")
+        r.a.fill("#period_from", "2026-11-01")
+        r.a.fill("#period_to", "2026-11-30")
+        r.a.click("button:has-text('Keep this upload')")
+        r.a.wait_for_url(re.compile(r".*/sales-invoices\?imported=\d+$"))
+
+    keep(
+        export(
+            "rc-1.csv",
+            ",Invoice,11/03/2026,7001,RC-1,Reconcile Co,,Bolts:M8,4,2.50,10.00",
+            ",Invoice,11/04/2026,7002,,Reconcile Co,,Bolts:M8,6,2.50,15.00",
+        )
+    )
+    r.go(r.a, "/customer-orders?q=RC-1")
+    check(r.a.locator("nav").first.bounding_box()["height"] < 80, "the top bar wraps onto two rows")
+    row = r.a.locator("#results tbody tr").first.inner_text()
+    check("Partially invoiced" in row and "10.00" in row and "15.00" in row, f"the list row is wrong: {row}")
+    r.shot(r.a)
+    r.go(r.a, "/customer-orders?status=matched")
+    check("No customer order matches" in r.main(r.a), "the status filter did not filter")
+    with r.a.expect_download() as download:
+        r.go(r.a, "/customer-orders?q=RC-1")
+        r.a.click("a:has-text('Download CSV')")
+    check(Path(download.value.path()).read_bytes().startswith(b"\xef\xbb\xbfCustomer,PO number"), "the CSV is wrong")
+    # the queue: an invoice with no PO reference reaches no order
+    r.go(r.a, "/customer-orders/exceptions?customer=")
+    text = r.main(r.a)
+    check(
+        "Unmatched invoice" in text and "7002" in text and "Partially invoiced" in text, "the queue lacks an exception"
+    )
+    r.shot(r.a)
+    # decide from the invoice page: a reason is needed, then the order page shows who decided
+    r.a.click("a:has-text('7002')")
+    r.a.wait_for_url(re.compile(r".*/sales-invoices/\d+$"))
+    r.a.select_option("#place_po", label="RC-1 (USD)")
+    r.a.click("button:has-text('Decide')")
+    r.a.wait_for_selector("text=Reason")
+    check("/sales-invoices/" in r.a.url, "a refusal left the invoice page")
+    r.a.fill("#place_reason", "Customer confirmed by phone")
+    r.a.select_option("#place_po", label="RC-1 (USD)")
+    r.a.click("button:has-text('Decide')")
+    r.a.wait_for_url(re.compile(r".*/customer-orders/\d+$"))
+    page = r.main(r.a)
+    check(
+        "Reconciliation: Matched" in page and "Customer confirmed by phone" in page and ADMIN in page,
+        "the decision is not shown",
+    )
+    r.shot(r.a, full=True)
+    r.a.click("button:has-text('Withdraw')")
+    r.a.wait_for_selector("h2:text-is('Decisions by people')", state="detached", timeout=8000)
+    check(
+        "Decisions by people" not in r.main(r.a) and "Reconciliation: Matched" not in r.main(r.a),
+        "the decision was not withdrawn",
+    )
+    check("History" in r.main(r.a) and "a person's decision" in r.main(r.a), "the history lacks the decision")
+    # a later export changes invoice 7001: keep the accepted figures
+    keep(export("rc-2.csv", ",Invoice,11/03/2026,7001,RC-1,Reconcile Co,,Bolts:M8,5,2.50,12.50"))
+    r.go(r.a, "/sales-invoices?state=needs_review")
+    r.a.click("a:has-text('7001')")
+    r.a.wait_for_url(re.compile(r".*/sales-invoices/\d+$"))
+    check("Settle the review" in r.main(r.a), "no review form on a changed invoice")
+    r.shot(r.a)
+    r.a.fill("#resolve_reason", "The first export was right")
+    r.a.click("button:has-text('Settle')")
+    r.a.wait_for_selector("h2:text-is('Settle the review')", state="detached", timeout=8000)
+    check(
+        "Settle the review" not in r.main(r.a) and "needs a person to look" not in r.main(r.a),
+        "the review did not clear",
+    )
+    r.shot(r.a)
+
+
 @case("TC-WEB-06")
 def readable_errors(r: Run) -> None:
     r.go(r.a, "/no-such-page")

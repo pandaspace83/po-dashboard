@@ -4,9 +4,9 @@
 
 PO Dashboard (RaceSpec Internal Dashboard). Scope: Phase 0 and Phase 1: sign-in, people, vendors, purchase orders, imports, the QuickBooks starting load, entries by hand, Home, Open items, Audit, page behaviour, security and speed.
 
-**142 cases:** 46 Critical, 80 High, 16 Medium; 2 terminal, 74 automated, 63 browser, 3 owner only.
+**146 cases:** 46 Critical, 84 High, 16 Medium; 2 terminal, 77 automated, 64 browser, 3 owner only.
 
-Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.18, by Claude, scripts/browser_evidence.py, on commit 5d3bd46 with uncommitted changes: **63 of 63** browser cases pass. Automated tests: `uv run pytest`. Defects: [DEFECTS.md](DEFECTS.md). Sign-off: [SIGN_OFF.md](SIGN_OFF.md).
+Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.18, by Claude, scripts/browser_evidence.py, on commit 13d6048 with uncommitted changes: **64 of 64** browser cases pass. Automated tests: `uv run pytest`. Defects: [DEFECTS.md](DEFECTS.md). Sign-off: [SIGN_OFF.md](SIGN_OFF.md).
 
 **To run them by hand:**
 
@@ -158,6 +158,10 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.18, by Claude, scripts/b
 | [TC-CO-13](#tc-co-13) | The reconciliation rules, one by one, on plain records | High | Automated | Automated tests | — |
 | [TC-CO-14](#tc-co-14) | T-7: the owner's ten reconciliation scenarios and their variants, end to end | High | Automated | Automated tests | — |
 | [TC-CO-15](#tc-co-15) | What a run keeps, a person's decisions, and the pages that re-run it | High | Automated | Automated tests | — |
+| [TC-CO-16](#tc-co-16) | The reconciliation screens: order list with status and CSV, order page, exception queue, a person's decisions, settling an invoice | High | Automated | Automated tests | Not yet run |
+| [TC-CO-17](#tc-co-17) | The reconciliation screens in Chrome: list, order page, decisions, exception queue, invoice review | High | Browser | Pass 11/12/2026 | Not yet run |
+| [TC-CO-18](#tc-co-18) | Phase 8 security and regression: hostile uploads, the token and Origin on every change, an audit row for every action, the upgrade | High | Automated | Automated tests | Not yet run |
+| [TC-CO-19](#tc-co-19) | T-7 end to end through the screens: customers, POs by file, two uploads on different days, every scenario, and a person settling what waits | High | Automated | Automated tests | Not yet run |
 | [TC-OPS-01](#tc-ops-01) | A backup restores to exactly what was backed up; it never overwrites, never deletes, and refuses unsafe places | Critical | Automated | Automated tests | — |
 | [TC-OPS-02](#tc-ops-02) | Two people, or a double click, cannot corrupt a record | High | Automated | Automated tests | — |
 | [TC-OPS-03](#tc-ops-03) | A model server that is down fails fast and leaves the document waiting; the health check sees a broken database | High | Automated | Automated tests | — |
@@ -3069,6 +3073,107 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.18, by Claude, scripts/b
 **Automated tests:** `test_reconciliation_scenarios.py::test_an_invoice_in_another_currency_is_a_confirmed_mismatch_and_is_not_counted`, `test_reconciliation_scenarios.py::test_a_run_replaces_the_apps_own_allocations_and_never_a_persons`, `test_reconciliation_scenarios.py::test_history_is_written_only_when_a_status_or_its_exceptions_change`, `test_reconciliation_scenarios.py::test_a_decision_is_refused_when_it_cannot_be_right`, `test_reconciliation_scenarios.py::test_withdrawing_a_decision_lets_the_rules_apply_again_and_is_audited`, `test_reconciliation_scenarios.py::test_filing_a_po_keeping_an_upload_and_approving_a_revision_in_the_app_each_re_run_it`, `test_reconciliation_scenarios.py::test_a_re_run_on_later_days_adds_no_history_while_nothing_changes`
 
 **Latest:** Owner: not recorded.
+
+
+<a id="tc-co-16"></a>
+
+### TC-CO-16: The reconciliation screens: order list with status and CSV, order page, exception queue, a person's decisions, settling an invoice
+
+**Priority:** High · **How:** Automated · **Refs:** PD-8.5, DEC-56, DEC-59, DEC-62, REQ-CO-10, REQ-CO-11, REQ-CO-13, REQ-CO-14, NFR-03
+
+**Steps**
+
+1. Covered by the tests named.
+
+**Expected:** The order list shows each order's status, invoiced amount, apparent remaining and latest upload, filters by status, and downloads a CSV that follows the filters and neutralises formulas. The exception queue lists every exception with its level and filters by customer, type, level, order status and dates; an invoice that reaches no order is listed with a link to it; an empty queue says all clear. The order page shows the figures, the exceptions, the lines with invoiced and remaining quantity, the invoices counted and by whom (the rules or a person), the decisions and the history. A person can link an invoice (a reason when it does not name the PO), match one line to one line, reject an invoice (a reason always), withdraw a decision, and close, cancel or reopen an order (a reason and the current version); each is audited and re-runs the reconciliation. An invoice marked for review is kept as accepted or replaced by one upload's figures, with a reason and the current version, and never loses a person's line decision silently. Every action needs the security token and a known record.
+
+**Automated tests:** `test_customer_screens.py::test_the_list_shows_status_invoiced_and_what_remains_and_filters_by_status`, `test_customer_screens.py::test_an_order_with_no_upload_says_so_and_a_waiting_revision_is_its_own_status`, `test_customer_screens.py::test_the_csv_follows_the_filters_and_neutralises_formulas`, `test_customer_screens.py::test_the_queue_lists_each_exception_with_its_level_and_filters`, `test_customer_screens.py::test_an_invoice_that_reaches_no_order_is_in_the_queue_with_a_link_to_it`, `test_customer_screens.py::test_the_order_page_shows_the_figures_the_lines_and_the_invoices_counted`, `test_customer_screens.py::test_a_person_links_an_invoice_that_names_no_po_and_the_page_and_audit_say_who`, `test_customer_screens.py::test_a_line_match_by_number_and_a_rejection_need_what_they_need`, `test_customer_screens.py::test_a_rejection_keeps_the_rules_from_matching_that_invoice_again`, `test_customer_screens.py::test_closing_cancelling_and_reopening_an_order_needs_a_reason_and_the_current_version`, `test_customer_screens.py::test_every_action_needs_the_security_token_and_a_known_order`, `test_customer_screens.py::test_a_changed_invoice_keeps_its_figures_until_a_person_decides_and_the_page_offers_both_ways`, `test_customer_screens.py::test_keeping_the_accepted_figures_needs_a_reason_and_is_audited`, `test_customer_screens.py::test_using_an_uploads_figures_replaces_the_lines_and_the_order_follows`, `test_customer_screens.py::test_an_invoice_can_be_placed_from_its_own_page_and_refusals_stay_on_it`
+
+**Latest:** Owner: Not yet run.
+
+
+<a id="tc-co-17"></a>
+
+### TC-CO-17: The reconciliation screens in Chrome: list, order page, decisions, exception queue, invoice review
+
+**Priority:** High · **How:** Browser · **Refs:** PD-8.5, DEC-45, DEC-56, DEC-59, REQ-CO-10, REQ-CO-11, REQ-CO-13, REQ-CO-14
+
+**Steps**
+
+1. Open Customer orders: see status, invoiced and remaining for an order that has one partial invoice.
+2. Filter by status and download the CSV.
+3. Open Exceptions: see the preliminary alert for the partial invoice; an invoice with no PO reference is listed.
+4. Open that invoice, choose the order, give a reason and link it; the order page shows the decision and who made it.
+5. Withdraw the decision.
+6. Upload a later export that changes an invoice, then keep the accepted figures with a reason.
+
+**Expected:** In Chrome: the list shows the new columns without a second top-bar row; the filter and CSV work; the queue lists the exception and the unmatched invoice; linking from the invoice page lands on the order page showing the person's decision; withdrawing it brings the exception back; a changed invoice shows its review form and settling it clears the exception.
+
+**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Not yet run.
+
+<details><summary>Screenshot</summary>
+
+![TC-CO-17 in Chrome](screenshots/TC-CO-17.png)
+
+</details>
+
+<details><summary>Screenshot 2</summary>
+
+![TC-CO-17 in Chrome](screenshots/TC-CO-17-2.png)
+
+</details>
+
+<details><summary>Screenshot 3</summary>
+
+![TC-CO-17 in Chrome](screenshots/TC-CO-17-3.png)
+
+</details>
+
+<details><summary>Screenshot 4</summary>
+
+![TC-CO-17 in Chrome](screenshots/TC-CO-17-4.png)
+
+</details>
+
+<details><summary>Screenshot 5</summary>
+
+![TC-CO-17 in Chrome](screenshots/TC-CO-17-5.png)
+
+</details>
+
+
+<a id="tc-co-18"></a>
+
+### TC-CO-18: Phase 8 security and regression: hostile uploads, the token and Origin on every change, an audit row for every action, the upgrade
+
+**Priority:** High · **How:** Automated · **Refs:** PD-8.6, DEC-47, DEC-56, REQ-CO-13, NFR-03
+
+**Steps**
+
+1. Covered by the tests named.
+
+**Expected:** Both upload pages refuse a zip bomb, a macro workbook, an outside-file trick, a sheet that claims to be huge, a zip with no workbook, binary junk, a broken workbook, too many columns and an empty file with one plain message, keep nothing and show no file contents or traceback; a missing size or odd form is refused, never a crash. Formulas and markup in a file stay text on every page and in the CSV. Every route in the three sections that changes something refuses a request with no session, with no security token and with a foreign Origin, changes nothing when empty, and never answers with a server error. Every such route is either audited or only a preview, and each action, driven for real, leaves its audit row naming the person. A populated database upgrades again, goes back and comes forward with every purchasing row unchanged, and the purchasing tests are unchanged and green.
+
+**Automated tests:** `test_customer_security.py::test_a_hostile_file_is_refused_in_plain_words_by_both_upload_pages_and_keeps_nothing`, `test_customer_security.py::test_a_file_that_sends_no_size_or_too_many_parts_is_refused_not_crashed`, `test_customer_security.py::test_formulas_and_markup_in_a_file_stay_text_on_every_page_and_in_the_csv`, `test_customer_security.py::test_every_changing_route_needs_the_token_and_a_local_origin_and_never_answers_500`, `test_customer_security.py::test_every_route_refuses_a_request_with_no_session_in_these_sections`, `test_customer_security.py::test_every_changing_route_is_either_audited_below_or_changes_nothing`, `test_customer_security.py::test_each_action_leaves_its_audit_row_with_who_did_it`, `test_customer_security.py::test_a_populated_database_upgrades_again_and_back_without_touching_a_purchasing_record`
+
+**Latest:** Owner: Not yet run.
+
+
+<a id="tc-co-19"></a>
+
+### TC-CO-19: T-7 end to end through the screens: customers, POs by file, two uploads on different days, every scenario, and a person settling what waits
+
+**Priority:** High · **How:** Automated · **Refs:** PD-8.7, T-7, DEC-56, DEC-59, DEC-62, DEC-63, REQ-CO-01, REQ-CO-03, REQ-CO-06, REQ-CO-07, REQ-CO-08, REQ-CO-09, REQ-CO-10, REQ-CO-11, REQ-CO-12, REQ-CO-13, REQ-CO-14
+
+**Steps**
+
+1. Covered by the test named.
+
+**Expected:** Through the web screens only, on made-up records dated from today: a customer is added, nine customer POs are imported from one file, and two QuickBooks uploads are kept on different days. The list and CSV then show: a fully billed order matched (amounts as 25.00); an old order with no invoice, in uploads that cover its time, possibly unbilled, and a young one never called that; a partly billed order with its remainder; an over-billed order; a wrong price needing review; instalments across two uploads counted once each, and a repeated invoice not counted twice; an invoice naming no PO waiting and then placed by a person with a reason; a revision changing nothing until approved and then reconciled at its new price; goods with freight, and a credit memo waiting; a customer name the app does not know chosen by a person and its order then matched. The exception queue lists the confirmed and preliminary ones, and a placed invoice leaves it.
+
+**Automated tests:** `test_customer_e2e.py::test_the_whole_flow_from_customers_to_settled_orders`
+
+**Latest:** Owner: Not yet run.
 
 
 ## Operations

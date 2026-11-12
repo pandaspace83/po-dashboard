@@ -22,6 +22,7 @@ Every failure is logged here the moment it is found, by whoever finds it: the ca
 | [DEF-014](#def-014) | 11/12/2026 | [TC-CO-08](TEST_CASES.md#tc-co-08) | Low | The top bar wrapped onto two rows when the Customer orders link was added | Fixed and retested |
 | [DEF-015](#def-015) | 11/12/2026 | [TC-CO-08](TEST_CASES.md#tc-co-08) | Low | An order showed a different spelling of its number after a revision was approved | Fixed and retested |
 | [DEF-016](#def-016) | 11/12/2026 | [TC-CO-09](TEST_CASES.md#tc-co-09) | Low | The names page said '1 invoice carry this name' | Fixed and retested |
+| [DEF-017](#def-017) | 11/12/2026 | [TC-CO-16](TEST_CASES.md#tc-co-16) | Medium | The Customer orders CSV showed amounts as 25.000000 | Fixed and retested |
 
 <a id="def-001"></a>
 
@@ -409,3 +410,25 @@ Every failure is logged here the moment it is found, by whoever finds it: the ca
 **Fix:** The verb now follows the count (carries or carry), and a test pins the wording. Not committed yet.
 
 **Retest:** 11/12/2026: pass in the tests; the Chrome run no longer shows the sentence with a count of one. Owner's retest: not needed.
+
+
+<a id="def-017"></a>
+
+## DEF-017: The Customer orders CSV showed amounts as 25.000000
+
+**Found:** 11/12/2026 by Claude, writing the end-to-end test (PD-8.7) · **Case:** TC-CO-16 · **Browser:** Not a browser case: found reading the downloaded file in the end-to-end test · **Severity:** Medium · **Status:** Fixed and retested
+
+**Steps to reproduce**
+
+1. Keep an upload that fully bills an order of 25.00.
+2. Download the Customer orders CSV.
+
+**Expected:** Amounts as a person writes them: 25.00.
+
+**Actual:** 25.000000: the exact six-decimal form the database stores.
+
+**Cause:** The CSV rows were given the stored decimals as they are; the pages format them, the CSV did not.
+
+**Fix:** views.plain writes two decimals, or more only when a cent is not enough, with no thousands commas; the end-to-end test pins 25.00. Not committed yet.
+
+**Retest:** 11/12/2026: pass in the end-to-end test. Owner's retest: not needed.

@@ -313,6 +313,30 @@ def reject_revision(
           after={"state": "rejected", "reason": why})  # fmt: skip
 
 
+def set_state(
+    db: Session, order: CustomerPO, to: str, reason: str | None, *, actor: AppUser | None = None,
+    client_address: str | None = None, seen: int | None = None, check: bool = False,
+) -> None:  # fmt: skip
+    """Close or cancel the revision in force with a reason, or reopen it. A person's say, never the app's."""
+    if to not in ("active", "closed", "cancelled"):
+        raise LedgerError("A purchase order can be made open, closed or cancelled.")
+    if order.state not in ("active", "closed", "cancelled"):
+        raise LedgerError("Only the revision in force can be closed, cancelled or reopened.")
+    if order.state == to:
+        raise LedgerError(f"That purchase order is already {'open' if to == 'active' else to}.")
+    why = text(reason, "Reason", longest=500, required=True)
+    if check:
+        check_seen(order.version, seen, "This purchase order")
+    before = order.state
+    order.state = to
+    order.closed_by, order.closed_at, order.close_note = (
+        (actor.id if actor else None, utcnow(), why) if to != "active" else (None, None, None)
+    )
+    db.flush()
+    audit(db, "customer_po.state", actor, f"customer_po:{order.id}", client_address,
+          before={"state": before}, after={"state": to, "reason": why})  # fmt: skip
+
+
 # ---- the waiting list
 
 

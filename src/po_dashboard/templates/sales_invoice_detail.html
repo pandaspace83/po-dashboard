@@ -4,6 +4,7 @@
 {% block content %}
 <p class="muted"><a href="/sales-invoices">Sales invoices</a> /</p>
 <h1>{{ "Credit memo" if invoice.kind == "credit_memo" else "Invoice" }} {{ invoice.invoice_number }}</h1>
+{% if error %}<p class="error" role="alert">{{ icon("alert") }}<span>{{ error }}</span></p>{% endif %}
 {% if invoice.state == "needs_review" %}<p class="error" role="alert">{{ icon("alert") }}<span>This invoice needs a person to look at it before it is trusted. Its accepted figures below are what was first read; later uploads that differ are listed under Seen in uploads.</span></p>{% endif %}
 <div class="card">
   <table class="facts"><tbody>
@@ -22,6 +23,47 @@
   <thead><tr><th scope="col">#</th><th scope="col">Item</th><th scope="col">Description</th><th scope="col" class="num">Quantity</th><th scope="col" class="num">Unit price</th><th scope="col" class="num">Amount</th><th scope="col">Kind</th></tr></thead>
   <tbody>{% for l in lines %}<tr><td>{{ l.position }}</td><td>{{ l.item or "" }}</td><td>{{ l.description or "" }}</td><td class="num">{{ l.qty|quantity }}</td><td class="num">{{ l.unit_price|money }}</td><td class="num">{{ l.amount|money }}</td><td>{% if l.kind == "goods" %}goods{% else %}<span class="pill">{{ l.kind }}: not goods</span>{% endif %}</td></tr>{% endfor %}</tbody>
 </table></div>
+{% endif %}
+<h2>Where it is counted</h2>
+{% if counted %}
+<div class="table-wrap table-scroll"><table>
+  <thead><tr><th scope="col">PO</th><th scope="col">Status of the PO</th><th scope="col" class="num">Amount</th><th scope="col">Matched by</th></tr></thead>
+  <tbody>{% for k, o in counted %}<tr><td class="nowrap"><a href="/customer-orders/{{ o.po.id }}">{{ o.po.number }}</a></td><td>{{ o.status }}</td><td class="num">{{ k.amount|money(invoice.currency) }}</td><td>{{ "a person" if k.basis == "person" else "the rules (exact evidence)" }}</td></tr>{% endfor %}</tbody>
+</table></div>
+{% else %}<p class="muted">This invoice is not counted against any PO.</p>{% endif %}
+{% if problems %}
+<h2>Exceptions about this invoice</h2>
+<ul>{% for p in problems %}<li>{% if p.level == "confirmed" %}<span class="pill bad">Confirmed discrepancy</span>{% else %}<span class="pill">Preliminary alert</span>{% endif %} <strong>{{ p.label }}.</strong> {{ p.message }}</li>{% endfor %}</ul>
+{% endif %}
+{% if invoice.state == "needs_review" %}
+<h2>Settle the review</h2>
+<div class="card">
+  <p>Nothing is overwritten until you choose. Either way your reason is kept in the audit trail.</p>
+  <form method="post" action="/sales-invoices/{{ invoice.id }}/resolve">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="version" value="{{ invoice.version }}">
+    <div class="form-row">
+      <div><label for="resolve_action">Do this</label><select id="resolve_action" name="action"><option value="keep">Keep the accepted figures</option>{% if seen|selectattr("obs.outcome", "equalto", "changed")|list %}<option value="use">Use the figures of an upload</option>{% endif %}</select></div>
+      {% if seen|selectattr("obs.outcome", "equalto", "changed")|list %}<div><label for="resolve_upload">Upload <span class="muted">(when using an upload's figures)</span></label><select id="resolve_upload" name="upload"><option value="">Choose</option>{% for s in seen if s.obs.outcome == "changed" %}<option value="{{ s.obs.id }}">{{ s.batch.created_at|moment }} {{ s.batch.file_name }}, total {{ s.total }}</option>{% endfor %}</select></div>{% endif %}
+      <div class="wide"><label for="resolve_reason">Reason</label><input id="resolve_reason" name="reason" maxlength="500" required></div>
+      <div class="shrink"><button class="primary" type="submit">{{ icon("check") }}Settle</button></div>
+    </div>
+  </form>
+</div>
+{% endif %}
+{% if customer and orders and invoice.state == "accepted" %}
+<h2>Decide</h2>
+<div class="card">
+  <p class="muted">Say which of {{ customer.name }}'s orders this invoice belongs to, or that it does not. The order page has the line-by-line choices.</p>
+  <form method="post" action="/sales-invoices/{{ invoice.id }}/place">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="form-row">
+      <div><label for="place_po">Order</label><select id="place_po" name="po_id" required><option value="">Choose an order</option>{% for o in orders %}<option value="{{ o.po.id }}">{{ o.po.number }} ({{ o.po.currency }})</option>{% endfor %}</select></div>
+      <div><label for="place_what">Decision</label><select id="place_what" name="what"><option value="link">Belongs to it</option><option value="reject">Does not belong to it</option></select></div>
+      <div class="wide"><label for="place_reason">Reason <span class="muted">(always for "does not belong"; for "belongs" when the invoice does not name the PO)</span></label><input id="place_reason" name="reason" maxlength="500"></div>
+      <div class="shrink"><button class="primary" type="submit">{{ icon("check") }}Decide</button></div>
+    </div>
+  </form>
+</div>
 {% endif %}
 <h2>Seen in uploads</h2>
 <div class="table-wrap"><table>

@@ -783,7 +783,7 @@ Code (built in PD-8.4, DEC-62): `quickbooks/reconciliation/engine.py` (`reconcil
 status, figures and exceptions out; no database, no clock), `store.py` (`load` builds the book from the tables, `run`
 keeps the app's own allocations and the history, `current` works today's view out for a page) and `decisions.py` (a
 person's link, rejection and withdrawal, each audited). The pages that change customer POs or invoices call `run` before
-they commit; screens for the results come in PD-8.5.
+they commit; the screens for the results are §16.6.
 
 ### 16.5 Status and exceptions (DEC-59)
 
@@ -793,14 +793,27 @@ invoice-level figures only, or an unconfirmed match. "No invoice in the uploaded
 after the set number of days, and only when the uploaded periods cover them. Credit memos and charges are listed apart and
 never change billed quantities.
 
-### 16.6 Screens
+### 16.6 Screens (built in PD-8.5, DEC-63)
 
-**Customer orders** in the top bar, for everyone signed in (DEC-56): the order list (customer, PO number, date, amount,
-invoiced, apparent remaining, status, the latest upload's date; filters, paging, a CSV export through `safe_cell`); the
-order page (lines with ordered, invoiced and remaining, the matching invoices and allocations, differences, the source
-document or upload, revisions, history, and the actions); the exception queue (filters by customer, type, level, status
-and date); sales invoices with the upload history; customers. Every action is a form post with the security token,
-answered with a redirect, and written to the audit trail with before and after; an override needs a reason.
+**Customer orders** in the top bar, for everyone signed in (DEC-56). Code: `pages/customer_orders.py`, `pages/sales_invoices.py`
+and `quickbooks/reconciliation/views.py`, which only reads `store.current` and writes nothing.
+
+- **The order list** (`/customer-orders`): customer, PO number, date, currency, ordered, invoiced, apparent remaining, status,
+  the latest upload that showed one of its invoices; filters (search, customer, state, reconciliation status), sorting,
+  paging, and a CSV download (`/customer-orders/export.csv`, same filters, every text cell through `safe_cell`).
+- **The order page**: the figures (ordered, invoiced, remaining, credits, charges, net), the exceptions, the lines with
+  invoiced and remaining quantity, the invoices counted and whether the rules or a person matched them, the decisions by
+  people with Withdraw, the forms to link an invoice (or a line to a line), reject one, and close, cancel or reopen the
+  order, the history, and the revisions with Approve and Reject.
+- **The exception queue** (`/customer-orders/exceptions`): every exception with its level, filtered by customer, type, level,
+  order status and date.
+- **Sales invoices**: the invoice page shows where it is counted, its exceptions, a form to settle a review (keep the
+  accepted figures, or use one upload's figures) and a form to say which order it belongs to or does not; the list, the
+  uploads and the unknown names are as PD-8.3 built them.
+- **Customers**: as PD-8.2.
+
+Every action is a form post with the security token, answered with a redirect, and written to the audit trail with before
+and after; an override, a rejection, a review and a close or cancel need a reason. Each re-runs the reconciliation.
 
 ### 16.7 Customer POs from email (PD-8.8, after Phase 4)
 

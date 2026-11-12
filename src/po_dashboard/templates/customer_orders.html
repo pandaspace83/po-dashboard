@@ -8,7 +8,9 @@
   <h1>Customer orders</h1>
   <div class="actions">
     <a class="button" href="/customers">{{ icon("users") }}Customers</a>
+    <a class="button" href="/customer-orders/exceptions">{{ icon("alert") }}Exceptions{% if exceptions %} ({{ exceptions }}){% endif %}</a>
     <a class="button" href="/sales-invoices">{{ icon("clipboard") }}Sales invoices</a>
+    <a class="button" hx-boost="false" download href="/customer-orders/export.csv{{ '?' ~ request.url.query if request.url.query }}">{{ icon("download") }}Download CSV</a>
     <a class="button" href="/customer-orders/import">{{ icon("upload") }}Import CSV or Excel</a>
     <a class="button primary" href="/customer-orders/new">{{ icon("plus") }}New customer order</a>
   </div>
@@ -20,6 +22,9 @@
 <form method="get" action="/customer-orders" id="filters" class="filters card" role="search" {{ live_filters("/customer-orders") }}>
   <div class="form-row">
     <div class="wide"><label for="q">Search</label><input id="q" name="q" type="search" placeholder="PO number or customer" value="{{ f.q }}" maxlength="100" autofocus data-search aria-keyshortcuts="/"></div>
+    <div><label for="status">Reconciliation</label>
+      <select id="status" name="status"><option value="">Any</option>
+      {% for key, label in statuses.items() %}<option value="{{ key }}" {{ "selected" if f.status == key }}>{{ label }}</option>{% endfor %}</select></div>
     <div><label for="state">State</label>
       <select id="state" name="state"><option value="">Any</option>
       {% for key, label in states.items() %}<option value="{{ key }}" {{ "selected" if f.state == key }}>{{ label }}</option>{% endfor %}</select></div>
@@ -32,24 +37,26 @@
 {% if rows %}
 <div class="table-wrap table-scroll">
 <table>
-  <thead><tr>{{ sort_th("Customer", "customer", sorting) }}{{ sort_th("PO", "po", sorting) }}{{ sort_th("PO date", "date", sorting) }}<th scope="col">Currency</th>{{ sort_th("Lines", "lines", sorting, "num") }}{{ sort_th("Total of the lines", "total", sorting, "num") }}{{ sort_th("State", "state", sorting) }}</tr></thead>
+  <thead><tr>{{ sort_th("Customer", "customer", sorting) }}{{ sort_th("PO", "po", sorting) }}{{ sort_th("PO date", "date", sorting) }}<th scope="col">Currency</th>{{ sort_th("Ordered", "total", sorting, "num") }}{{ sort_th("Invoiced", "invoiced", sorting, "num") }}{{ sort_th("Apparent remaining", "remaining", sorting, "num") }}{{ sort_th("Status", "status", sorting) }}{{ sort_th("Latest upload", "upload", sorting) }}</tr></thead>
   <tbody>
   {% for r in rows %}
   <tr>
-    <td><a href="/customers/{{ r.customer.id }}">{{ r.customer.name }}</a></td>
-    <td class="nowrap"><a href="/customer-orders/{{ r.order.id }}">{{ r.number }}</a>{% if r.order.revision %} <span class="muted">rev {{ r.order.revision }}</span>{% endif %}</td>
-    <td>{{ r.order.po_date|day }}</td>
-    <td>{{ r.order.currency }}</td>
-    <td class="num">{{ r.lines }}</td>
-    <td class="num">{{ r.total|money }}</td>
-    <td>{% if r.order.state == "closed" %}<span class="pill ok">{{ icon("check-circle") }}Closed</span>{% elif r.order.state == "cancelled" %}<span class="pill">{{ icon("ban") }}Cancelled</span>{% else %}<span class="pill">{{ icon("clock") }}Open</span>{% endif %}{% if r.pending %} <a class="pill bad" href="/customer-orders/{{ r.pending.id }}">{{ icon("alert") }}revision {{ r.pending.revision }} waiting</a>{% endif %}</td>
+    <td><a href="/customers/{{ r.row.customer.id }}">{{ r.row.customer.name }}</a></td>
+    <td class="nowrap"><a href="/customer-orders/{{ r.row.order.id }}">{{ r.row.number }}</a>{% if r.row.order.revision %} <span class="muted">rev {{ r.row.order.revision }}</span>{% endif %}</td>
+    <td>{{ r.row.order.po_date|day }}</td>
+    <td>{{ r.row.order.currency }}</td>
+    <td class="num">{{ r.row.total|money }}</td>
+    <td class="num">{% if r.invoiced is not none %}{{ r.invoiced|money }}{% else %}<span class="muted">n/a</span>{% endif %}</td>
+    <td class="num">{% if r.remaining is not none %}{{ r.remaining|money }}{% else %}<span class="muted">n/a</span>{% endif %}</td>
+    <td>{% if r.status in ("matched", "closed") %}<span class="pill ok">{{ icon("check-circle") }}{{ r.label }}</span>{% elif r.status in ("needs_review", "over_invoiced") %}<span class="pill bad">{{ icon("alert") }}{{ r.label }}</span>{% elif r.status == "cancelled" %}<span class="pill">{{ icon("ban") }}{{ r.label }}</span>{% else %}<span class="pill">{{ icon("clock") }}{{ r.label }}</span>{% endif %}{% if r.problems %} <span class="muted">{{ r.problems }} exception{{ "" if r.problems == 1 else "s" }}</span>{% endif %}{% if r.row.pending %} <a class="pill bad" href="/customer-orders/{{ r.row.pending.id }}">{{ icon("alert") }}revision {{ r.row.pending.revision }} waiting</a>{% endif %}</td>
+    <td>{{ r.last_upload|day if r.last_upload else "" }}</td>
   </tr>
   {% endfor %}
   </tbody>
 </table>
 </div>
 {{ pager(page, "customer order") }}
-{% elif f.q or f.state or f.customer_id %}
+{% elif f.q or f.state or f.status or f.customer_id %}
 <div class="card empty">{{ icon("search") }}<p><strong>No customer order matches.</strong></p><p><a href="/customer-orders">Clear the filters</a>.</p></div>
 {% else %}
 <div class="card empty">{{ icon("clipboard") }}<p><strong>No customer orders yet.</strong></p><p><a href="/customer-orders/new">Enter one</a>, <a href="/customer-orders/import">import a file</a>, or <a href="/customers/new">add a customer</a> first.</p></div>

@@ -9,7 +9,7 @@ that leaves the office is the connection to the mailbox.
 Python (FastAPI, SQLite), server-rendered pages with HTMX, and Ollama with `qwen2.5:14b-instruct`. macOS only for now.
 
 > **Status: Phases 0 to 3 are built. Phase 4 (reading documents with the model) is in progress and paused for Phase 8
-> (customer orders), whose design is written.** The table below is
+> (customer orders), built except reading customer POs from email (PD-8.8), which needs Phase 4.** The table below is
 > updated at the end of every phase, and the detail is in [docs/PLAN.md](docs/PLAN.md).
 
 ## What it is for
@@ -59,7 +59,7 @@ would notice on their own. It is judged by whether it helps with that, not by wh
 | 5 | Alerts and follow-up | Not started |
 | 6 | The company's mail system, the office Mac, running for real | Not started |
 | 7 | A second machine, the final audit, release | Not started |
-| 8 | Customer orders: customer POs reconciled against QuickBooks sales invoices (asked for 2026-11-12, built before Phase 4 resumes) | In progress: customers, customer POs, the QuickBooks sales invoice import and the matching engine are built; the screens for statuses and exceptions are next |
+| 8 | Customer orders: customer POs reconciled against QuickBooks sales invoices (asked for 2026-11-12, built before Phase 4 resumes) | Built on synthetic records (PD-8.0 to 8.7): customers, customer POs, the QuickBooks sales import, the matching engine, the screens and exception queue. Not yet tried on a real export (OPEN-22); customer POs by email wait for Phase 4 (PD-8.8) |
 
 ## The documents
 

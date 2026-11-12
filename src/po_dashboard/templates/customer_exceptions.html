@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% from "_picker.html" import customer_picker %}
+{% from "_table.html" import pager %}
+{% block title %}Exceptions · Customer orders · {{ app_name }}{% endblock %}
+{% block content %}
+<p class="muted"><a href="/customer-orders">Customer orders</a> /</p>
+<div class="page-head"><h1>Exceptions</h1></div>
+<p class="muted">Where customer orders and the QuickBooks invoices disagree, or where the app could not tell. A <strong>confirmed discrepancy</strong> rests on line evidence on both sides. A <strong>preliminary alert</strong> rests on missing data, invoice totals only, or a match nobody has confirmed. Open an order to decide.</p>
+<form method="get" action="/customer-orders/exceptions" class="filters card" role="search">
+  <div class="form-row">
+    <div>{{ customer_picker("customer", "Customer", f.customer_id, customer_name, false, "Any customer", false) }}</div>
+    <div><label for="code">Type</label><select id="code" name="code"><option value="">Any</option>{% for key, label in codes.items() %}<option value="{{ key }}" {{ "selected" if f.code == key }}>{{ label }}</option>{% endfor %}</select></div>
+    <div><label for="level">Level</label><select id="level" name="level"><option value="">Any</option>{% for key, label in levels.items() %}<option value="{{ key }}" {{ "selected" if f.level == key }}>{{ label }}</option>{% endfor %}</select></div>
+    <div><label for="status">Order status</label><select id="status" name="status"><option value="">Any</option>{% for key, label in statuses.items() %}<option value="{{ key }}" {{ "selected" if f.status == key }}>{{ label }}</option>{% endfor %}</select></div>
+    <div><label for="from">From</label><input id="from" name="from" type="date" value="{{ f.from }}"></div>
+    <div><label for="to">To</label><input id="to" name="to" type="date" value="{{ f.to }}"></div>
+    <div class="shrink"><button class="primary" type="submit">{{ icon("search") }}Show</button> <a class="button" href="/customer-orders/exceptions">Clear</a></div>
+  </div>
+</form>
+{% if rows %}
+<div class="table-wrap table-scroll"><table>
+  <thead><tr><th scope="col">Level</th><th scope="col">Type</th><th scope="col">Customer</th><th scope="col">PO</th><th scope="col">Invoice</th><th scope="col" class="num">Difference</th><th scope="col">What was found</th></tr></thead>
+  <tbody>
+  {% for r in rows %}
+  <tr>
+    <td>{% if r.problem.level == "confirmed" %}<span class="pill bad">{{ icon("alert") }}Confirmed</span>{% else %}<span class="pill">{{ icon("clock") }}Preliminary</span>{% endif %}</td>
+    <td>{{ r.label }}</td>
+    <td>{% if r.customer %}<a href="/customers/{{ r.customer.id }}">{{ r.customer.name }}</a>{% else %}<span class="muted">not chosen</span>{% endif %}</td>
+    <td class="nowrap">{% if r.problem.po_id %}<a href="/customer-orders/{{ r.problem.po_id }}">{{ r.number }}</a>{% else %}<span class="muted">none</span>{% endif %}</td>
+    <td class="nowrap">{% if r.invoice %}<a href="/sales-invoices/{{ r.invoice.id }}">{{ r.invoice.invoice_number }}</a>{% endif %}</td>
+    <td class="num">{% if r.problem.amount is not none %}{{ r.problem.amount|money }}{% endif %}</td>
+    <td>{{ r.problem.message }}</td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+{{ pager(page, "exception") }}
+{% elif total %}
+<div class="card empty">{{ icon("search") }}<p><strong>No exception matches.</strong></p><p><a href="/customer-orders/exceptions">Clear the filters</a>.</p></div>
+{% else %}
+<div class="card empty">{{ icon("check-circle") }}<p><strong>All clear.</strong></p><p>Nothing disagrees, and nothing waits for a person.</p></div>
+{% endif %}
+{% endblock %}

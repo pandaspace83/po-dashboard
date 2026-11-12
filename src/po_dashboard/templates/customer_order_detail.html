@@ -38,15 +38,126 @@
     <tr><th scope="row">Source</th><td>{{ order.source }}</td></tr>
   </tbody></table>
 </div>
-<h2>Lines</h2>
+{% if found %}
+<div class="card">
+  <div class="card-head">{{ icon("clipboard") }}<h2>Reconciliation: {{ status_words[found.status] }}</h2></div>
+  <table class="facts"><tbody>
+    <tr><th scope="row">Ordered</th><td>{{ found.ordered|money(order.currency) }}</td></tr>
+    <tr><th scope="row">Invoiced</th><td>{{ found.invoiced|money(order.currency) }}</td></tr>
+    <tr><th scope="row">Apparent remaining</th><td>{{ found.remaining|money(order.currency) }} <span class="muted">(ordered less invoiced, from the uploads so far)</span></td></tr>
+    {% if found.credits %}<tr><th scope="row">Credit memos a person linked</th><td>{{ found.credits|money(order.currency) }}</td></tr>{% endif %}
+    {% for kind, amount in found.charges.items() %}<tr><th scope="row">{{ kind|capitalize }}</th><td>{{ amount|money(order.currency) }} <span class="muted">(apart from the goods)</span></td></tr>{% endfor %}
+    {% if found.net is not none %}<tr><th scope="row">Net invoiced</th><td>{{ found.net|money(order.currency) }}</td></tr>{% elif found.net_unclear %}<tr><th scope="row">Net invoiced</th><td><span class="muted">unknown: something on an invoice is not classified</span></td></tr>{% endif %}
+  </tbody></table>
+</div>
+{% if found.problems %}
+<h2>Exceptions</h2>
 <div class="table-wrap table-scroll"><table>
-  <thead><tr><th scope="col">#</th><th scope="col">Item</th><th scope="col">Description</th><th scope="col" class="num">Quantity</th><th scope="col">Unit</th><th scope="col" class="num">Unit price</th><th scope="col" class="num">Amount</th></tr></thead>
+  <thead><tr><th scope="col">Level</th><th scope="col">Type</th><th scope="col">Invoice</th><th scope="col" class="num">Difference</th><th scope="col">What was found</th></tr></thead>
   <tbody>
-  {% for l in lines %}
-  <tr><td>{{ l.line_no }}</td><td>{{ l.item }}</td><td>{{ l.description or "" }}</td><td class="num">{{ l.qty|quantity }}</td><td>{{ l.unit or "" }}</td><td class="num">{{ l.unit_price|money }}</td><td class="num">{{ (l.qty * l.unit_price)|money }}</td></tr>
+  {% for p in found.problems %}
+  <tr><td>{% if p.level == "confirmed" %}<span class="pill bad">{{ icon("alert") }}Confirmed discrepancy</span>{% else %}<span class="pill">{{ icon("clock") }}Preliminary alert</span>{% endif %}</td>
+    <td>{{ p.label }}</td>
+    <td class="nowrap">{% if p.invoice_id and p.invoice_id in invoices %}<a href="/sales-invoices/{{ p.invoice_id }}">{{ invoices[p.invoice_id].invoice_number }}</a>{% endif %}</td>
+    <td class="num">{% if p.amount is not none %}{{ p.amount|money }}{% endif %}</td>
+    <td>{{ p.message }}</td></tr>
   {% endfor %}
   </tbody>
 </table></div>
+{% endif %}
+{% else %}
+<p class="notice" role="status">{{ icon("clock") }}<span>{% if order.state in ("active", "closed", "cancelled") %}This revision is not the one in force. See the <a href="/customer-orders">list</a> for the order's status.{% else %}Nothing is reconciled for this revision until it is approved.{% endif %}</span></p>
+{% endif %}
+<h2>Lines</h2>
+<div class="table-wrap table-scroll"><table>
+  <thead><tr><th scope="col">#</th><th scope="col">Item</th><th scope="col">Description</th><th scope="col" class="num">Quantity</th><th scope="col">Unit</th><th scope="col" class="num">Unit price</th><th scope="col" class="num">Amount</th>{% if found %}<th scope="col" class="num">Invoiced quantity</th><th scope="col" class="num">Remaining quantity</th>{% endif %}</tr></thead>
+  <tbody>
+  {% for l in lines %}
+  <tr><td>{{ l.line_no }}</td><td>{{ l.item }}</td><td>{{ l.description or "" }}</td><td class="num">{{ l.qty|quantity }}</td><td>{{ l.unit or "" }}</td><td class="num">{{ l.unit_price|money }}</td><td class="num">{{ (l.qty * l.unit_price)|money }}</td>{% if found %}{% set fig = figures.get(l.id) %}{% if fig and fig.qty_known %}<td class="num">{{ fig.billed_qty|quantity }}</td><td class="num">{{ fig.remaining_qty|quantity }}</td>{% else %}<td class="num muted" colspan="2">unknown</td>{% endif %}{% endif %}</tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+{% if found %}
+<h2>Invoices counted against this order</h2>
+{% if found.links %}
+<div class="table-wrap table-scroll"><table>
+  <thead><tr><th scope="col">Invoice</th><th scope="col">Invoice line</th><th scope="col">PO line</th><th scope="col" class="num">Quantity</th><th scope="col" class="num">Amount</th><th scope="col">Matched by</th><th scope="col">Last upload</th></tr></thead>
+  <tbody>
+  {% for k in found.links %}{% set inv = invoices.get(k.invoice_id) %}
+  <tr><td class="nowrap"><a href="/sales-invoices/{{ k.invoice_id }}">{{ inv.invoice_number if inv else k.invoice_id }}</a>{% if k.credit %} <span class="pill">credit</span>{% endif %}</td>
+    <td>{% if k.invoice_line_id and k.invoice_line_id in invoice_lines %}{{ invoice_lines[k.invoice_line_id].position }}{% else %}whole invoice{% endif %}</td>
+    <td>{% for l in lines if l.id == k.po_line_id %}{{ l.line_no }}{% else %}whole PO{% endfor %}</td>
+    <td class="num">{{ k.qty|quantity if k.qty is not none else "" }}</td><td class="num">{{ k.amount|money }}</td>
+    <td>{{ "a person" if k.basis == "person" else "the rules (exact evidence)" }}</td>
+    <td>{{ uploads[k.invoice_id]|day if k.invoice_id in uploads else "" }}</td></tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+{% else %}<p class="muted">No invoice is counted against this order.</p>{% endif %}
+{% if decided %}
+<h2>Decisions by people</h2>
+<div class="table-wrap table-scroll"><table>
+  <thead><tr><th scope="col">Invoice</th><th scope="col">Decision</th><th scope="col">Reason</th><th scope="col">By</th><th scope="col"></th></tr></thead>
+  <tbody>
+  {% for d in decided %}{% set inv = invoices.get(d.sales_invoice_id) %}
+  <tr><td class="nowrap"><a href="/sales-invoices/{{ d.sales_invoice_id }}">{{ inv.invoice_number if inv else d.sales_invoice_id }}</a></td>
+    <td>{{ "belongs to this PO" if d.state == "confirmed" else "does not belong to this PO" }}{% if d.sales_invoice_line_id %} (one line){% endif %}{% if d.amount is not none %}, {{ d.amount|money(order.currency) }}{% endif %}</td>
+    <td>{{ d.reason or "" }}</td><td>{{ who_decided.get(d.decided_by, "") }} {{ d.decided_at|moment }}</td>
+    <td><form method="post" action="/customer-orders/{{ order.id }}/withdraw" class="inline">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="decision_id" value="{{ d.id }}">
+      <input name="reason" maxlength="500" placeholder="Why take it back? (optional)" aria-label="Reason for withdrawing this decision">
+      <button type="submit">{{ icon("x") }}Withdraw</button></form></td></tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+{% endif %}
+<h2>Decide</h2>
+<div class="card">
+  <h3>Say an invoice belongs to this order</h3>
+  <form method="post" action="/customer-orders/{{ order.id }}/link">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="form-row">
+      <div class="wide"><label for="link_invoice">Invoice</label><select id="link_invoice" name="invoice_id" required><option value="">Choose an invoice of {{ customer.name }}</option>{% for i in invoice_choices %}<option value="{{ i.id }}">{{ i.invoice_number }}{{ " (credit memo)" if i.kind == "credit_memo" }}, {{ i.invoice_date|day }}, {{ i.total|money(i.currency) }}</option>{% endfor %}</select></div>
+      <div><label for="link_invoice_line">Invoice line no. <span class="muted">(optional)</span></label><input id="link_invoice_line" name="invoice_line" inputmode="numeric" maxlength="5"></div>
+      <div><label for="link_po_line">PO line no. <span class="muted">(with it)</span></label><input id="link_po_line" name="po_line" inputmode="numeric" maxlength="5"></div>
+      <div><label for="link_amount">Amount <span class="muted">(a total-only invoice or a credit memo)</span></label><input id="link_amount" name="amount" inputmode="decimal" maxlength="24"></div>
+      <div class="wide"><label for="link_reason">Reason <span class="muted">(needed when the invoice does not name this PO)</span></label><input id="link_reason" name="reason" maxlength="500"></div>
+      <div class="shrink"><button class="primary" type="submit">{{ icon("check") }}Link</button></div>
+    </div>
+  </form>
+  <h3>Say an invoice does not belong to this order</h3>
+  <form method="post" action="/customer-orders/{{ order.id }}/reject-invoice">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="form-row">
+      <div class="wide"><label for="rej_invoice">Invoice</label><select id="rej_invoice" name="invoice_id" required><option value="">Choose an invoice of {{ customer.name }}</option>{% for i in invoice_choices %}<option value="{{ i.id }}">{{ i.invoice_number }}{{ " (credit memo)" if i.kind == "credit_memo" }}, {{ i.invoice_date|day }}, {{ i.total|money(i.currency) }}</option>{% endfor %}</select></div>
+      <div class="wide"><label for="rej_reason">Reason</label><input id="rej_reason" name="reason" maxlength="500" required></div>
+      <div class="shrink"><button type="submit">{{ icon("ban") }}Not this order</button></div>
+    </div>
+  </form>
+  <h3>Close, cancel or reopen the order</h3>
+  <form method="post" action="/customer-orders/{{ order.id }}/state">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="version" value="{{ order.version }}">
+    <div class="form-row">
+      <div><label for="state_to">Make it</label><select id="state_to" name="to">{% if order.state != "active" %}<option value="active">Open again</option>{% endif %}{% if order.state != "closed" %}<option value="closed">Closed</option>{% endif %}{% if order.state != "cancelled" %}<option value="cancelled">Cancelled</option>{% endif %}</select></div>
+      <div class="wide"><label for="state_reason">Reason</label><input id="state_reason" name="reason" maxlength="500" required></div>
+      <div class="shrink"><button type="submit">{{ icon("check") }}Change</button></div>
+    </div>
+  </form>
+</div>
+{% endif %}
+{% if events %}
+<h2>History</h2>
+<div class="table-wrap table-scroll"><table>
+  <thead><tr><th scope="col">When</th><th scope="col">Status</th><th scope="col">Exceptions then</th><th scope="col">Caused by</th></tr></thead>
+  <tbody>
+  {% for e, problems in events %}
+  <tr><td>{{ e.created_at|moment }}</td><td>{% if e.status_before %}{{ status_words.get(e.status_before, e.status_before) }} to {% endif %}{{ status_words.get(e.status_after, e.status_after) }}</td>
+    <td>{% for code, level, message in problems %}{{ message }}{{ " " if not loop.last }}{% else %}none{% endfor %}</td>
+    <td>{{ {"upload": "an upload", "person": "a person's decision", "revision": "a revision", "po_change": "a change to the order"}.get(e.cause, e.cause) }}</td></tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+{% endif %}
 <h2>Revisions</h2>
 <div class="table-wrap"><table>
   <thead><tr><th scope="col">Revision</th><th scope="col">State</th><th scope="col">Filed</th><th scope="col">Approved by</th></tr></thead>

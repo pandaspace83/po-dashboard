@@ -24,6 +24,7 @@ from po_dashboard.auth.service import audit
 from po_dashboard.customers import config, service
 from po_dashboard.customers.keys import name_key
 from po_dashboard.db.customers import (
+    Allocation,
     Customer,
     SalesImport,
     SalesImportRow,
@@ -33,7 +34,7 @@ from po_dashboard.db.customers import (
 )
 from po_dashboard.db.models import AppUser
 from po_dashboard.intake.store import FileStore
-from po_dashboard.ledger.errors import LedgerError
+from po_dashboard.ledger.errors import LedgerError, check_seen, text
 from po_dashboard.ledger.sheets import SheetRejected, read_table
 from po_dashboard.quickbooks.importers import mapping as mapping_module
 from po_dashboard.quickbooks.importers.mapping import Mapping
@@ -170,8 +171,10 @@ class ImportReport:
 
 def _observation(db: Session, invoice: SalesInvoice, batch: SalesImport, record: InvoiceRecord, outcome: str) -> None:
     content = content_of_record(record)
-    shown = {"record": content, "description": [ln.description for ln in record.lines],
-             "review": list(record.review), "notes": list(record.notes)}  # fmt: skip
+    shown = {
+        "record": content, "description": [ln.description for ln in record.lines],
+        "items": [ln.item for ln in record.lines], "review": list(record.review), "notes": list(record.notes),
+    }  # fmt: skip
     db.add(SalesInvoiceObservation(
         invoice_id=invoice.id, import_id=batch.id, fingerprint=fingerprint_of(content),
         content=json.dumps(shown, sort_keys=True), outcome=outcome,
@@ -295,3 +298,75 @@ def map_name(
     audit(db, "sales_invoice.map_customer", actor, f"customer:{customer.id}", client_address,
           after={"name": name[:100], "invoices": linked})  # fmt: skip
     return linked
+
+
+# ---- a person settles an invoice that waits for review (PD-8.5)
+
+
+def _decimal(value: str) -> Decimal | None:
+    return Decimal(value) if value else None
+
+
+def resolve_invoice(
+    db: Session, invoice: SalesInvoice, action: str, reason: str | None, *, observation_id: int | None = None,
+    actor: AppUser | None = None, client_address: str | None = None, seen: int | None = None, check: bool = False,
+) -> None:  # fmt: skip
+    """Settle an invoice marked for review. `keep` trusts the accepted figures and ignores what later uploads said;
+    `use` replaces them with what one later upload showed. Either way a reason is kept, the invoice is accepted, and the
+    caller re-runs the reconciliation and commits."""
+    if invoice.state != "needs_review":
+        raise LedgerError("That invoice is not waiting for review any more.")
+    if action not in ("keep", "use"):
+        raise LedgerError("Choose to keep the accepted figures or to use an upload's figures.")
+    why = text(reason, "Reason", longest=500, required=True)
+    if check:
+        check_seen(invoice.version, seen, "This invoice")
+    before = {"state": invoice.state, "total": None if invoice.total is None else str(invoice.total)}
+    if action == "use":
+        obs = db.get(SalesInvoiceObservation, observation_id) if observation_id else None
+        if obs is None or obs.invoice_id != invoice.id or obs.outcome != CHANGED:
+            raise LedgerError("Choose one of the uploads that showed this invoice with different figures.")
+        shown = json.loads(obs.content)
+        record = shown["record"]
+        names = shown.get("items") or [None] * len(record["lines"])
+        invoice.invoice_date = date.fromisoformat(record["date"]) if record["date"] else None
+        invoice.currency, invoice.level = record["currency"], record["level"]
+        invoice.po_reference, invoice.qb_reference = record["po"] or None, record["qb"] or None
+        invoice.total = _decimal(record["total"])
+        have = {
+            ln.position: ln
+            for ln in db.scalars(select(SalesInvoiceLine).where(SalesInvoiceLine.invoice_id == invoice.id))
+        }
+        descriptions = shown.get("description") or [None] * len(record["lines"])
+        wanted = {line[0] for line in record["lines"]}
+        for position, old in have.items():
+            if position not in wanted:
+                held = db.scalar(select(Allocation.id).where(
+                    Allocation.sales_invoice_line_id == old.id, Allocation.basis == "person"
+                ).limit(1))  # fmt: skip
+                if held is not None:
+                    raise LedgerError(
+                        f"A person matched line {position}, which the upload no longer has. Withdraw that decision "
+                        "first, or keep the accepted figures."
+                    )
+                db.delete(old)
+        db.flush()
+        for (position, item, qty, price, amount, kind), name, description in zip(
+            record["lines"], names, descriptions, strict=False
+        ):
+            row = have.get(position)
+            if row is None:
+                row = SalesInvoiceLine(invoice_id=invoice.id, position=position, amount=Decimal(0))
+                db.add(row)
+            row.item, row.description = name if name is not None else (item or None), description
+            row.qty, row.unit_price, row.amount, row.kind = (
+                _decimal(qty),
+                _decimal(price),
+                _decimal(amount) or Decimal(0),
+                kind,
+            )
+    invoice.state = "accepted"
+    db.flush()
+    used = observation_id if action == "use" else None
+    audit(db, f"sales_invoice.{action}", actor, f"sales_invoice:{invoice.id}", client_address, before=before,
+          after={"state": "accepted", "reason": why, "upload": used})  # fmt: skip

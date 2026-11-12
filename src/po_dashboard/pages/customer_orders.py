@@ -4,11 +4,14 @@ is audited. A revision waits for a person; a PO whose customer is unknown waits 
 
 from __future__ import annotations
 
+import csv
+import io
 import json
 import secrets
 import threading
 import time
 from collections.abc import Callable
+from datetime import date
 from decimal import Decimal
 from typing import Annotated, Any
 
@@ -20,15 +23,27 @@ from starlette.datastructures import UploadFile
 
 from po_dashboard.customers import config, intake, listing, po_import
 from po_dashboard.customers.intake import LineData, PoData
-from po_dashboard.db.customers import Customer, CustomerPO, CustomerPOIntake
+from po_dashboard.db.customers import (
+    Allocation,
+    Customer,
+    CustomerPO,
+    CustomerPOIntake,
+    CustomerPOLine,
+    ReconciliationEvent,
+    SalesInvoice,
+    SalesInvoiceLine,
+)
 from po_dashboard.db.models import AppUser
 from po_dashboard.db.types import Money, Quantity
 from po_dashboard.ledger.errors import LedgerError, number, parse_seen, text, when
 from po_dashboard.ledger.orders import COMMON_CURRENCIES, ImportRejected, RowError
+from po_dashboard.ledger.reports import safe_cell
 from po_dashboard.ledger.sheets import MAX_BYTES
 from po_dashboard.pages import tables
 from po_dashboard.pages.common import CurrentUser, Db, client_address, render
+from po_dashboard.quickbooks.reconciliation import decisions, views
 from po_dashboard.quickbooks.reconciliation import store as reconciliation
+from po_dashboard.quickbooks.reconciliation.engine import CODES, STATUSES
 
 router = APIRouter(prefix="/customer-orders")
 Field = Annotated[str, Form()]
@@ -70,34 +85,54 @@ def _count(value: str | None) -> int | None:
 # ---- the list
 
 
-def _list(request: Request, db: Db, user: CurrentUser, error: str | None = None, status: int = 200) -> HTMLResponse:
+def _statuses() -> dict[str, str]:
+    return {**views.STATUS_WORDS, "revision": "A revision is waiting"} | {}
+
+
+def _filtered(request: Request, db: Db) -> tuple[list[views.Row], dict[str, Any], str]:
     q = request.query_params.get("q", "").strip()[:100].lower()
     chosen = _count(request.query_params.get("customer"))
     state = request.query_params.get("state", "")
+    status = request.query_params.get("status", "")
     rows = []
-    for row in listing.order_rows(db):
-        if q and q not in row.number.lower() and q not in row.customer.name.lower():
+    for row in views.order_rows(db, reconciliation.current(db)):
+        if q and q not in row.row.number.lower() and q not in row.row.customer.name.lower():
             continue
-        if chosen is not None and row.customer.id != chosen:
+        if chosen is not None and row.row.customer.id != chosen:
             continue
-        if state == "open" and row.order.state != "active":
+        if state == "open" and row.row.order.state != "active":
             continue
-        if state == "revision" and row.pending is None:
+        if state == "revision" and row.row.pending is None:
             continue
-        if state in ("closed", "cancelled") and row.order.state != state:
+        if state in ("closed", "cancelled") and row.row.order.state != state:
+            continue
+        if status == "revision" and row.row.pending is None:
+            continue
+        if status and status != "revision" and row.status != status:
             continue
         rows.append(row)
-    keys: dict[str, Callable[[Any], Any]] = {
-        "po": lambda r: r.number.lower(),
-        "customer": lambda r: r.customer.name.lower(),
-        "date": lambda r: r.order.po_date,
-        "total": lambda r: r.total,
-        "lines": lambda r: r.lines,
-        "state": lambda r: r.order.state,
-    }
-    ordered, sorting = tables.sort_rows(rows, request.query_params.get("sort"), keys, "-date")
-    shown = tables.page_of(ordered, request.query_params.get("page"))
     picked = db.get(Customer, chosen) if chosen is not None else None
+    return rows, {"q": q, "customer_id": chosen, "state": state, "status": status}, picked.name if picked else ""
+
+
+SORT_KEYS: dict[str, Callable[[Any], Any]] = {
+    "po": lambda r: r.row.number.lower(),
+    "customer": lambda r: r.row.customer.name.lower(),
+    "date": lambda r: r.row.order.po_date,
+    "total": lambda r: r.row.total,
+    "lines": lambda r: r.row.lines,
+    "state": lambda r: r.row.order.state,
+    "status": lambda r: r.label,
+    "invoiced": lambda r: (r.invoiced is None, r.invoiced or Decimal(0)),
+    "remaining": lambda r: (r.remaining is None, r.remaining or Decimal(0)),
+    "upload": lambda r: (r.last_upload is None, r.last_upload),
+}
+
+
+def _list(request: Request, db: Db, user: CurrentUser, error: str | None = None, status: int = 200) -> HTMLResponse:
+    rows, f, customer_name = _filtered(request, db)
+    ordered, sorting = tables.sort_rows(rows, request.query_params.get("sort"), SORT_KEYS, "-date")
+    shown = tables.page_of(ordered, request.query_params.get("page"))
     waiting = db.scalar(select(CustomerPOIntake.id).where(CustomerPOIntake.state == "waiting").limit(1)) is not None
     flash = {k: _count(request.query_params.get(k)) for k in ("imported", "waiting", "skipped", "revisions")}
     return render(
@@ -108,18 +143,99 @@ def _list(request: Request, db: Db, user: CurrentUser, error: str | None = None,
         rows=shown.rows,
         page=shown,
         sorting=sorting,
-        f={"q": q, "customer_id": chosen, "state": state},
-        customer_name=picked.name if picked else "",
+        f=f,
+        customer_name=customer_name,
         states=STATES,
+        statuses=_statuses(),
         error=error,
         waiting=waiting,
         flash=flash,
+        exceptions=len(reconciliation.current(db).problems()),
     )
 
 
 @router.get("", response_class=HTMLResponse)
 def order_list(request: Request, db: Db, user: CurrentUser) -> HTMLResponse:
     return _list(request, db, user)
+
+
+@router.get("/export.csv")
+def order_csv(request: Request, db: Db, user: CurrentUser) -> Response:
+    rows, _, _ = _filtered(request, db)
+    ordered, _ = tables.sort_rows(rows, request.query_params.get("sort"), SORT_KEYS, "-date")
+    out = io.StringIO(newline="")
+    writer = csv.writer(out, lineterminator="\r\n")
+    writer.writerow(views.CSV_COLUMNS)
+    for line in views.csv_rows(ordered):
+        writer.writerow(safe_cell(cell) for cell in line)
+    return Response(
+        b"\xef\xbb\xbf" + out.getvalue().encode("utf-8"),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": 'attachment; filename="customer-orders.csv"'},
+    )
+
+
+# ---- the exception queue (DEC-59)
+
+
+@router.get("/exceptions", response_class=HTMLResponse)
+def exception_queue(request: Request, db: Db, user: CurrentUser) -> HTMLResponse:
+    result = reconciliation.current(db)
+    q = request.query_params
+    chosen = _count(q.get("customer"))
+    code, level, status = q.get("code", ""), q.get("level", ""), q.get("status", "")
+    start, end = _day_param(q.get("from")), _day_param(q.get("to"))
+    rows = []
+    for row in views.queue(db, result):
+        if chosen is not None and (row.customer is None or row.customer.id != chosen):
+            continue
+        if code in CODES and row.problem.code != code or level in views.LEVELS and row.problem.level != level:
+            continue
+        if status in STATUSES and row.status != status:
+            continue
+        if (
+            (start or end)
+            and row.day is None
+            or start
+            and row.day
+            and row.day < start
+            or end
+            and row.day
+            and row.day > end
+        ):
+            continue
+        rows.append(row)
+    rank = {"confirmed": 0, "preliminary": 1}
+    rows.sort(key=lambda r: (rank[r.problem.level], r.customer.name.lower() if r.customer else "", r.number or ""))
+    shown = tables.page_of(rows, q.get("page"))
+    picked = db.get(Customer, chosen) if chosen is not None else None
+    return render(
+        request,
+        "customer_exceptions.html",
+        user,
+        rows=shown.rows,
+        page=shown,
+        f={
+            "customer_id": chosen,
+            "code": code,
+            "level": level,
+            "status": status,
+            "from": q.get("from", ""),
+            "to": q.get("to", ""),
+        },  # fmt: skip
+        customer_name=picked.name if picked else "",
+        codes=views.codes(),
+        levels=views.LEVELS,
+        statuses=STATUSES,
+        total=len(result.problems()),
+    )
+
+
+def _day_param(value: str | None) -> date | None:
+    try:
+        return date.fromisoformat(value) if value else None
+    except ValueError:
+        return None
 
 
 # ---- by hand
@@ -402,11 +518,49 @@ def _detail(
         for u in db.scalars(select(AppUser))
         if u.id in {r.approved_by for r in revisions} | {r.created_by for r in revisions}
     }
+    result = reconciliation.current(db)
+    found = result.orders.get(order.id)
+    family = [r.id for r in revisions]
+    invoices = {i.id: i for i in db.scalars(select(SalesInvoice).where(SalesInvoice.customer_id == order.customer_id))}
+    invoice_lines = {
+        ln.id: ln
+        for ln in db.scalars(select(SalesInvoiceLine).where(SalesInvoiceLine.invoice_id.in_(list(invoices) or [0])))
+    }
+    decided = list(
+        db.scalars(
+            select(Allocation)
+            .where(Allocation.basis == "person", Allocation.customer_po_id.in_(family))
+            .order_by(Allocation.id)
+        )
+    )
+    events = list(
+        db.scalars(
+            select(ReconciliationEvent)
+            .where(ReconciliationEvent.customer_po_id.in_(family))
+            .order_by(ReconciliationEvent.id.desc())
+            .limit(50)
+        )
+    )
+    uploads = views.last_uploads(db)
     return render(
         request,
         "customer_order_detail.html",
         user,
         status,
+        found=found,
+        figures={f.line.id: f for f in found.lines} if found else {},
+        invoices=invoices,
+        invoice_lines=invoice_lines,
+        invoice_choices=sorted(invoices.values(), key=lambda i: (i.invoice_date is None, i.invoice_date), reverse=True)[
+            :300
+        ],
+        decided=decided,
+        events=[(e, json.loads(e.exceptions or "[]")) for e in events],
+        status_words=views.STATUS_WORDS,
+        uploads=uploads,
+        in_force=found is not None,
+        levels=views.LEVELS,
+        who_decided={u.id: u.email for u in db.scalars(select(AppUser))},
         order=order,
         customer=customer,
         lines=lines,
@@ -430,14 +584,16 @@ def order_page(request: Request, db: Db, user: CurrentUser, order_id: int, filed
 
 
 def _revision_act(
-    request: Request, db: Db, user: CurrentUser, order_id: int, work: Callable[[CustomerPO], object]
-) -> HTMLResponse | RedirectResponse:
+    request: Request, db: Db, user: CurrentUser, order_id: int, work: Callable[[CustomerPO], object],
+    *, run: bool = True, cause: str = "revision",
+) -> HTMLResponse | RedirectResponse:  # fmt: skip
     order = db.get(CustomerPO, order_id)
     if order is None:
         return _list(request, db, user, error="That customer purchase order was not found.", status=404)
     try:
         work(order)
-        reconciliation.run(db, cause="revision", cause_ref=order.id)
+        if run:
+            reconciliation.run(db, cause=cause, cause_ref=order.id)
         db.commit()
     except LedgerError as problem:
         db.rollback()
@@ -474,3 +630,81 @@ def reject(
             db, o, reason, actor=user, client_address=client_address(request), seen=parse_seen(version), check=True
         ),
     )
+
+
+# ---- close, cancel or reopen; and a person's decisions about invoices
+
+
+@router.post("/{order_id}/state", response_class=HTMLResponse, response_model=None)
+def change_state(
+    request: Request, db: Db, user: CurrentUser, order_id: int, to: Field = "", reason: Field = "", version: Field = ""
+) -> HTMLResponse | RedirectResponse:
+    return _revision_act(
+        request, db, user, order_id,
+        lambda o: intake.set_state(
+            db, o, to, reason, actor=user, client_address=client_address(request), seen=parse_seen(version), check=True
+        ),
+        cause="po_change",
+    )  # fmt: skip
+
+
+def _invoice(db: Db, value: str) -> SalesInvoice:
+    found = db.get(SalesInvoice, _count(value) or 0)
+    if found is None:
+        raise LedgerError("Choose an invoice from the list.")
+    return found
+
+
+def _amount(value: str) -> Decimal | None:
+    return number(value, "Amount", Money, positive=False) if value.strip() else None
+
+
+@router.post("/{order_id}/link", response_class=HTMLResponse, response_model=None)
+def link_invoice(
+    request: Request, db: Db, user: CurrentUser, order_id: int, invoice_id: Field = "", invoice_line: Field = "",
+    po_line: Field = "", amount: Field = "", reason: Field = "",
+) -> HTMLResponse | RedirectResponse:  # fmt: skip
+    def work(order: CustomerPO) -> None:
+        invoice = _invoice(db, invoice_id)
+        line_id = po_line_id = None
+        if invoice_line.strip() or po_line.strip():
+            at, no = _count(invoice_line), _count(po_line)
+            line = db.scalar(select(SalesInvoiceLine).where(
+                SalesInvoiceLine.invoice_id == invoice.id, SalesInvoiceLine.position == at))  # fmt: skip
+            target = db.scalar(select(CustomerPOLine).where(
+                CustomerPOLine.customer_po_id == order.id, CustomerPOLine.line_no == no))  # fmt: skip
+            if line is None or target is None:
+                raise LedgerError("Give a line number that is on the invoice and a line number that is on the PO.")
+            line_id, po_line_id = line.id, target.id
+        decisions.link(
+            db, invoice, order, invoice_line_id=line_id, po_line_id=po_line_id, amount=_amount(amount),
+            reason=reason, actor=user, client_address=client_address(request),
+        )  # fmt: skip
+
+    return _revision_act(request, db, user, order_id, work, run=False)
+
+
+@router.post("/{order_id}/reject-invoice", response_class=HTMLResponse, response_model=None)
+def reject_invoice(
+    request: Request, db: Db, user: CurrentUser, order_id: int, invoice_id: Field = "", reason: Field = ""
+) -> HTMLResponse | RedirectResponse:
+    return _revision_act(
+        request, db, user, order_id,
+        lambda o: decisions.reject(
+            db, _invoice(db, invoice_id), o, reason=reason, actor=user, client_address=client_address(request)
+        ),
+        run=False,
+    )  # fmt: skip
+
+
+@router.post("/{order_id}/withdraw", response_class=HTMLResponse, response_model=None)
+def withdraw_decision(
+    request: Request, db: Db, user: CurrentUser, order_id: int, decision_id: Field = "", reason: Field = ""
+) -> HTMLResponse | RedirectResponse:
+    def work(order: CustomerPO) -> None:
+        row = db.get(Allocation, _count(decision_id) or 0)
+        if row is None or row.customer_po_id not in {r.id for r in listing.revisions_of(db, order)}:
+            raise LedgerError("That decision was not found on this purchase order.")
+        decisions.withdraw(db, row, reason=reason, actor=user, client_address=client_address(request))
+
+    return _revision_act(request, db, user, order_id, work, run=False)

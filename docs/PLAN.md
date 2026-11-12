@@ -2,8 +2,8 @@
 
 > **Status, 2026-11-12:** Phases 0 to 3 are built. **Phase 4 is in progress:** its design is written (PD-4.0, DEC-54) and
 > the queue and the extractor are built (PD-4.0a); the model gateway, validator, matching, Review screen and Accept come
-> next, after **Phase 8 (customer orders and invoice reconciliation)**, which the owner asked for first; its design is
-> written (PD-8.0) and waits for the go-ahead. Left from Phase 3: the owner's check of the Mailboxes screen with the real
+> next, after **Phase 8 (customer orders and invoice reconciliation)**, which the owner asked for first and which is now built
+> (PD-8.0 to PD-8.7); only PD-8.8, customer POs from email, waits for Phase 4. Left from Phase 3: the owner's check of the Mailboxes screen with the real
 > Google account (TC-MAIL-28).
 > **Sources:** [REQUIREMENTS.md](REQUIREMENTS.md), [ARCHITECTURE.md](ARCHITECTURE.md), [DECISIONS.md](DECISIONS.md).
 
@@ -288,12 +288,23 @@ PD-8.4 rules review. Synthetic data only until the owner shows a real export (OP
   71 tests; T-7 met for the ten scenarios and their variants).** The engine, the loader and run, a person's decisions; the
   pages re-run it at every change. The rules where DEC-59 left room are DEC-62 (Assumed). No screens yet: PD-8.5 shows
   the statuses, the exception queue and the decision buttons.
-- [ ] PD-8.5 The screens (§16.6): order list with filters and CSV, order page with every action, exception queue, sales
-  invoices and uploads, customers; Chrome cases for each.
-- [ ] PD-8.6 Security and regression: malformed and hostile uploads, the route sweep, an audit row for every action, the
-  purchasing tests unchanged and green, the migration on a copy of a populated database.
-- [ ] PD-8.7 End to end on synthetic records (customers, POs, two uploads, every scenario), then AUDIT.md, the README,
-  BUILD_HISTORY and the completion report.
+- [x] PD-8.5 The screens (§16.6, DEC-63): order list with status, figures, filters and CSV, order page with every action,
+  exception queue, the invoice page with its review and placing forms; Chrome cases for each. **Done 2026-11-12 (TC-CO-16:
+  automated; TC-CO-17: real Chrome).** `quickbooks/reconciliation/views.py` (reads only), the list, CSV, queue and order page in
+  `pages/customer_orders.py`, the invoice page, `resolve` and `place` in `pages/sales_invoices.py`, `intake.set_state`
+  (close, cancel, reopen) and `imports.resolve_invoice`. An upload now also keeps each line's item as written, so using its
+  figures does not lower-case them.
+- [x] PD-8.6 Security and regression: malformed and hostile uploads, the route sweep, an audit row for every action, the
+  purchasing tests unchanged and green, the migration on a copy of a populated database. **Done 2026-11-12 (TC-CO-18: 16
+  tests; the whole suite and ruff and mypy green).** Nine hostile files are refused by both upload pages; every changing route in
+  the three sections is swept for session, token, Origin and no server error, and is either audited or only a preview (a new
+  route fails the test until it is listed); each action driven for real leaves its audit row naming the person; a populated
+  database upgrades again, goes back and comes forward with purchasing rows identical. No defect found.
+- [x] PD-8.7 End to end on synthetic records (customers, POs, two uploads, every scenario), then AUDIT.md, the README,
+  BUILD_HISTORY and the completion report. **Done 2026-11-12 (TC-CO-19; the whole suite, ruff and mypy green).** One test
+  drives only the screens: a customer, nine POs by file, two uploads on different days, every T-7 scenario, then a person
+  settles what waited. It found DEF-017 (the CSV showed 25.000000), fixed. AUDIT.md: REQ-CO-01 to 14 Met, T-7 Met, both on
+  synthetic records.
 - [ ] PD-8.8 (after Phase 4) Customer POs from email (§16.7): the `customer_purchase_order` type, a new prompt version,
   golden-set cases and a re-score, the customer found by sender domain, Accept through the intake service.
 
