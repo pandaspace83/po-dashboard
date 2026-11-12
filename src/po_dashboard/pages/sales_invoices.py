@@ -37,6 +37,7 @@ from po_dashboard.pages import tables
 from po_dashboard.pages.common import CurrentUser, Db, client_address, render
 from po_dashboard.quickbooks.importers import mapping as mp
 from po_dashboard.quickbooks.importers.sales import ImportProblem
+from po_dashboard.quickbooks.reconciliation import store as reconciliation
 from po_dashboard.quickbooks.snapshots import imports
 
 router = APIRouter(prefix="/sales-invoices")
@@ -264,6 +265,7 @@ async def confirm(request: Request, db: Db, user: CurrentUser) -> Response:
                 save_mapping_as=form.get("remember", "").strip() or None,
             )
         )
+        reconciliation.run(db, cause="upload", cause_ref=report.record.id)
         db.commit()
     except ImportProblem as problem:
         db.rollback()
@@ -300,6 +302,7 @@ async def map_name(request: Request, db: Db, user: CurrentUser) -> Response:
             actor=user,
             client_address=client_address(request),
         )
+        reconciliation.run(db, cause="person")
         db.commit()
     except LedgerError as problem:
         db.rollback()

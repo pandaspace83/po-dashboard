@@ -779,6 +779,12 @@ customer (exact name), QuickBooks reference, PO reference (exact, per customer, 
 equal item, then quantities, prices and currency. Decisions by people are kept and never undone by a re-run; automatic
 matches are worked out again each time. Anything with two candidates, or none, waits for a person with suggestions.
 
+Code (built in PD-8.4, DEC-62): `quickbooks/reconciliation/engine.py` (`reconcile(book)`: plain records in, each PO's
+status, figures and exceptions out; no database, no clock), `store.py` (`load` builds the book from the tables, `run`
+keeps the app's own allocations and the history, `current` works today's view out for a page) and `decisions.py` (a
+person's link, rejection and withdrawal, each audited). The pages that change customer POs or invoices call `run` before
+they commit; screens for the results come in PD-8.5.
+
 ### 16.5 Status and exceptions (DEC-59)
 
 The status of a customer PO is computed from its active revision and its allocations, never typed. Exceptions carry a

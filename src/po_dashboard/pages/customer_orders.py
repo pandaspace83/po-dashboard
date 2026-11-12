@@ -28,6 +28,7 @@ from po_dashboard.ledger.orders import COMMON_CURRENCIES, ImportRejected, RowErr
 from po_dashboard.ledger.sheets import MAX_BYTES
 from po_dashboard.pages import tables
 from po_dashboard.pages.common import CurrentUser, Db, client_address, render
+from po_dashboard.quickbooks.reconciliation import store as reconciliation
 
 router = APIRouter(prefix="/customer-orders")
 Field = Annotated[str, Form()]
@@ -222,6 +223,7 @@ async def create(
     if not errors:
         try:
             result = intake.file_po(db, data, actor=user, client_address=client_address(request))
+            reconciliation.run(db, cause="po_change", cause_ref=result.po.id if result.po else None)
             db.commit()
             where = result.po.id if result.po else 0
             tail = "" if result.kind == "created" else f"?filed={'copy' if result.kind == 'skipped' else 'revision'}"
@@ -291,6 +293,7 @@ def import_confirm(request: Request, db: Db, user: CurrentUser, token: Field = "
     raw, filename = held
     try:
         plan = po_import.apply(db, raw, filename, actor=user, client_address=client_address(request))
+        reconciliation.run(db, cause="po_change")
         db.commit()
     except ImportRejected as rejected:
         db.rollback()
@@ -349,6 +352,7 @@ async def waiting_resolve(request: Request, db: Db, user: CurrentUser, waiting_i
             actor=user,
             client_address=client_address(request),
         )
+        reconciliation.run(db, cause="po_change")
         db.commit()
     except LedgerError as problem:
         db.rollback()
@@ -433,6 +437,7 @@ def _revision_act(
         return _list(request, db, user, error="That customer purchase order was not found.", status=404)
     try:
         work(order)
+        reconciliation.run(db, cause="revision", cause_ref=order.id)
         db.commit()
     except LedgerError as problem:
         db.rollback()

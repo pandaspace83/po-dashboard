@@ -4,7 +4,7 @@
 
 PO Dashboard (RaceSpec Internal Dashboard). Scope: Phase 0 and Phase 1: sign-in, people, vendors, purchase orders, imports, the QuickBooks starting load, entries by hand, Home, Open items, Audit, page behaviour, security and speed.
 
-**139 cases:** 46 Critical, 77 High, 16 Medium; 2 terminal, 71 automated, 63 browser, 3 owner only.
+**142 cases:** 46 Critical, 80 High, 16 Medium; 2 terminal, 74 automated, 63 browser, 3 owner only.
 
 Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.18, by Claude, scripts/browser_evidence.py, on commit 5d3bd46 with uncommitted changes: **63 of 63** browser cases pass. Automated tests: `uv run pytest`. Defects: [DEFECTS.md](DEFECTS.md). Sign-off: [SIGN_OFF.md](SIGN_OFF.md).
 
@@ -155,6 +155,9 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.18, by Claude, scripts/b
 | [TC-CO-11](#tc-co-11) | An upload is planned without changing anything, then kept with its file, rows and period, and never overwrites an accepted invoice | High | Automated | Automated tests | — |
 | [TC-CO-12](#tc-co-12) | A customer name an export uses that the app does not know is linked by a person, never guessed, and remembered | High | Automated | Automated tests | — |
 | [TC-CO-09](#tc-co-09) | The Sales invoices screens: upload, check the columns, see what it would do, keep it, and look at invoices, uploads and unknown names | High | Browser | Pass 11/12/2026 | Not yet run |
+| [TC-CO-13](#tc-co-13) | The reconciliation rules, one by one, on plain records | High | Automated | Automated tests | — |
+| [TC-CO-14](#tc-co-14) | T-7: the owner's ten reconciliation scenarios and their variants, end to end | High | Automated | Automated tests | — |
+| [TC-CO-15](#tc-co-15) | What a run keeps, a person's decisions, and the pages that re-run it | High | Automated | Automated tests | — |
 | [TC-OPS-01](#tc-ops-01) | A backup restores to exactly what was backed up; it never overwrites, never deletes, and refuses unsafe places | Critical | Automated | Automated tests | — |
 | [TC-OPS-02](#tc-ops-02) | Two people, or a double click, cannot corrupt a record | High | Automated | Automated tests | — |
 | [TC-OPS-03](#tc-ops-03) | A model server that is down fails fast and leaves the document waiting; the health check sees a broken database | High | Automated | Automated tests | — |
@@ -3015,6 +3018,57 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.18, by Claude, scripts/b
 ![TC-CO-09 in Chrome](screenshots/TC-CO-09-6.png)
 
 </details>
+
+
+<a id="tc-co-13"></a>
+
+### TC-CO-13: The reconciliation rules, one by one, on plain records
+
+**Priority:** High · **How:** Automated · **Refs:** PD-8.4, DEC-59, DEC-62, REQ-CO-09, REQ-CO-10, REQ-CO-12
+
+**Steps**
+
+1. Covered by the tests named.
+
+**Expected:** Exact matching on line evidence; items compared ignoring only case and spacing; references read as keys, a list naming several POs, looked up only within the customer; no reference or an unknown one waits with suggestions and is never matched by an equal amount; a QuickBooks reference first; an item on two lines waits. Price and quantity tolerances, over-invoicing on lines first and by amount only for what lines do not explain, partial invoicing, currency never converted. Invoices with only a total matched by amount and never split by a rule. Credit memos wait and never change billed quantities; charges apart, the net only when every part is known. Duplicates, changed and incomplete invoices. The 30-day rule and coverage. Closed POs, pending revisions, a person's decisions, a stale decision. The same data in any order gives the same result.
+
+**Automated tests:** `test_reconciliation_engine.py::test_an_invoice_that_bills_the_po_exactly_is_matched_on_line_evidence`, `test_reconciliation_engine.py::test_items_are_compared_ignoring_only_case_and_spacing_never_by_likeness`, `test_reconciliation_engine.py::test_po_references_are_read_as_keys_and_a_list_names_several_pos`, `test_reconciliation_engine.py::test_a_reference_is_looked_up_only_within_the_invoices_customer`, `test_reconciliation_engine.py::test_a_reference_the_app_does_not_have_is_unmatched_with_suggestions`, `test_reconciliation_engine.py::test_an_invoice_with_no_reference_waits_and_is_never_matched_by_an_equal_amount`, `test_reconciliation_engine.py::test_an_invoice_whose_customer_is_not_chosen_reaches_no_po`, `test_reconciliation_engine.py::test_a_quickbooks_reference_on_both_sides_comes_before_the_po_reference`, `test_reconciliation_engine.py::test_an_item_on_two_candidate_lines_waits_for_a_person_and_nothing_is_counted`, `test_reconciliation_engine.py::test_a_price_within_the_tolerance_matches_and_beyond_it_is_a_confirmed_mismatch_with_its_variance`, `test_reconciliation_engine.py::test_more_quantity_than_ordered_is_over_invoiced_on_line_evidence_and_not_counted_twice`, `test_reconciliation_engine.py::test_price_and_quantity_over_together_are_fully_explained_by_the_line_differences`, `test_reconciliation_engine.py::test_the_quantity_tolerance_is_a_setting`, `test_reconciliation_engine.py::test_a_partly_billed_po_is_partially_invoiced_with_its_apparent_remainder`, `test_reconciliation_engine.py::test_an_invoice_in_another_currency_is_never_converted_or_counted`, `test_reconciliation_engine.py::test_an_invoice_with_only_a_total_is_matched_by_amount_and_says_so`, `test_reconciliation_engine.py::test_an_invoice_total_naming_two_pos_is_not_split_by_a_rule`, `test_reconciliation_engine.py::test_a_credit_memo_waits_for_a_person_and_never_changes_what_was_billed`, `test_reconciliation_engine.py::test_freight_tax_and_discounts_are_apart_from_goods_and_the_net_includes_them`, `test_reconciliation_engine.py::test_a_charge_that_is_on_the_po_is_matched_to_its_line_like_anything_else`, `test_reconciliation_engine.py::test_a_charge_nobody_classified_stops_the_net_and_waits`, `test_reconciliation_engine.py::test_charges_on_an_invoice_for_several_pos_are_not_split`, `test_reconciliation_engine.py::test_a_billed_line_with_no_quantity_cannot_be_compared`, `test_reconciliation_engine.py::test_two_different_invoices_with_one_number_are_a_confirmed_potential_duplicate`, `test_reconciliation_engine.py::test_an_invoice_changed_or_read_incompletely_makes_the_po_wait`, `test_reconciliation_engine.py::test_two_invoices_with_the_same_date_and_lines_are_both_counted_and_flagged`, `test_reconciliation_engine.py::test_a_young_po_without_an_invoice_is_not_called_anything`, `test_reconciliation_engine.py::test_an_old_po_with_no_invoice_is_possibly_unbilled_only_when_the_uploads_cover_its_time`, `test_reconciliation_engine.py::test_a_po_no_upload_touches_is_not_covered`, `test_reconciliation_engine.py::test_the_unbilled_days_are_a_setting`, `test_reconciliation_engine.py::test_the_periods_of_several_uploads_are_joined`, `test_reconciliation_engine.py::test_a_closed_po_is_closed_and_is_not_called_unbilled_but_a_wrong_price_still_shows`, `test_reconciliation_engine.py::test_a_pending_revision_makes_the_po_wait_and_the_terms_in_force_are_used`, `test_reconciliation_engine.py::test_a_difference_against_a_later_revision_says_the_invoice_came_first`, `test_reconciliation_engine.py::test_a_persons_rejection_keeps_the_rule_from_matching_again`, `test_reconciliation_engine.py::test_a_persons_link_places_an_invoice_with_no_reference_and_its_lines_then_match_by_item`, `test_reconciliation_engine.py::test_a_persons_line_choice_settles_an_ambiguous_item`, `test_reconciliation_engine.py::test_a_decision_that_no_longer_fits_the_revision_is_shown_not_applied`, `test_reconciliation_engine.py::test_the_result_does_not_depend_on_the_order_of_the_records`, `test_reconciliation_engine.py::test_every_code_and_status_has_words_for_the_screens`, `test_reconciliation_engine.py::test_part_of_a_total_a_person_left_unplaced_is_said`
+
+**Latest:** Owner: not recorded.
+
+
+<a id="tc-co-14"></a>
+
+### TC-CO-14: T-7: the owner's ten reconciliation scenarios and their variants, end to end
+
+**Priority:** High · **How:** Automated · **Refs:** PD-8.4, DEC-59, DEC-62, T-7, REQ-CO-07, REQ-CO-08, REQ-CO-09, REQ-CO-10, REQ-CO-12
+
+**Steps**
+
+1. Covered by the tests named.
+
+**Expected:** Through the real intake and sales import: (1) fully invoiced is matched, by amount only for an invoice list; (2) possibly unbilled only after 30 days and when the uploads cover that time, else not found or not covered, and a young PO is never called unbilled; (3) partial with the apparent remainder; (4) over-invoiced, an amount variance on totals or a confirmed quantity discrepancy on lines; (5) a confirmed price mismatch with its variance; (6) an invoice repeated in a file, in a later file or as the same file counted once, two invoices with one number a confirmed potential duplicate; (7) instalments across uploads added once each, and one invoice split between two POs; (8) no reference, another customer's PO or an unknown customer name waits, and a person's link places it and survives re-runs; (9) a revision changes nothing until approved, then its terms are reconciled, and a person's line decision follows it or is shown as no longer fitting; (10) charges apart from goods with the net, a credit memo waits and never changes billed quantities, an unclassifiable line stops the net.
+
+**Automated tests:** `test_reconciliation_scenarios.py::test_scenario_1_a_po_billed_exactly_on_line_evidence_is_matched`, `test_reconciliation_scenarios.py::test_scenario_1_variant_an_invoice_list_with_totals_only_is_matched_by_amount`, `test_reconciliation_scenarios.py::test_scenario_2_an_old_po_with_no_invoice_in_uploads_that_cover_its_time_is_possibly_unbilled`, `test_reconciliation_scenarios.py::test_scenario_2_variant_uploads_that_miss_part_of_its_time_say_not_found_not_unbilled`, `test_reconciliation_scenarios.py::test_scenario_2_variant_a_young_open_po_is_never_called_unbilled`, `test_reconciliation_scenarios.py::test_scenario_2_variant_with_no_upload_at_all_the_po_is_not_covered`, `test_reconciliation_scenarios.py::test_scenario_3_two_invoices_of_2000_and_1500_leave_1500_apparently_remaining`, `test_reconciliation_scenarios.py::test_scenario_3_variant_by_invoice_totals_it_is_partial_by_amount`, `test_reconciliation_scenarios.py::test_scenario_4_invoices_of_5800_against_5000_are_an_800_variance_for_review`, `test_reconciliation_scenarios.py::test_scenario_4_variant_on_line_evidence_the_extra_quantity_is_a_confirmed_discrepancy`, `test_reconciliation_scenarios.py::test_scenario_5_ten_units_at_110_against_100_is_a_confirmed_100_variance`, `test_reconciliation_scenarios.py::test_scenario_6_an_invoice_repeated_in_one_file_in_a_later_file_or_as_the_same_file_is_counted_once`, `test_reconciliation_scenarios.py::test_scenario_6_two_different_invoices_with_one_number_are_a_confirmed_potential_duplicate`, `test_reconciliation_scenarios.py::test_scenario_7_instalments_across_uploads_add_up_once_each`, `test_reconciliation_scenarios.py::test_one_invoice_naming_two_pos_is_split_between_them_by_item`, `test_reconciliation_scenarios.py::test_scenario_8_an_invoice_with_no_po_reference_waits_and_a_persons_link_places_it`, `test_reconciliation_scenarios.py::test_scenario_8_variant_a_reference_to_another_customers_po_is_ambiguous`, `test_reconciliation_scenarios.py::test_scenario_8_variant_an_exported_name_the_app_does_not_know_matches_nothing_until_a_person_chooses`, `test_reconciliation_scenarios.py::test_scenario_9_a_revision_keeps_the_original_terms_until_approved_and_then_reconciles_the_new_ones`, `test_reconciliation_scenarios.py::test_scenario_9_variant_a_persons_line_decision_follows_the_revision_or_is_shown_as_no_longer_fitting`, `test_reconciliation_scenarios.py::test_scenario_10_charges_are_apart_from_goods_and_the_net_is_given_when_every_part_is_known`, `test_reconciliation_scenarios.py::test_scenario_10_a_credit_memo_never_changes_billed_quantities_and_waits_until_a_person_links_it`, `test_reconciliation_scenarios.py::test_scenario_10_variant_a_line_nobody_can_classify_makes_the_net_unknown_and_waits`
+
+**Latest:** Owner: not recorded.
+
+
+<a id="tc-co-15"></a>
+
+### TC-CO-15: What a run keeps, a person's decisions, and the pages that re-run it
+
+**Priority:** High · **How:** Automated · **Refs:** PD-8.4, DEC-62, REQ-CO-13, NFR-03
+
+**Steps**
+
+1. Covered by the tests named.
+
+**Expected:** A currency mismatch is not counted. A run replaces the app's own allocations and never a person's. History is written only when a status or its exceptions change, and not each day while nothing changes. A decision that cannot be right is refused (another customer, another currency, no customer, no reason for a rejection or an override, an amount on a line-level invoice, one line without the other, withdrawing an app match, deciding twice); withdrawing lets the rules apply again; each is audited with who. Filing a PO, keeping an upload and approving a revision in the app each re-run it.
+
+**Automated tests:** `test_reconciliation_scenarios.py::test_an_invoice_in_another_currency_is_a_confirmed_mismatch_and_is_not_counted`, `test_reconciliation_scenarios.py::test_a_run_replaces_the_apps_own_allocations_and_never_a_persons`, `test_reconciliation_scenarios.py::test_history_is_written_only_when_a_status_or_its_exceptions_change`, `test_reconciliation_scenarios.py::test_a_decision_is_refused_when_it_cannot_be_right`, `test_reconciliation_scenarios.py::test_withdrawing_a_decision_lets_the_rules_apply_again_and_is_audited`, `test_reconciliation_scenarios.py::test_filing_a_po_keeping_an_upload_and_approving_a_revision_in_the_app_each_re_run_it`, `test_reconciliation_scenarios.py::test_a_re_run_on_later_days_adds_no_history_while_nothing_changes`
+
+**Latest:** Owner: not recorded.
 
 
 ## Operations
