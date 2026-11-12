@@ -1,18 +1,18 @@
 # PO Dashboard: Plan and To-Do
 
-> **Status, 2026-11-04:** Plan approved. **Phase 0 is built** except CI (PD-0.5), which needs a GitHub remote. **Phase 1
-> is in progress:** sign-in, the ledger tables and the status engine are built; the PO screens are next. The deployment
-> changed the same day (DEC-28 to DEC-32), and this plan includes it.
+> **Status, 2026-11-12:** Phases 0 to 3 are built. **Phase 4 is in progress:** its design is written (PD-4.0, DEC-54) and
+> the queue and the extractor are built (PD-4.0a); the model gateway, validator, matching, Review screen and Accept come
+> next. Left from Phase 3: the owner's check of the Mailboxes screen with the real Google account (TC-MAIL-28).
 > **Sources:** [REQUIREMENTS.md](REQUIREMENTS.md), [ARCHITECTURE.md](ARCHITECTURE.md), [DECISIONS.md](DECISIONS.md).
 
 **How this file works.** Each task has an ID (`PD-3.2`) and a checkbox. Phases run in order and each ends with a demo
 or a test run you can check. Nothing is built until you approve the plan; after that I tick tasks as they are done and
-update [AUDIT.md](AUDIT.md) at the end of each phase. A phase that needs an answer from [DECISIONS.md](DECISIONS.md)
+update [AUDIT.md](AUDIT.md), the status table in the [README](../README.md) and the status line above at the end of each phase. A phase that needs an answer from [DECISIONS.md](DECISIONS.md)
 §2 says which.
 
 **Documentation first (DEC-25).** Every phase starts with a `PD-n.0` task, before any code: bring the docs in line with
 what really happened, ask the owner every OPEN question the phase needs, write down any design it needs, then get the
-go-ahead. A task is ticked only after it has been run for real, not just written.
+go-ahead (including the README's status table, which is the public front page). A task is ticked only after it has been run for real, not just written.
 
 **Models.** Design and scoring work (the Phase 1 sign-in design, Phase 2 scoring design, Phase 6 security check, the final audit) suits Opus.
 The rest is following this plan, which suits Sonnet. I will say before each switch.
@@ -183,13 +183,8 @@ already downloaded).*
   the check OPEN-21 left). Written: DEC-54 (the pipeline), ARCHITECTURE §4 (the `extraction`, `shipment_tracking` and
   `invoice_charge` tables) and §6.1 to §6.4 (queue, matching, flags, review), the screens in §9. Brought in line:
   AUDIT.md (not updated since Phase 0: 12 requirements met, 22 partly), the test record's swapped PO references,
-  DEC-53's table row. **Waiting:** the owner's confirmation of DEC-54's design (the parts marked Assumed).
-- [ ] PD-4.0a The tables and the queue (§6.1): one migration for `extraction` (queue and review columns, `version`),
-  `shipment_tracking`, `invoice_charge`, and a real link from acknowledgements, shipments and invoices to their
-  document. The scanner queues each document it reads, in the same transaction. The extractor loop (one at a time,
-  claim by a guarded `UPDATE`, `running` back to `queued` at start, retries 1, 5 and 30 minutes for timeouts and server
-  errors, fail at once for a bad answer, wait without counting when the model is down), the reading window (quoted
-  earlier messages dropped first, then `read_in_part`), and the Failed list with Retry and Dismiss.
+  DEC-53's table row. DEC-54 confirmed by the owner, 2026-11-12.
+- [x] PD-4.0a The tables and the queue (§6.1). **Done 2026-11-12 (TC-QUE-01 to 07: 48 tests, and the Failed documents page checked in real Chrome).** Migration 0009: `extraction` (queue and review columns, `version`), `shipment_tracking`, `invoice_charge`, and a real foreign key from acknowledgements, shipments and invoices to `source_document` (the rebuild SQLite needs for that dropped migration 0006's case-insensitive invoice-number index, which the migration now puts back). `extraction/queue.py` (queue each read document once, claim by one guarded `UPDATE`, recover `running` rows at start, the Failed list with Retry and Dismiss), `extraction/runner.py` (the extractor: no transaction during a model call; model down costs nothing; retries after 1, 5 and 30 minutes then failed; a bad answer fails at once; fixed words only), `extraction/window.py` (about 15,000 characters, quoted earlier messages first, `read_in_part`), the extractor's own loop in the app beside the scanner's, the scanner queueing in the transaction that records the text, and `/documents/failed` with a Home tile. `models/llm.py` now tells `BadAnswer` (not tried again) from a server error, and keeps Ollama's prompt count. The extractor must be given its model call, so no test can reach a real model. Nothing reads a document with the real model yet: PD-4.1 to PD-4.5 build what is done with an answer.
 - [ ] PD-4.1 The model gateway finished: Ollama's prompt count kept, errors sorted into "try again" and "will fail the
   same way", the health strip's "model not reachable", waiting and failed counts. A test that only `models/llm.py`
   calls the model server (NFR-10).

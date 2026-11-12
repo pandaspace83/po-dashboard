@@ -20,8 +20,10 @@ from datetime import datetime
 from sqlalchemy import Engine, select
 from sqlalchemy.orm import Session
 
+from po_dashboard.config import DEFAULT_MODEL
 from po_dashboard.db.base import utcnow
 from po_dashboard.db.mail import Mailbox, ScanState, SourceDocument
+from po_dashboard.extraction import queue
 from po_dashboard.intake import reading
 from po_dashboard.intake.messages import DUPLICATE, STORED, TOO_OLD, store_message
 from po_dashboard.intake.store import FileStore
@@ -60,9 +62,9 @@ class Scanner:
     def __init__(
         self, engine: Engine, store: FileStore, *, open_mailbox: Callable[[Mailbox], MailSource] = open_source,
         batch: int = BATCH, max_messages: int = MAX_MESSAGES_PER_SCAN, max_reads: int = MAX_READS_PER_SCAN,
-        now: Callable[[], datetime] = utcnow,
+        now: Callable[[], datetime] = utcnow, model: str = DEFAULT_MODEL,
     ) -> None:  # fmt: skip
-        self.engine, self.store, self.open_mailbox = engine, store, open_mailbox
+        self.engine, self.store, self.open_mailbox, self.model = engine, store, open_mailbox, model
         self.batch, self.max_messages, self.max_reads, self.now = batch, max_messages, max_reads, now
         self._running = threading.Lock()
 
@@ -77,6 +79,7 @@ class Scanner:
             for mailbox_id in mailboxes:
                 budget = self._scan_mailbox(mailbox_id, budget, report)
             self._read(report)
+            self._queue_missing()
             return report
         finally:
             self._running.release()
@@ -173,6 +176,8 @@ class Scanner:
                 begin_immediate(db)
                 document = db.get(SourceDocument, doc_id)
                 state = reading.apply(document, result) if document and document.state == reading.WAITING else None
+                if document is not None and state == reading.READ:
+                    queue.enqueue(db, document, self.model)  # queued in the same transaction that records the text
                 db.commit()
             if state == reading.READ:
                 report.read += 1
@@ -182,6 +187,14 @@ class Scanner:
                 report.failed += 1
             else:
                 report.waiting += 1
+
+
+    def _queue_missing(self) -> None:
+        """Documents read before the queue existed, or whose queueing a crash interrupted, join it now."""
+        with Session(self.engine) as db:
+            begin_immediate(db)
+            queue.queue_missing(db, self.model)
+            db.commit()
 
 
 def last_scan(db: Session) -> datetime | None:

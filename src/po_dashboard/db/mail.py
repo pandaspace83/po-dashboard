@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import CheckConstraint, ForeignKey, Index, Integer, String, Text, UniqueConstraint, text
+from sqlalchemy import CheckConstraint, Float, ForeignKey, Index, Integer, String, Text, UniqueConstraint, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from po_dashboard.db.base import Base, UTCDateTime, utcnow
@@ -108,3 +108,61 @@ class ScanState(Base):
     last_success: Mapped[datetime | None] = mapped_column(UTCDateTime, default=None)
     last_error: Mapped[str | None] = mapped_column(String(200), default=None)  # a fixed reason, never mail text
     failures: Mapped[int] = mapped_column(Integer, default=0)  # in a row
+
+
+EXTRACTION_STATES = ("queued", "running", "done", "failed")
+REVIEW_STATES = ("waiting", "unmatched", "no_facts", "accepted", "rejected", "dismissed", "superseded")
+
+
+class Extraction(Base):
+    """One model reading of one document, and the work queue (DEC-54, ARCHITECTURE section 6.1). The row is `queued`
+    when the text step has read the document; the extractor claims it, and a person's review state follows. A new
+    prompt or model is a new row, so a document is read once per prompt version and model. `last_error` is fixed
+    words, never document text (DEC-13)."""
+
+    __tablename__ = "extraction"
+    __table_args__ = (
+        UniqueConstraint("document_id", "prompt_version", "model", name="uq_extraction_document_prompt_model"),
+        CheckConstraint("state in ('queued', 'running', 'done', 'failed')", name="state_known"),
+        CheckConstraint(
+            "review_state is null or review_state in "
+            "('waiting', 'unmatched', 'no_facts', 'accepted', 'rejected', 'dismissed', 'superseded')",
+            name="review_state_known",
+        ),
+        CheckConstraint("attempts >= 0", name="attempts_not_negative"),
+        Index("ix_extraction_queue", "state", "next_attempt_at"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+    document_id: Mapped[int] = mapped_column(ForeignKey("source_document.id", ondelete="CASCADE"), index=True)
+    model: Mapped[str] = mapped_column(String(100))
+    prompt_version: Mapped[int] = mapped_column(Integer)
+    schema_version: Mapped[int] = mapped_column(Integer)
+    # the queue
+    state: Mapped[str] = mapped_column(String(16), default="queued")
+    attempts: Mapped[int] = mapped_column(Integer, default=0)
+    last_error: Mapped[str | None] = mapped_column(String(200), default=None)
+    next_attempt_at: Mapped[datetime | None] = mapped_column(UTCDateTime, default=None)
+    started_at: Mapped[datetime | None] = mapped_column(UTCDateTime, default=None)
+    finished_at: Mapped[datetime | None] = mapped_column(UTCDateTime, default=None)
+    seconds: Mapped[float | None] = mapped_column(Float, default=None)
+    prompt_tokens: Mapped[int | None] = mapped_column(Integer, default=None)
+    # what was read: the model's reply exactly as it came, so numbers stay exact
+    answer: Mapped[str | None] = mapped_column(Text, default=None)
+    doc_type: Mapped[str | None] = mapped_column(String(32), default=None)
+    po_number: Mapped[str | None] = mapped_column(String(100), default=None)
+    # matching and review (Phase 4, PD-4.3 to PD-4.5)
+    review_state: Mapped[str | None] = mapped_column(String(16), default=None)
+    po_id: Mapped[int | None] = mapped_column(ForeignKey("purchase_order.id", ondelete="SET NULL"), default=None)
+    vendor_id: Mapped[int | None] = mapped_column(ForeignKey("vendor.id", ondelete="SET NULL"), default=None)
+    flags: Mapped[str | None] = mapped_column(Text, default=None)  # JSON list of {flag, level, line}
+    final: Mapped[str | None] = mapped_column(Text, default=None)  # JSON: the values a person accepted
+    entry_kind: Mapped[str | None] = mapped_column(String(16), default=None)  # ack, shipment, invoice, po
+    entry_id: Mapped[int | None] = mapped_column(Integer, default=None)
+    reviewed_by: Mapped[int | None] = mapped_column(ForeignKey("app_user.id", ondelete="SET NULL"), default=None)
+    reviewed_at: Mapped[datetime | None] = mapped_column(UTCDateTime, default=None)
+    review_note: Mapped[str | None] = mapped_column(String(500), default=None)
+    version: Mapped[int] = mapped_column(Integer, server_default="1")  # see Vendor.version (DEC-52)
+
+    __mapper_args__ = {"version_id_col": version}

@@ -8,6 +8,8 @@
   <div class="tile">{{ icon("clock") }}<div><span class="label">Last scan</span><span class="value">{{ health.last_scan }}</span></div></div>
   <div class="tile">{{ icon("chip") }}<div><span class="label">Model {{ health.model_name }}</span>
     <span class="value {{ 'ok' if health.model == 'reachable' else 'bad' }}">{{ health.model }}</span></div></div>
+  <div class="tile">{{ icon("clipboard") }}<div><span class="label">Waiting to be read</span><span class="value">{{ health.waiting }}</span></div></div>
+  <a class="tile {{ 'alert-tile' if health.failed }}" href="/documents/failed">{{ icon("alert") }}<div><span class="label">Failed documents</span><span class="value {{ 'bad' if health.failed }}">{{ health.failed }}</span></div></a>
 </div>
 {#- Counts and the to-do list update themselves every minute; those updates are not activity (DEC-45 item 9). -#}
 <div id="live" data-background hx-get="/" hx-trigger="every 60s" hx-target="this" hx-select="#live" hx-swap="outerHTML show:none"

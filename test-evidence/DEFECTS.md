@@ -15,8 +15,10 @@ Every failure is logged here the moment it is found, by whoever finds it: the ca
 | [DEF-007](#def-007) | 11/11/2026 | [TC-MAIL-24](TEST_CASES.md#tc-mail-24) | Low | A silent connection to the Gmail sign-in listener could hold up the sign-in | Fixed, not committed yet |
 | [DEF-008](#def-008) | 11/11/2026 | [TC-MAIL-10](TEST_CASES.md#tc-mail-10) | Low | A test lowered Pillow's pixel limit for the whole test run, so another test failed when the files ran in a different order | Fixed, not committed yet |
 | [DEF-009](#def-009) | 11/11/2026 | [TC-SIGN-01](TEST_CASES.md#tc-sign-01) | Low | The browser check for the cursor in Email failed on a slow first page load, though the cursor was there | Fixed, not committed yet |
-| [DEF-010](#def-010) | 11/12/2026 | [TC-MAIL-27](TEST_CASES.md#tc-mail-27) | Low | After connecting, the message gave a different start date from the table on the same page | Fixed, Chrome retest waiting |
-| [DEF-011](#def-011) | 11/12/2026 | [TC-MAIL-23](TEST_CASES.md#tc-mail-23) | High | With python.org's Python, every document failed: the sandbox refused Python's own restart | Fixed, CI retest waiting |
+| [DEF-010](#def-010) | 11/12/2026 | [TC-MAIL-27](TEST_CASES.md#tc-mail-27) | Low | After connecting, the message gave a different start date from the table on the same page | Fixed and retested |
+| [DEF-011](#def-011) | 11/12/2026 | [TC-MAIL-23](TEST_CASES.md#tc-mail-23) | High | With python.org's Python, every document failed: the sandbox refused Python's own restart | Fixed and retested |
+| [DEF-012](#def-012) | 11/12/2026 | [TC-HOME-01](TEST_CASES.md#tc-home-01) | Low | The Home check counted the new Failed documents tile as a seventh purchasing count | Fixed and retested |
+| [DEF-013](#def-013) | 11/12/2026 | [TC-QB-08](TEST_CASES.md#tc-qb-08) | Low | The check for the QuickBooks refusal read the page before the answer arrived | Fixed and retested |
 
 <a id="def-001"></a>
 
@@ -231,7 +233,7 @@ Every failure is logged here the moment it is found, by whoever finds it: the ca
 
 ## DEF-010: After connecting, the message gave a different start date from the table on the same page
 
-**Found:** 11/12/2026 by Claude, reading the Chrome screenshots before the first push · **Case:** TC-MAIL-27 · **Browser:** Google Chrome (scripts/browser_evidence.py) · **Severity:** Low · **Status:** Fixed, Chrome retest waiting
+**Found:** 11/12/2026 by Claude, reading the Chrome screenshots before the first push · **Case:** TC-MAIL-27 · **Browser:** Google Chrome (scripts/browser_evidence.py) · **Severity:** Low · **Status:** Fixed and retested
 
 **Steps to reproduce**
 
@@ -249,14 +251,14 @@ Every failure is logged here the moment it is found, by whoever finds it: the ca
 
 **Fix:** The message and the Terminal command use the same date display as the table. A test pins the time to 2 AM UTC with the Mac in New York, and the browser check now compares the message date with the table date. Not committed yet.
 
-**Retest:** 11/12/2026, Claude: pass in the tests (the new test fails on the old code). Chrome retest: waiting for the next browser evidence run.
+**Retest:** 11/12/2026, Claude: pass in the tests (the new test fails on the old code). Chrome retest 11/12/2026: pass (the message date now equals the table date; all 61 cases passed).
 
 
 <a id="def-011"></a>
 
 ## DEF-011: With python.org's Python, every document failed: the sandbox refused Python's own restart
 
-**Found:** 11/12/2026 by GitHub Actions CI, its first run (macOS runner) · **Case:** TC-MAIL-23 · **Browser:** Not a browser case (the test suite on GitHub's Mac, python.org Python 3.13) · **Severity:** High · **Status:** Fixed, CI retest waiting
+**Found:** 11/12/2026 by GitHub Actions CI, its first run (macOS runner) · **Case:** TC-MAIL-23 · **Browser:** Not a browser case (the test suite on GitHub's Mac, python.org Python 3.13) · **Severity:** High · **Status:** Fixed and retested
 
 **Steps to reproduce**
 
@@ -271,4 +273,58 @@ Every failure is logged here the moment it is found, by whoever finds it: the ca
 
 **Fix:** The sandbox also allows programs inside the running Python's own installation folder (sys.base_prefix). Every other program, apart from Tesseract, is still refused. A new test runs python.org's Python under the real rules whenever one is installed, and first shows the old rules failing. Not committed yet.
 
-**Retest:** 11/12/2026, Claude: pass on this Mac with python.org Python 3.14 and with uv's Python 3.13. First CI retest: 17 of the 18 failures were fixed; the last was the sandbox test building its own rules without the new allowance (fixed). CI retest: waiting for the next push.
+**Retest:** 11/12/2026, Claude: pass on this Mac with python.org Python 3.14 and with uv's Python 3.13. First CI retest: 17 of the 18 failures were fixed; the last was the sandbox test building its own rules without the new allowance (fixed). CI retest 11/12/2026: pass (978 tests on GitHub's Mac, commit c215fbc).
+
+
+<a id="def-012"></a>
+
+## DEF-012: The Home check counted the new Failed documents tile as a seventh purchasing count
+
+**Found:** 11/12/2026 by Claude, browser evidence run in Chrome · **Case:** TC-HOME-01 · **Browser:** Google Chrome (scripts/browser_evidence.py) · **Severity:** Low · **Status:** Fixed and retested
+
+**Steps to reproduce**
+
+1. Run scripts/browser_evidence.py after PD-4.0a added the Failed documents tile to the health strip.
+
+**Expected:** The check finds the six purchasing counts.
+
+**Actual:** The check failed: 7 tiles, not six. The app was right: the new tile is a link above the six counts.
+
+**Seen:** screenshots/DEF-012-before.png
+
+![DEF-012 as found](screenshots/DEF-012-before.png)
+
+**Cause:** The check counted every link tile on Home, and PD-4.0a added one in the health strip.
+
+**Fix:** The check counts only the tiles inside the live part of the page (the six purchasing counts). Not committed yet.
+
+**Retest:** 11/12/2026, Claude in Chrome: pass (all 61 cases passed). Owner's retest: not needed (test script only).
+
+![DEF-012 retested](screenshots/TC-HOME-01.png)
+
+
+<a id="def-013"></a>
+
+## DEF-013: The check for the QuickBooks refusal read the page before the answer arrived
+
+**Found:** 11/12/2026 by Claude, browser evidence run in Chrome · **Case:** TC-QB-08 · **Browser:** Google Chrome (scripts/browser_evidence.py) · **Severity:** Low · **Status:** Fixed and retested
+
+**Steps to reproduce**
+
+1. Upload the vendor file on Load from QuickBooks and read the page at once.
+
+**Expected:** The refusal naming the missing columns is read and checked.
+
+**Actual:** The check failed: the vendor file was not refused by name. The failure screenshot, taken a moment later, shows the refusal in full.
+
+**Seen:** screenshots/DEF-013-before.png
+
+![DEF-013 as found](screenshots/DEF-013-before.png)
+
+**Cause:** The script read the page straight after the click, before the answer was swapped in, on a busy Mac. The same kind of flaw as DEF-009.
+
+**Fix:** The check waits up to 10 seconds for the refusal, and for the app's own file's message, before it reads them. Not committed yet.
+
+**Retest:** 11/12/2026, Claude in Chrome: pass (all 61 cases passed). Owner's retest: not needed (test script only).
+
+![DEF-013 retested](screenshots/TC-QB-08.png)

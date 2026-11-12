@@ -1453,6 +1453,91 @@ expected = "Google's page opens, then the Mailboxes page says Connected with the
 tests = []
 owner = "Not yet run"
 
+[[case]]
+id = "TC-QUE-01"
+area = "Extraction queue"
+title = "The queue tables exist, the entries link to their documents, and the database refuses nonsense"
+priority = "High"
+kind = "automated"
+refs = ["PD-4.0a", "DEC-54", "REQ-IN-04"]
+steps = ["Covered by the tests named."]
+expected = "The extraction table, shipment_tracking and invoice_charge exist. An acknowledgement, shipment or invoice can point only at a real document, and a document an entry came from cannot be deleted. A tracking number appears once per shipment; a charge has a known kind and may be negative (a discount). An extraction is one per document, prompt version and model, with known states. The rebuild that adds the link keeps the case-insensitive invoice number rule."
+tests = ["test_extraction_queue.py::test_the_new_tables_and_links_exist_and_refuse_nonsense", "test_extraction_queue.py::test_the_invoice_number_index_from_migration_0006_survived_the_rebuild", "test_extraction_queue.py::test_a_document_an_entry_came_from_cannot_be_deleted", "test_extraction_queue.py::test_tracking_numbers_and_charges_keep_their_rules", "test_extraction_queue.py::test_an_extraction_is_one_per_document_prompt_and_model_and_has_known_states", "test_database.py::test_migration_matches_the_models"]
+
+
+[[case]]
+id = "TC-QUE-02"
+area = "Extraction queue"
+title = "Every read document is queued once, and the scanner queues what it reads"
+priority = "High"
+kind = "automated"
+refs = ["PD-4.0a", "DEC-54"]
+steps = ["Covered by the tests named."]
+expected = "A document the text step read is queued; one that was not read is not. It is queued once, even after a new prompt version (a new prompt never re-reads on its own). The scanner queues each document in the transaction that records its text and, on later scans, catches documents read before the queue existed. The queue holds the model name from settings."
+tests = ["test_extraction_queue.py::test_every_read_document_is_queued_once_and_unread_ones_are_not", "test_extraction_queue.py::test_a_new_prompt_does_not_queue_a_document_that_already_has_a_reading", "test_extraction_queue.py::test_the_scanner_queues_each_document_it_reads_and_catches_up_on_older_ones", "test_extraction_queue.py::test_the_model_name_in_the_queue_is_the_one_in_settings"]
+
+
+[[case]]
+id = "TC-QUE-03"
+area = "Extraction queue"
+title = "A row is claimed by one reader only, oldest first, when due, and a crash puts it back"
+priority = "High"
+kind = "automated"
+refs = ["PD-4.0a", "DEC-54", "NFR-04"]
+steps = ["Covered by the tests named."]
+expected = "The oldest due row is claimed first and once. A row is not claimed before its retry time. Four readers claiming at once never hold the same row. A row left running by a crash goes back to queued without counting the try, and is read after recovery. The health counts are right."
+tests = ["test_extraction_queue.py::test_the_oldest_due_row_is_claimed_first_and_only_once", "test_extraction_queue.py::test_a_row_is_not_claimed_before_its_time", "test_extraction_queue.py::test_many_claimers_at_once_never_hold_the_same_row", "test_extraction_queue.py::test_a_row_a_crash_left_running_goes_back_without_counting_the_try", "test_extraction_queue.py::test_a_row_a_crash_left_running_is_read_after_recovery", "test_extraction_queue.py::test_the_counts_for_the_health_strip"]
+
+
+[[case]]
+id = "TC-QUE-04"
+area = "Extraction queue"
+title = "The extractor stores a read exactly, and every failure ends the way the design says"
+priority = "High"
+kind = "automated"
+refs = ["PD-4.0a", "DEC-54", "DEC-13", "NFR-10"]
+steps = ["Covered by the tests named."]
+expected = "A read keeps the model's reply as it came (numbers exact), the type, PO number, seconds and token count. A model that cannot be reached costs the document nothing and it is read when the model is back. A server error is tried again after 1, 5 and 30 minutes, then fails with fixed words. A reply that cannot be used fails at once; a bug fails with the kind of error only; no document words reach the error. A document with no text fails in fixed words. A late answer does not undo a person's Retry or Dismiss. No lock is held while the model works. The extractor cannot be built without its model call, so no test reaches a real model."
+tests = ["test_extraction_queue.py::test_a_read_is_stored_exactly_with_the_numbers_the_model_gave", "test_extraction_queue.py::test_the_text_the_model_reads_is_the_stored_text_of_the_document", "test_extraction_queue.py::test_an_unknown_document_type_or_a_blank_po_number_is_kept_as_nothing", "test_extraction_queue.py::test_idle_when_nothing_is_queued", "test_extraction_queue.py::test_a_model_that_cannot_be_reached_costs_the_document_nothing", "test_extraction_queue.py::test_a_server_error_is_tried_again_after_1_5_and_30_minutes_then_fails", "test_extraction_queue.py::test_an_answer_that_cannot_be_used_fails_at_once_in_fixed_words", "test_extraction_queue.py::test_a_bug_in_the_call_fails_the_document_with_the_kind_of_error_only", "test_extraction_queue.py::test_a_document_with_no_stored_text_fails_in_fixed_words", "test_extraction_queue.py::test_a_change_made_while_the_model_works_is_not_overwritten", "test_extraction_queue.py::test_the_model_is_called_with_no_transaction_open", "test_extraction_queue.py::test_the_extractor_needs_its_model_call_passed_in_so_no_test_reaches_a_real_model", "test_extraction_queue.py::test_the_loop_recovers_first_reads_on_without_a_pause_and_rests_when_idle_or_the_model_is_down"]
+
+
+[[case]]
+id = "TC-QUE-05"
+area = "Extraction queue"
+title = "A long document is cut to the reading window, the quoted earlier messages first, and it says so"
+priority = "High"
+kind = "automated"
+refs = ["PD-4.0a", "DEC-54"]
+steps = ["Covered by the tests named."]
+expected = "A short text is untouched. A long one loses its quoted earlier messages first and, if that is enough, is not flagged. One still too long is cut, says so in the text sent, and is flagged read_in_part. The text sent never exceeds the window."
+tests = ["test_extraction_queue.py::test_a_short_text_is_untouched", "test_extraction_queue.py::test_a_long_text_loses_its_quoted_earlier_messages_first_and_is_not_flagged", "test_extraction_queue.py::test_a_text_still_too_long_is_cut_and_flagged_and_says_so", "test_extraction_queue.py::test_a_current_message_longer_than_the_window_is_cut_even_when_it_has_quotes", "test_extraction_queue.py::test_a_long_document_is_cut_to_the_window_and_flagged"]
+
+
+[[case]]
+id = "TC-QUE-06"
+area = "Extraction queue"
+title = "The gateway tells an answer that will fail again from an error worth trying again"
+priority = "High"
+kind = "automated"
+refs = ["PD-4.0a", "DEC-54", "NFR-10"]
+steps = ["Covered by the tests named."]
+expected = "A reply that is not JSON, not an object, or cut off at the reply limit is a BadAnswer (not tried again). A server error is an ordinary model error (tried again) and a missing server is unavailable. Ollama's prompt count is kept when given."
+tests = ["test_extraction_queue.py::test_a_reply_that_is_not_the_schema_or_was_cut_off_will_not_be_tried_again", "test_extraction_queue.py::test_a_server_error_can_be_tried_again_and_the_prompt_count_is_kept"]
+
+
+[[case]]
+id = "TC-QUE-07"
+area = "Extraction queue"
+title = "Failed documents are listed on their own page, and a person can Retry or Dismiss them"
+priority = "High"
+kind = "browser"
+refs = ["PD-4.0a", "DEC-54", "DEC-29", "DEC-52", "NFR-03"]
+steps = ["Home shows a failed document in the Failed documents tile.", "Open the tile: the list names the document and the reason.", "Press Retry: the list is empty and Home shows 0.", "With another failed document, type a reason and press Dismiss."]
+expected = "Home shows how many documents wait and how many failed, and the failed tile opens the list. The list shows each failed document with its message, tries and reason, never a dismissed one; markup in a subject is shown as text. Retry puts it back with its tries reset; Dismiss needs a reason, files it with who and why, and takes it off the list and the count; both are audited. A page that is out of date, or a document no longer failed, is refused. Anyone signed in may use it; every action needs the security token. In Chrome: the tile shows 1, the page lists the document, Retry empties the list and the count returns to 0, and Dismiss with a reason empties it again."
+tests = ["test_failed_documents.py::test_the_list_shows_each_failed_document_with_its_message_and_why", "test_failed_documents.py::test_only_failed_documents_that_nobody_dismissed_are_listed", "test_failed_documents.py::test_markup_in_a_subject_is_shown_as_text", "test_failed_documents.py::test_an_empty_list_says_so", "test_failed_documents.py::test_retry_puts_the_document_back_with_its_tries_reset_and_it_is_audited", "test_failed_documents.py::test_dismiss_needs_a_reason_files_the_document_and_says_who_and_why", "test_failed_documents.py::test_a_page_that_is_out_of_date_is_refused_and_changes_nothing", "test_failed_documents.py::test_a_document_that_is_not_failed_cannot_be_retried_or_dismissed", "test_failed_documents.py::test_everyone_signed_in_may_use_it_and_nobody_else", "test_failed_documents.py::test_every_action_needs_the_security_token", "test_failed_documents.py::test_home_counts_the_waiting_and_the_failed", "test_failed_documents.py::test_no_document_words_are_in_the_page_except_the_message_it_came_in"]
+owner = "Not yet run"
+
+
 # =====================================================================================================================
 # Operations (engineering review, 2026-11-10)
 
@@ -1690,8 +1775,8 @@ actual = "The message said Mail from 11/10/2026 on will be read; the table said 
 failure_evidence = "screenshots/DEF-010-before.png"
 cause = "The message printed the stored time, which is in UTC, as a date; the table turns it into the office date first (DEC-45). In the evening in the US the two are different days. The browser check looked for the word Connected, not the date."
 fix = "The message and the Terminal command use the same date display as the table. A test pins the time to 2 AM UTC with the Mac in New York, and the browser check now compares the message date with the table date."
-retest = "11/12/2026, Claude: pass in the tests (the new test fails on the old code). Chrome retest: waiting for the next browser evidence run."
-status = "Fixed, Chrome retest waiting"
+retest = "11/12/2026, Claude: pass in the tests (the new test fails on the old code). Chrome retest 11/12/2026: pass (the message date now equals the table date; all 61 cases passed)."
+status = "Fixed and retested"
 
 [[defect]]
 id = "DEF-011"
@@ -1706,8 +1791,44 @@ expected = "The document is read inside the sandbox, as on this Mac."
 actual = "Every read ended as failed: the reader stopped unexpectedly. 20 tests failed in CI (reading, scanner, hostile files). On this Mac they passed, because uv's own Python does not restart itself."
 cause = "python.org's Python starts by running a second program inside its installation (Resources/Python.app/Contents/MacOS/Python). The sandbox rules allowed only the python file itself to run, so that restart was refused before any code ran. Reproduced here with the python.org Python 3.14 installed on this Mac."
 fix = "The sandbox also allows programs inside the running Python's own installation folder (sys.base_prefix). Every other program, apart from Tesseract, is still refused. A new test runs python.org's Python under the real rules whenever one is installed, and first shows the old rules failing."
-retest = "11/12/2026, Claude: pass on this Mac with python.org Python 3.14 and with uv's Python 3.13. First CI retest: 17 of the 18 failures were fixed; the last was the sandbox test building its own rules without the new allowance (fixed). CI retest: waiting for the next push."
-status = "Fixed, CI retest waiting"
+retest = "11/12/2026, Claude: pass on this Mac with python.org Python 3.14 and with uv's Python 3.13. First CI retest: 17 of the 18 failures were fixed; the last was the sandbox test building its own rules without the new allowance (fixed). CI retest 11/12/2026: pass (978 tests on GitHub's Mac, commit c215fbc)."
+status = "Fixed and retested"
+
+[[defect]]
+id = "DEF-012"
+found = "11/12/2026"
+found_by = "Claude, browser evidence run in Chrome"
+case = "TC-HOME-01"
+browser = "Google Chrome (scripts/browser_evidence.py)"
+severity = "Low"
+title = "The Home check counted the new Failed documents tile as a seventh purchasing count"
+steps = ["Run scripts/browser_evidence.py after PD-4.0a added the Failed documents tile to the health strip."]
+expected = "The check finds the six purchasing counts."
+actual = "The check failed: 7 tiles, not six. The app was right: the new tile is a link above the six counts."
+failure_evidence = "screenshots/DEF-012-before.png"
+cause = "The check counted every link tile on Home, and PD-4.0a added one in the health strip."
+fix = "The check counts only the tiles inside the live part of the page (the six purchasing counts)."
+retest = "11/12/2026, Claude in Chrome: pass (all 61 cases passed). Owner's retest: not needed (test script only)."
+retest_evidence = "screenshots/TC-HOME-01.png"
+status = "Fixed and retested"
+
+[[defect]]
+id = "DEF-013"
+found = "11/12/2026"
+found_by = "Claude, browser evidence run in Chrome"
+case = "TC-QB-08"
+browser = "Google Chrome (scripts/browser_evidence.py)"
+severity = "Low"
+title = "The check for the QuickBooks refusal read the page before the answer arrived"
+steps = ["Upload the vendor file on Load from QuickBooks and read the page at once."]
+expected = "The refusal naming the missing columns is read and checked."
+actual = "The check failed: the vendor file was not refused by name. The failure screenshot, taken a moment later, shows the refusal in full."
+failure_evidence = "screenshots/DEF-013-before.png"
+cause = "The script read the page straight after the click, before the answer was swapped in, on a busy Mac. The same kind of flaw as DEF-009."
+fix = "The check waits up to 10 seconds for the refusal, and for the app's own file's message, before it reads them."
+retest = "11/12/2026, Claude in Chrome: pass (all 61 cases passed). Owner's retest: not needed (test script only)."
+retest_evidence = "screenshots/TC-QB-08.png"
+status = "Fixed and retested"
 
 # =====================================================================================================================
 # User sign-off: the checks that matter most before go-live. "Ready" items can be tested now; "Not built" items are

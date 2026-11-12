@@ -27,8 +27,9 @@ import threading
 import time
 import tomllib
 from collections.abc import Callable
-from datetime import date, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
+from typing import Any
 from urllib.parse import parse_qs, urlparse
 
 import httpx
@@ -38,6 +39,7 @@ from sqlalchemy.orm import Session
 
 from po_dashboard.auth import service
 from po_dashboard.config import Settings
+from po_dashboard.db.mail import Extraction, Mailbox, SourceDocument, SourceMessage
 from po_dashboard.db.migrate import upgrade
 from po_dashboard.ledger.orders import TEMPLATE as PO_TEMPLATE
 from po_dashboard.web import create_app
@@ -87,6 +89,7 @@ class Run:
         self.current = ""
         self.shots: list[str] = []
         self.problems: list[str] = []
+        self.engine: Any = None  # the app's database, for cases that need a made-up row the app cannot yet make
         self.saved: dict[str, str] = {}  # urls of things made by earlier cases
         self.temporary = ""
 
@@ -799,12 +802,14 @@ def quickbooks_again(r: Run) -> None:
 def quickbooks_wrong_files(r: Run) -> None:
     r.go(r.a, "/orders/quickbooks")
     r.upload(r.a, DATA / "vendors_sample.xlsx", "button:has-text('Show what it would do')")
-    check("This does not look like the QuickBooks Open POs report: it has no 'date', 'num'" in r.main(r.a),
-          "the vendor file was not refused by name")  # fmt: skip
+    refused = "This does not look like the QuickBooks Open POs report: it has no 'date', 'num'"
+    r.a.wait_for_selector(f"text={refused}", timeout=10000)  # the answer arrives after the click (DEF-013)
+    check(refused in r.main(r.a), "the vendor file was not refused by name")
     r.shot(r.a)
     template = r.work / "purchase-orders-template.csv"
     template.write_text(PO_TEMPLATE)
     r.upload(r.a, template, "button:has-text('Show what it would do')")
+    r.a.wait_for_selector("text=app's own import format", timeout=10000)
     check("app's own import format" in r.main(r.a), "the app's own file was not recognised")
     r.shot(r.a)
     r.a.click("a:has-text('Go to Import CSV or Excel')")
@@ -985,7 +990,8 @@ def timeline(r: Run) -> None:
 @case("TC-HOME-01")
 def home_counts(r: Run) -> None:
     r.go(r.a, "/")
-    check(r.a.locator("a.tile").count() == 6, f"{r.a.locator('a.tile').count()} tiles, not six")
+    tiles = r.a.locator("#live a.tile")  # the six purchasing counts; the health strip above them is separate (DEF-012)
+    check(tiles.count() == 6, f"{tiles.count()} tiles, not six")
     check("Ask the vendor for a new date" in r.a.inner_text("#live"), "Needs attention has no next step")
     r.shot(r.a, full=True)
 
@@ -1153,6 +1159,61 @@ def mailbox_round_trip(r: Run) -> None:
     r.shot(r.a)
 
 
+def seed_failed_document(r: Run, subject: str) -> None:
+    """A made-up failed document in the evidence database: the model is never run here."""
+    with Session(r.engine) as db:
+        box = db.query(Mailbox).first() or Mailbox(address="evidence@example.test", provider="folder", location="/none")
+        db.add(box)
+        db.flush()
+        n = db.query(SourceMessage).count() + 1
+        message = SourceMessage(
+            mailbox_id=box.id, folder="Inbox", provider_id=f"evidence-{n}", sender="vendor@acme.example",
+            recipients="purchasing@example.test", subject=subject, received_at=datetime.now(UTC),
+            message_id_header=f"<evidence-{n}@acme.example>", raw_path="00/" + "0" * 64,
+            content_hash=f"{n:064}", size=10,
+        )  # fmt: skip
+        db.add(message)
+        db.flush()
+        document = SourceDocument(
+            message_id=message.id, filename="Message body", kind="body", stored_path="00/" + "0" * 64,
+            content_hash=f"{n:064}", size=10, state="read", text_path="00/" + "0" * 64,
+        )  # fmt: skip
+        db.add(document)
+        db.flush()
+        db.add(Extraction(
+            document_id=document.id, model="stub:1b", prompt_version=1, schema_version=1, state="failed", attempts=4,
+            last_error="the model server gave no answer, even after 4 tries", finished_at=datetime.now(UTC),
+        ))  # fmt: skip
+        db.commit()
+
+
+@case("TC-QUE-07")
+def failed_documents(r: Run) -> None:
+    seed_failed_document(r, "Acknowledgement for PO 4521")
+    r.go(r.a, "/")
+    if "/sign-in" in r.a.url:
+        r.sign_in(r.a, ADMIN, PASSWORD)
+        r.go(r.a, "/")
+    tile = r.a.locator("a.tile[href='/documents/failed']")
+    check(tile.count() == 1 and "1" in tile.inner_text(), "Home does not show one failed document")
+    tile.click()
+    r.a.wait_for_url(re.compile(r".*/documents/failed$"))
+    listed = r.main(r.a)
+    check("Acknowledgement for PO 4521" in listed and "even after 4 tries" in listed, "the failure is not listed")
+    r.shot(r.a)
+    r.a.click("form[action$='/retry'] button")
+    r.a.wait_for_selector("text=No failed documents.")
+    r.go(r.a, "/")
+    shown = r.a.locator("a.tile[href='/documents/failed']").inner_text().split()[-1]
+    check(shown == "0", f"the count is {shown}, not 0")
+    seed_failed_document(r, "A newsletter")
+    r.go(r.a, "/documents/failed")
+    r.a.fill("input[name='reason']", "Not an order")
+    r.a.click("form[action$='/dismiss'] button")
+    r.a.wait_for_selector("text=No failed documents.")
+    r.shot(r.a)
+
+
 @case("TC-WEB-06")
 def readable_errors(r: Run) -> None:
     r.go(r.a, "/no-such-page")
@@ -1253,6 +1314,7 @@ def main() -> int:
         with sync_playwright() as p:
             browser = p.chromium.launch(channel="chrome", headless=not args.headed)
             run = Run(browser, f"http://127.0.0.1:{port}", work)
+            run.engine = engine
             for cid in browser_cases:
                 run.current, run.shots = cid, []
                 began = time.monotonic()

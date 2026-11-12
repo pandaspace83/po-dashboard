@@ -219,7 +219,7 @@ so someone always decides about the missing quantity. A PO with no lines is Open
 7. **Review.** The extraction waits for a person (DEC-08). Accept writes the ledger rows, the history rows and an
    audit entry in one transaction. Reject keeps the extraction, marked rejected, with a reason.
 
-### 6.1 The queue (DEC-54, PD-4.0a)
+### 6.1 The queue (DEC-54, PD-4.0a; built)
 
 The `extraction` table is the queue; there is no other queue software. Its machine state is `queued`, `running`, `done`
 or `failed`:

@@ -57,6 +57,8 @@ for 30 minutes.
 | Banner: "can't read mailbox" after a change | the app's permission was changed on the mail system's side | Ask the company's admin to check that the app's access covers that mailbox |
 | Banner: "model not reachable" | Ollama not running, or the model missing | Start Ollama; `ollama list` shows `qwen2.5:14b-instruct`; pull it if missing |
 | Documents stuck "processing" | the app stopped mid-document | Restart the service; the document is retried; nothing is lost because the position moves only after storage |
+| Home says "Waiting to be read" and the number does not go down | the model is not reachable (Home says so beside it), or the model is slow: the first read after Ollama loads a 14b model can take minutes | Start Ollama and check `ollama list`. Nothing is lost and nothing is marked failed while the model is down; the documents are read when it is back |
+| Home shows "Failed documents" above 0 | the model gave no usable answer for those documents, after 4 tries or at once | Open Failed documents (the tile). Retry puts a document back in the queue; Dismiss files it with a reason. If many fail together, check the model first |
 | Every document is flagged or Unmatched | wrong vendor domains, or POs not entered | Check the vendor's domains; enter the missing POs |
 | Slow extraction | machine short of memory | Close other apps; or choose a smaller model in Settings (lower accuracy) |
 | Wrong data was accepted | a person accepted a misread document | Edit the facts on the PO (recorded in the audit trail); report the document so it joins the golden set |

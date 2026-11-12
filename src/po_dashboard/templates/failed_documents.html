@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% from "_table.html" import pager with context %}
+{% block title %}Failed documents · {{ app_name }}{% endblock %}
+{% block content %}
+<h1>Failed documents</h1>
+<p class="muted">The model could not read these. Retry puts a document back in the queue; Dismiss files it as dealt with, and says why.</p>
+{% if error %}<p class="error" role="alert">{{ icon("alert") }}<span>{{ error }}</span></p>{% endif %}
+<div id="results">
+{% if page.rows %}
+<div class="table-wrap table-scroll">
+<table>
+  <thead><tr><th scope="col">Document</th><th scope="col">From</th><th scope="col">Subject</th><th scope="col">Received</th><th scope="col">Tries</th><th scope="col">Why</th><th scope="col">Actions</th></tr></thead>
+  <tbody>
+  {% for row, document, message in page.rows %}
+  <tr>
+    <td>{{ document.filename }}</td>
+    <td>{{ message.sender or "" }}</td>
+    <td>{{ message.subject or "" }}</td>
+    <td>{{ message.received_at | moment }}</td>
+    <td>{{ row.attempts }}</td>
+    <td>{{ row.last_error or "" }}</td>
+    <td>
+      <div class="actions">
+        <form method="post" action="/documents/failed/{{ row.id }}/retry" class="inline">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <input type="hidden" name="version" value="{{ row.version }}">
+          <button type="submit" class="small">{{ icon("refresh") }}Retry</button>
+        </form>
+        <form method="post" action="/documents/failed/{{ row.id }}/dismiss" class="inline">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <input type="hidden" name="version" value="{{ row.version }}">
+          <input name="reason" type="text" maxlength="500" required placeholder="Why dismiss?" aria-label="Reason for dismissing {{ document.filename }}">
+          <button type="submit" class="small">{{ icon("ban") }}Dismiss</button>
+        </form>
+      </div>
+    </td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{{ pager(page, "document") }}
+{% else %}
+<p>No failed documents.</p>
+{% endif %}
+</div>
+{% endblock %}

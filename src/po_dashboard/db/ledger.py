@@ -108,7 +108,9 @@ class Acknowledgement(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
     po_id: Mapped[int] = mapped_column(ForeignKey("purchase_order.id", ondelete="RESTRICT"), index=True)
-    source_document_id: Mapped[int | None] = mapped_column(Integer, default=None)  # a real link from Phase 4
+    source_document_id: Mapped[int | None] = mapped_column(
+        ForeignKey("source_document.id", ondelete="RESTRICT"), default=None, index=True
+    )  # the document an accepted entry came from (Phase 4); empty for an entry typed by hand
     source_ref: Mapped[str | None] = mapped_column(String(64), default=None)  # page or cell
     accepted_by: Mapped[int | None] = mapped_column(ForeignKey("app_user.id", ondelete="SET NULL"), default=None)
     accepted_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
@@ -156,7 +158,9 @@ class Shipment(Base):
     tracking_number: Mapped[str | None] = mapped_column(String(100), default=None)
     shipped_at: Mapped[date | None] = mapped_column(Date, default=None)
     eta: Mapped[date | None] = mapped_column(Date, default=None)  # applies to every line unless the line has its own
-    source_document_id: Mapped[int | None] = mapped_column(Integer, default=None)
+    source_document_id: Mapped[int | None] = mapped_column(
+        ForeignKey("source_document.id", ondelete="RESTRICT"), default=None, index=True
+    )
     source_ref: Mapped[str | None] = mapped_column(String(64), default=None)
     accepted_by: Mapped[int | None] = mapped_column(ForeignKey("app_user.id", ondelete="SET NULL"), default=None)
     accepted_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
@@ -193,7 +197,9 @@ class Invoice(Base):
     invoice_number: Mapped[str] = mapped_column(String(64))
     invoice_date: Mapped[date | None] = mapped_column(Date, default=None)
     total: Mapped[Decimal | None] = mapped_column(Money, default=None)  # as written; no tax field until OPEN-11
-    source_document_id: Mapped[int | None] = mapped_column(Integer, default=None)
+    source_document_id: Mapped[int | None] = mapped_column(
+        ForeignKey("source_document.id", ondelete="RESTRICT"), default=None, index=True
+    )
     source_ref: Mapped[str | None] = mapped_column(String(64), default=None)
     accepted_by: Mapped[int | None] = mapped_column(ForeignKey("app_user.id", ondelete="SET NULL"), default=None)
     accepted_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
@@ -213,3 +219,37 @@ class InvoiceLine(Base):
     po_line_id: Mapped[int] = mapped_column(ForeignKey("po_line.id", ondelete="RESTRICT"), index=True)
     qty: Mapped[Decimal] = mapped_column(Quantity)
     price: Mapped[Decimal] = mapped_column(Money)
+
+
+class ShipmentTracking(Base):
+    """Every tracking number of a shipment notice: one notice can list several boxes (DEC-54).
+    `shipment.tracking_number` keeps the first, for display."""
+
+    __tablename__ = "shipment_tracking"
+    __table_args__ = (
+        UniqueConstraint("shipment_id", "tracking_number", name="uq_shipment_tracking_shipment_id_number"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+    shipment_id: Mapped[int] = mapped_column(ForeignKey("shipment.id", ondelete="CASCADE"), index=True)
+    tracking_number: Mapped[str] = mapped_column(String(100))
+    carrier: Mapped[str | None] = mapped_column(String(100), default=None)
+
+
+CHARGE_KINDS = ("freight", "tariff", "tax", "other")
+
+
+class InvoiceCharge(Base):
+    """A charge on an invoice that is not goods (DEC-48): freight, tariff, tax or other, as printed. Never a PO line,
+    never an alert (OPEN-21). A discount is `other` with a negative amount."""
+
+    __tablename__ = "invoice_charge"
+    __table_args__ = (CheckConstraint("kind in ('freight', 'tariff', 'tax', 'other')", name="kind_known"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+    invoice_id: Mapped[int] = mapped_column(ForeignKey("invoice.id", ondelete="CASCADE"), index=True)
+    kind: Mapped[str] = mapped_column(String(16))
+    label: Mapped[str] = mapped_column(String(200))
+    amount: Mapped[Decimal] = mapped_column(Money)

@@ -20,12 +20,15 @@ from po_dashboard.auth.gate import Gate
 from po_dashboard.config import Settings
 from po_dashboard.db.migrate import upgrade
 from po_dashboard.display import day, moment
+from po_dashboard.extraction.runner import Extractor
 from po_dashboard.intake.store import FileStore
 from po_dashboard.mail.gmail_auth import Keychain
+from po_dashboard.models import llm
 from po_dashboard.pages import (
     account,
     admin,
     audit,
+    documents,
     entries,
     errors,
     mailboxes,
@@ -36,7 +39,7 @@ from po_dashboard.pages import (
 )
 from po_dashboard.pages.formats import money, quantity
 from po_dashboard.pages.tables import with_query
-from po_dashboard.scheduler.loop import run_forever
+from po_dashboard.scheduler.loop import run_extractor, run_forever
 from po_dashboard.scheduler.scanner import Scanner
 
 HERE = Path(__file__).parent
@@ -52,14 +55,15 @@ def create_app(
 
     @asynccontextmanager
     async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
-        task = None
-        if start_scanner:
-            scanner = Scanner(engine, FileStore(settings.data_dir / "originals"))
-            task = asyncio.create_task(run_forever(scanner))
+        tasks: list[asyncio.Task[None]] = []
+        if start_scanner:  # the two clocks: mail comes in, and the model reads (DEC-54)
+            store = FileStore(settings.data_dir / "originals")
+            tasks.append(asyncio.create_task(run_forever(Scanner(engine, store, model=settings.model))))
+            tasks.append(asyncio.create_task(run_extractor(Extractor(engine, store, settings, extract=llm.extract))))
         try:
             yield
         finally:
-            if task is not None:
+            for task in tasks:
                 task.cancel()
 
     app = FastAPI(
@@ -88,6 +92,7 @@ def create_app(
 
     app.include_router(account.router)
     app.include_router(admin.router)
+    app.include_router(documents.router)
     app.include_router(mailboxes.router)
     app.include_router(mailboxes.public)
     app.include_router(audit.router)

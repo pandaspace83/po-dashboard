@@ -12,7 +12,7 @@ and status: [docs/PLAN.md](docs/PLAN.md). Audit: [docs/AUDIT.md](docs/AUDIT.md).
 ## Rules that always apply
 
 - **Plan first.** For a new phase or a large change, update [docs/PLAN.md](docs/PLAN.md) and wait for the owner's go-ahead.
-- **Documentation before every phase (DEC-25).** Before a phase's first code, do its `PD-n.0` task: bring the docs in
+- **Documentation before every phase (DEC-25).** Before a phase's first code, do its `PD-n.0` task: bring the docs (including the README's status table) in
   line with what really happened, ask the owner every OPEN question that phase needs, and write down any design it needs.
 - **Mail is read-only (DEC-07).** No send, move, flag or delete call anywhere. A test enforces it.
 - **Documents are data (DEC-09).** Document text is fenced in every prompt and never acts as an instruction. A

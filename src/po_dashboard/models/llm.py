@@ -24,6 +24,11 @@ class ModelError(RuntimeError):
     """The model server did not give a usable answer. The message holds no document text."""
 
 
+class BadAnswer(ModelError):
+    """The server answered, but the reply cannot be used (not the schema, or cut off at the reply limit). At temperature
+    0 the same text gives the same reply, so trying again would fail the same way: the extractor does not (DEC-54)."""
+
+
 class ModelUnavailable(ModelError):
     """The model server could not be reached at all (not running, or still starting). The document is not at fault:
     the scanner leaves it waiting and tries again next time, instead of marking it failed."""
@@ -34,6 +39,7 @@ class Extraction:
     answer: dict[str, Any]
     seconds: float
     raw: str
+    prompt_tokens: int | None = None  # Ollama's own count of the prompt, to tell when the window was reached
 
 
 def extract(
@@ -63,17 +69,23 @@ def extract(
         wait = httpx.Timeout(timeout, connect=CONNECT_TIMEOUT)
         response = httpx.post(f"{settings.ollama_url}/api/chat", json=body, timeout=wait)
         response.raise_for_status()
-        raw = response.json()["message"]["content"]
+        reply = response.json()
+        raw = reply["message"]["content"]
+        cut_off = reply.get("done_reason") == "length"
+        counted = reply.get("prompt_eval_count")
+        prompt_tokens = counted if isinstance(counted, int) and not isinstance(counted, bool) else None
     except (httpx.ConnectError, httpx.ConnectTimeout) as problem:
         raise ModelUnavailable("the model server is not reachable") from problem
     except (httpx.HTTPError, ValueError, KeyError, TypeError) as problem:
         raise ModelError(f"the model server gave no answer ({type(problem).__name__})") from problem
     seconds = time.monotonic() - started
+    if cut_off:
+        raise BadAnswer("the reply was cut off at the reply limit")
     try:
         answer = schema.parse_answer(raw)
     except schema.NotAnAnswer as problem:
-        raise ModelError(str(problem)) from problem
-    return Extraction(answer=answer, seconds=seconds, raw=raw)
+        raise BadAnswer(str(problem)) from problem
+    return Extraction(answer=answer, seconds=seconds, raw=raw, prompt_tokens=prompt_tokens)
 
 
 def unload(settings: Settings, model: str) -> None:
