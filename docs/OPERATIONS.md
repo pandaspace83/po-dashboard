@@ -175,3 +175,28 @@ shown as "· for <customer>"; a line partly received gets "received N per QuickB
 does: create vendors, change a PO already in the app, read `Other 1`, `Print` or the delivery dates (those come from
 emails), or close anything. Closing from the weekly export waits for OPEN-20.
 
+
+## 16. Connecting the Gmail test mailbox (PD-3.5, DEC-50)
+
+Use a **dedicated test Gmail account** that holds only made-up mail (DEC-13). The app reads it with the `gmail.readonly`
+permission only, so Google itself refuses a send, move or delete. Nothing secret goes in a file or in chat.
+
+**Once, in the Google Cloud console (free):**
+1. Create a project (any name). Under *APIs and services* turn on the **Gmail API**.
+2. *OAuth consent screen*: user type **External**, publishing status **Testing**. Under *Test users* add the test Gmail
+   address. Under *Data access* add the one scope `.../auth/gmail.readonly`.
+3. *Credentials*, *Create credentials*, *OAuth client ID*, application type **Desktop app**. Keep the client id (it ends
+   `.apps.googleusercontent.com`) and the client secret to hand; do not paste them anywhere but the prompt below.
+
+**Then, in Terminal on this Mac:**
+1. `uv run po-dashboard mailbox gmail-client` asks for the client id and secret at hidden prompts and saves them in the
+   Keychain.
+2. `uv run po-dashboard mailbox connect-gmail` opens Google's sign-in page. Sign in as the test account and allow
+   read-only access. Add `--days 7` to also read the last seven days of mail (the default 0 reads only mail that arrives
+   after connecting, so an old inbox does not flood the Unmatched queue).
+3. The scanner (running inside `serve`) picks the mailbox up on its next 5-minute tick.
+
+**Weekly, while the Google project is in Testing mode:** Google ends the sign-in after about 7 days. The scan then stops
+for that mailbox, Home's last-scan tile ages, and the mailbox is marked *needs reconnect*. Run `connect-gmail` again; no
+mail is lost, because the saved position is kept. `uv run po-dashboard mailbox disconnect-gmail ADDRESS` forgets the saved
+sign-in (the mail already stored stays).

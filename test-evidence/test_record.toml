@@ -1296,6 +1296,62 @@ steps = ["Covered by the tests named."]
 expected = "A scan started while the web app holds the write lock waits and succeeds instead of failing with 'database is locked'. While a document is being read (OCR can take minutes) another writer is not blocked. The clock keeps scanning after a scan crashes. Home says 'no scan yet', 'just now' or 'N min ago'."
 tests = ["test_scanner.py::test_a_scan_waits_for_the_web_apps_write_lock_instead_of_failing", "test_scanner.py::test_a_scan_does_not_hold_the_write_lock_while_it_reads_a_document", "test_scanner.py::test_the_loop_scans_again_and_again_and_survives_a_crashing_scan", "test_scanner.py::test_the_home_page_says_when_the_last_scan_was"]
 
+[[case]]
+id = "TC-MAIL-15"
+area = "Gmail"
+title = "The Gmail provider passes the same contract as every other mail source"
+priority = "High"
+kind = "automated"
+refs = ["PD-3.5", "REQ-IN-06", "DEC-50"]
+steps = ["Covered by the tests named, which run the shared contract against a pretend Gmail."]
+expected = "Folders, one-time delivery, later arrivals, unchanged bytes, batch limits, separate folders, a position it does not understand, an unknown folder, health that never raises, and reading that changes nothing all behave as for the folder provider."
+tests = ["test_gmail.py::TestGmailSource::test_it_scans_the_inbox_and_sent_items", "test_gmail.py::TestGmailSource::test_an_empty_folder_gives_nothing_and_a_position", "test_gmail.py::TestGmailSource::test_each_message_comes_once", "test_gmail.py::TestGmailSource::test_a_message_that_arrives_later_is_returned_once", "test_gmail.py::TestGmailSource::test_the_bytes_are_handed_over_unchanged", "test_gmail.py::TestGmailSource::test_a_batch_limit_loses_nothing_and_repeats_nothing", "test_gmail.py::TestGmailSource::test_the_two_folders_are_separate", "test_gmail.py::TestGmailSource::test_a_position_it_does_not_understand_means_start_again", "test_gmail.py::TestGmailSource::test_an_unknown_folder_is_refused", "test_gmail.py::TestGmailSource::test_health_is_ok_and_then_says_what_is_wrong_without_raising", "test_gmail.py::TestGmailSource::test_reading_changes_nothing", "test_gmail.py::TestGmailSource::test_it_has_no_way_to_change_a_mailbox", "test_gmail.py::test_the_position_is_the_history_id_and_only_new_mail_is_read_afterwards", "test_gmail.py::test_a_position_google_no_longer_keeps_means_the_recent_window_is_read_again", "test_gmail.py::test_a_message_deleted_before_it_is_read_is_skipped_not_fatal", "test_gmail.py::test_a_first_read_asks_only_for_mail_since_the_start_date"]
+
+[[case]]
+id = "TC-MAIL-16"
+area = "Gmail"
+title = "Gmail is only ever read: GET requests, one fixed host, the read-only scope"
+priority = "High"
+kind = "automated"
+refs = ["PD-3.5", "DEC-07", "REQ-IN-02"]
+steps = ["Covered by the tests named."]
+expected = "Every request to Gmail is a GET to gmail.googleapis.com over https; the only other address is Google's token endpoint. The only scope asked for is gmail.readonly. A message id from Google that is not plain letters and digits is never put in an address. The read-only source guard still passes over the new code."
+tests = ["test_gmail.py::test_every_request_to_gmail_is_a_get_to_the_one_host_with_only_the_read_scope", "test_gmail.py::test_a_message_id_that_is_not_plain_is_never_put_in_an_address", "test_mail_readonly.py::test_no_module_in_the_app_can_send_mail", "test_mail_readonly.py::test_the_mail_package_calls_nothing_that_changes_a_mailbox_or_a_file", "test_mail_readonly.py::test_the_mail_package_names_no_write_address_or_scope"]
+
+[[case]]
+id = "TC-MAIL-17"
+area = "Gmail"
+title = "Retries only where a retry helps, with backoff, and a lapsed sign-in needs a reconnect"
+priority = "High"
+kind = "automated"
+refs = ["PD-3.5", "engineering review: retries, backoff"]
+steps = ["Covered by the tests named."]
+expected = "429, 5xx, connection errors and Google's two rate-limit 403s are retried with growing waits (capped, honouring Retry-After) and then give up with fixed words. Any other 403 is not retried. A 401 refreshes the token once, then needs a reconnect, with no wait. A withdrawn or missing refresh token means reconnect. The scanner marks that mailbox needs_reconnect and leaves it alone."
+tests = ["test_gmail.py::test_a_429_is_retried_after_the_wait_google_asks_for", "test_gmail.py::test_a_500_is_retried_with_growing_waits_and_then_gives_up", "test_gmail.py::test_waits_are_capped", "test_gmail.py::test_a_connection_error_is_retried", "test_gmail.py::test_a_rate_limit_sent_as_403_is_retried_but_any_other_403_is_not", "test_gmail.py::test_a_401_refreshes_the_token_once_then_needs_a_reconnect", "test_gmail.py::test_the_access_token_is_reused_until_it_is_nearly_out", "test_gmail.py::test_a_withdrawn_sign_in_and_a_missing_one_both_mean_reconnect", "test_gmail.py::test_the_scanner_reads_gmail_and_a_lapsed_sign_in_marks_the_mailbox_needs_reconnect"]
+
+[[case]]
+id = "TC-MAIL-18"
+area = "Gmail"
+title = "The sign-in uses PKCE and a checked state on a loopback listener, and no secret is kept outside the Keychain"
+priority = "High"
+kind = "automated"
+refs = ["PD-3.5", "DEC-50", "DEC-13", "NFR-08"]
+steps = ["Covered by the tests named."]
+expected = "The PKCE challenge is the hash of a fresh verifier and the verifier goes only to the token endpoint. The listener is on 127.0.0.1, answers only the callback path, and ignores a return with the wrong state. A refused sign-in says so in fixed words. The refresh token and the client secret end up only in the Keychain: not in the database, the data folder, a log, an error or terminal output. Secrets are asked for at hidden prompts. Disconnecting forgets the token."
+tests = ["test_gmail.py::test_pkce_challenge_is_the_hash_of_the_verifier_and_every_sign_in_is_different", "test_gmail.py::test_the_sign_in_address_asks_for_read_only_with_pkce_and_a_state", "test_gmail.py::test_a_sign_in_returns_the_tokens_and_the_listener_is_on_loopback_only", "test_gmail.py::test_a_return_with_the_wrong_state_is_refused", "test_gmail.py::test_a_return_to_another_path_is_ignored", "test_gmail.py::test_a_sign_in_google_refuses_says_so_in_fixed_words", "test_gmail.py::test_connect_saves_the_token_in_the_keychain_and_the_mailbox_in_the_database", "test_gmail.py::test_connecting_without_a_refresh_token_or_with_bad_days_is_refused", "test_gmail.py::test_disconnecting_forgets_the_token_and_stops_scanning", "test_gmail.py::test_no_token_or_secret_reaches_a_log_or_an_error", "test_gmail.py::test_the_secrets_are_asked_for_in_the_keychain_never_a_file", "test_gmail.py::test_the_client_must_be_saved_first_and_must_look_right", "test_gmail.py::test_the_terminal_commands_ask_for_secrets_at_a_hidden_prompt_and_print_none"]
+
+[[case]]
+id = "TC-MAIL-19"
+area = "Gmail"
+title = "The real Gmail test account connects, is read, and is never changed (owner's check)"
+priority = "High"
+kind = "owner"
+refs = ["PD-3.5", "DEC-50", "DEC-07"]
+steps = ["Follow OPERATIONS section 16 with the dedicated test account.", "Send the test account two made-up emails, one with a PDF attached.", "Wait for the next scan (up to 5 minutes), then check Home's last-scan tile.", "Look in the test account in Gmail itself."]
+expected = "connect-gmail finishes with 'Connected <address>'. Home's Last scan says 'just now' or a few minutes. Gmail shows both emails exactly as before: still unread, not moved, not starred, nothing deleted."
+tests = []
+owner = "Passed 2026-11-11 by the owner: connected the dedicated test account; both test emails (each with a PDF) were read by the scanner (2 messages, 2 bodies and 2 PDFs read); both stayed unread in Gmail. Reconnecting with --days 7 first showed the start date would not move (fixed the same day, tested)."
+
 # =====================================================================================================================
 # Operations (engineering review, 2026-11-10)
 

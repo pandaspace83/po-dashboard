@@ -15,6 +15,10 @@ from po_dashboard.auth import passwords, service
 from po_dashboard.config import Settings
 from po_dashboard.db.migrate import upgrade
 from po_dashboard.db.models import AppUser
+from po_dashboard.mail import gmail_auth
+from po_dashboard.mail.gmail_connect import connect as connect_gmail
+from po_dashboard.mail.gmail_connect import disconnect as disconnect_gmail
+from po_dashboard.mail.gmail_connect import save_client
 from po_dashboard.ops import backup, logs
 from po_dashboard.web import create_app
 
@@ -85,7 +89,34 @@ def build_parser() -> argparse.ArgumentParser:
     actions.add_parser("reset-password", help="print a new temporary password").add_argument("email")
     actions.add_parser("unlock", help="clear a lockout").add_argument("email")
     actions.add_parser("list", help="list accounts")
+    box = commands.add_parser("mailbox", help="connect the Gmail test mailbox, at this Mac")
+    boxes = box.add_subparsers(dest="mailbox_command", required=True)
+    boxes.add_parser("gmail-client", help="save your Google client id and secret in the Keychain (hidden prompts)")
+    connect = boxes.add_parser("connect-gmail", help="sign in to Gmail on Google's page and connect the mailbox")
+    connect.add_argument("--days", type=int, default=0, help="also read this many days of older mail (default 0)")
+    boxes.add_parser("disconnect-gmail", help="forget the saved Gmail sign-in").add_argument("address")
     return parser
+
+
+def run_mailbox_command(db: Session, args: argparse.Namespace) -> int:
+    """Gmail set-up. Secrets are asked for at a hidden prompt and go straight to the Keychain: never an argument, a
+    file or the screen."""
+    keychain = gmail_auth.Keychain()
+    try:
+        if args.mailbox_command == "gmail-client":
+            save_client(keychain, getpass.getpass("Google client id: "), getpass.getpass("Google client secret: "))
+            print("Saved in the Keychain.")
+        elif args.mailbox_command == "connect-gmail":
+            print("Your browser will open Google's sign-in page. Sign in with the TEST Gmail account.")
+            box = connect_gmail(db, keychain, days=args.days)
+            print(f"Connected {box.address}. Mail from {box.read_since:%m/%d/%Y} on will be read.")
+        else:
+            disconnect_gmail(db, keychain, args.address)
+            print(f"Disconnected {args.address}. Mail already stored stays.")
+    except gmail_auth.GmailError as problem:
+        print(problem, file=sys.stderr)
+        return 1
+    return 0
 
 
 def run_backup_command(settings: Settings, args: argparse.Namespace) -> int:
@@ -117,7 +148,7 @@ def main(argv: list[str] | None = None) -> None:
         return
     try:
         with Session(engine) as db:
-            code = run_user_command(db, args)
+            code = run_mailbox_command(db, args) if args.command == "mailbox" else run_user_command(db, args)
     except (service.AuthError, passwords.PasswordRejected) as problem:
         print(problem, file=sys.stderr)
         code = 1

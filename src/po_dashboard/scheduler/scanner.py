@@ -26,6 +26,7 @@ from po_dashboard.intake import reading
 from po_dashboard.intake.messages import DUPLICATE, STORED, TOO_OLD, store_message
 from po_dashboard.intake.store import FileStore
 from po_dashboard.mail import open_source
+from po_dashboard.mail.gmail_auth import NeedsReconnect
 from po_dashboard.mail.source import MailSource
 
 log = logging.getLogger("po_dashboard.scanner")
@@ -137,7 +138,9 @@ class Scanner:
         return budget
 
     def _failed(self, mailbox_id: int, folder: str, problem: Exception, report: ScanReport) -> None:
-        reason = f"could not read the mailbox ({type(problem).__name__})"
+        reconnect = isinstance(problem, NeedsReconnect)
+        reason = "the sign-in lapsed: connect the mailbox again" if reconnect else (
+            f"could not read the mailbox ({type(problem).__name__})")  # fmt: skip
         report.errors.append(reason)
         log.warning("scan failed for mailbox %s: %s", mailbox_id, type(problem).__name__)
         with Session(self.engine) as db:
@@ -147,6 +150,8 @@ class Scanner:
                 state = ScanState(mailbox_id=mailbox_id, folder=folder)
                 db.add(state)
             state.last_attempt, state.last_error, state.failures = self.now(), reason, (state.failures or 0) + 1
+            if reconnect and (mailbox := db.get(Mailbox, mailbox_id)) is not None:
+                mailbox.state = "needs_reconnect"  # the scanner leaves it alone until a person reconnects it
             db.commit()
 
     # ---- reading
