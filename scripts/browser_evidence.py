@@ -1292,6 +1292,67 @@ def customer_orders(r: Run) -> None:
     r.shot(r.a)
 
 
+@case("TC-CO-09")
+def sales_invoices(r: Run) -> None:
+    r.go(r.a, "/sales-invoices")
+    if "/sign-in" in r.a.url:
+        r.sign_in(r.a, ADMIN, PASSWORD)
+        r.go(r.a, "/sales-invoices")
+    check("No sales invoices yet" in r.main(r.a), "the page is not empty to begin with")
+    check(r.a.locator("nav").first.bounding_box()["height"] < 80, "the top bar wraps onto two rows")
+    r.go(r.a, "/sales-invoices/upload")
+    r.upload(r.a, DATA / "sales_by_customer_detail_sample.csv", "button:has-text('Show what it would do')")
+    r.a.wait_for_selector("text=What the file would do")
+    text = r.main(r.a)
+    check("The column names are on row 5" in text and "by line" in text, "the columns were not found")
+    unknown = "not known: Northwind Racing" in text and "choose the customer afterwards" in text
+    check(unknown, "unknown customers not said")
+    suggested = (r.a.input_value("#period_from"), r.a.input_value("#period_to"))
+    check(suggested == ("2026-11-03", "2026-11-09"), f"the period suggested is {suggested}")
+    check(r.a.input_value("#map_amount") == "Amount" and r.a.input_value("#map_item") == "Item", "no mapping suggested")
+    r.shot(r.a, full=True)
+    # change the mapping: with no item, quantity or price column it reads by invoice total only
+    for field in ("item", "qty", "unit_price"):
+        r.a.select_option(f"#map_{field}", "")
+    r.a.click("button:has-text('Show again')")
+    r.a.wait_for_selector("text=by invoice total only")
+    check("no item, quantity and price columns" in r.main(r.a), "the level change was not explained")
+    for field, header in (("item", "Item"), ("qty", "Qty"), ("unit_price", "Sales Price")):
+        r.a.select_option(f"#map_{field}", header)
+    r.a.click("button:has-text('Show again')")
+    r.a.wait_for_selector("text=Matching will be by line")
+    r.a.fill("#remember", "sales by customer")
+    r.shot(r.a)
+    r.a.click("button:has-text('Keep this upload')")
+    r.a.wait_for_url(re.compile(r".*/sales-invoices\?imported=3$"))
+    check("Kept the upload: 3 new invoices" in r.main(r.a) and "2001" in r.main(r.a), "the upload was not kept")
+    check("name a customer the app does not know" in r.main(r.a), "unknown customers not mentioned")
+    r.shot(r.a)
+    # the invoice, with what is not goods
+    r.a.click("a:has-text('2001')")
+    r.a.wait_for_url(re.compile(r".*/sales-invoices/\d+$"))
+    check("freight: not goods" in r.main(r.a) and "31.50 USD" in r.main(r.a), "the invoice page is wrong")
+    r.shot(r.a)
+    # the same file again is recognised
+    r.go(r.a, "/sales-invoices/upload")
+    r.upload(r.a, DATA / "sales_by_customer_detail_sample.csv", "button:has-text('Show what it would do')")
+    r.a.wait_for_selector("text=already imported on")
+    check(r.a.locator("button:has-text('Keep this upload')").is_disabled(), "an exact repeat could be kept")
+    # choose the customers the export named
+    r.go(r.a, "/sales-invoices/names")
+    first = r.a.locator("h2").first.inner_text()  # the names are listed alphabetically
+    check(first == "Contoso Parts", f"the first name waiting is {first}")
+    r.a.fill("input[name='new_customer'] >> nth=0", "Contoso Parts")
+    r.a.click("button:has-text('Link') >> nth=0")
+    r.a.wait_for_load_state()
+    r.shot(r.a)
+    waiting = r.a.locator("h2").all_inner_texts()
+    check("Northwind Racing" in waiting and "Contoso Parts" not in waiting, f"the names still waiting are {waiting}")
+    r.go(r.a, "/sales-invoices")
+    check("Contoso Parts" in r.main(r.a), "the invoice did not take its customer")
+    r.shot(r.a)
+
+
 @case("TC-WEB-06")
 def readable_errors(r: Run) -> None:
     r.go(r.a, "/no-such-page")

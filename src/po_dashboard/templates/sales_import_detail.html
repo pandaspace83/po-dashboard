@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% from "_table.html" import pager %}
+{% block title %}Upload {{ batch.file_name }} · {{ app_name }}{% endblock %}
+{% block content %}
+<p class="muted"><a href="/sales-invoices">Sales invoices</a> /</p>
+<h1>Upload: {{ batch.file_name }}</h1>
+<div class="card">
+  <table class="facts"><tbody>
+    <tr><th scope="row">Uploaded</th><td>{{ batch.created_at|moment }}{% if maker %} by {{ maker }}{% endif %}</td></tr>
+    <tr><th scope="row">Dates it covers</th><td>{{ batch.period_from|day }} to {{ batch.period_to|day }}</td></tr>
+    <tr><th scope="row">Invoices</th><td>{{ counts.get("new", 0) }} new, {{ counts.get("same", 0) }} unchanged, {{ counts.get("changed", 0) }} changed, {{ counts.get("conflicting", 0) }} conflicting</td></tr>
+    <tr><th scope="row">Rows</th><td>{{ counts.get("line", 0) }} read, {{ counts.get("heading", 0) }} headings, {{ counts.get("total", 0) }} totals, {{ counts.get("unusable", 0) }} not read</td></tr>
+    <tr><th scope="row">File</th><td><a href="/sales-invoices/imports/{{ batch.id }}/file" hx-boost="false" download>Download the original</a> <span class="muted">(kept unchanged, hash {{ batch.file_hash[:12] }})</span></td></tr>
+  </tbody></table>
+</div>
+<div class="card">
+  <h2>How its columns were read</h2>
+  <ul>{% for f, header in mapping.items() %}<li>{{ labels.get(f, f) }}: <strong>{{ header }}</strong></li>{% endfor %}</ul>
+</div>
+<h2>Every row</h2>
+<form method="get" class="filters" action="/sales-invoices/imports/{{ batch.id }}">
+  <label for="outcome">Show</label>
+  <select id="outcome" name="outcome" onchange="this.form.requestSubmit()">
+    <option value="">All rows</option>{% for o in ("line", "heading", "total", "unusable") %}<option value="{{ o }}" {{ "selected" if outcome == o }}>{{ o }}</option>{% endfor %}
+  </select> <button type="submit">{{ icon("search") }}Show</button>
+</form>
+<div class="table-wrap table-scroll"><table>
+  <thead><tr><th scope="col">Row</th><th scope="col">Outcome</th><th scope="col">Why</th><th scope="col">What the row said</th></tr></thead>
+  <tbody>
+  {% for row, cells in page.rows %}
+  <tr><td>{{ row.row_number }}</td><td>{% if row.outcome == "unusable" %}<span class="pill bad">{{ icon("alert") }}not read</span>{% else %}{{ row.outcome }}{% endif %}</td><td>{{ row.reason or "" }}</td><td class="muted">{{ cells|select|join(" | ") }}</td></tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+{{ pager(page, "row") }}
+{% endblock %}

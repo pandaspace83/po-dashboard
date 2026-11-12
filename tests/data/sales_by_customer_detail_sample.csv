@@ -1,0 +1,14 @@
+RaceSpec Test Co (made up),,,,,,,,,,
+Sales by Customer Detail,,,,,,,,,,
+November 2026,,,,,,,,,,
+,,,,,,,,,,
+,Type,Date,Num,P. O. #,Name,Memo,Item,Qty,Sales Price,Amount
+Northwind Racing,,,,,,,,,,
+,Invoice,11/03/2026,2001,CP-1001,Northwind Racing,Hex bolt M8,Bolts:M8,10,2.50,25.00
+,Invoice,11/03/2026,2001,CP-1001,Northwind Racing,Washer M8,Washers:M8,100,0.015,1.50
+,Invoice,11/03/2026,2001,CP-1001,Northwind Racing,,Shipping,,,5.00
+Total Northwind Racing,,,,,,,,,,31.50
+Contoso Parts,,,,,,,,,,
+,Invoice,11/05/2026,2002,IN-7,Contoso Parts,Gear,Gear:G1,4,25,100.00
+,Credit Memo,11/09/2026,C-100,IN-7,Contoso Parts,Returned gear,Gear:G1,-1,25,-25.00
+Total Contoso Parts,,,,,,,,,,75.00

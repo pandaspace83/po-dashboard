@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% from "_picker.html" import customer_picker %}
+{% block title %}Customers in exports · {{ app_name }}{% endblock %}
+{% block content %}
+<p class="muted"><a href="/sales-invoices">Sales invoices</a> /</p>
+<h1>Customers the exports name</h1>
+<p class="muted">These names came from QuickBooks exports and match no customer the app knows. Choose the customer each one is, or make a new customer. The name is then remembered as one of that customer's QuickBooks names, so the next export finds it by itself. Nothing is guessed from a similar name.</p>
+{% if error %}<p class="error" role="alert">{{ icon("alert") }}<span>{{ error }}</span></p>{% endif %}
+{% if names %}
+{% for name, count in names %}
+<div class="card">
+  <div class="card-head">{{ icon("users") }}<h2>{{ name }}</h2></div>
+  <p>{{ count }} invoice{{ "" if count == 1 else "s" }} {{ "carries" if count == 1 else "carry" }} this name.</p>
+  <form method="post" action="/sales-invoices/names/map">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <input type="hidden" name="name" value="{{ name }}">
+    <div class="form-row">
+      <div>{{ customer_picker("customer_id_" ~ loop.index, "Customer", "", "", false, "Choose a customer") }}</div>
+      <div><label for="new_{{ loop.index }}">Or a new customer</label><input id="new_{{ loop.index }}" name="new_customer" maxlength="200" placeholder="{{ name }}"></div>
+      <div class="shrink"><button class="primary" type="submit">{{ icon("check") }}Link</button></div>
+    </div>
+  </form>
+</div>
+{% endfor %}
+{% else %}
+<div class="card empty">{{ icon("check-circle") }}<p><strong>Every customer in the exports is known.</strong></p></div>
+{% endif %}
+{% endblock %}

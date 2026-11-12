@@ -22,7 +22,7 @@ would notice on their own. It is judged by whether it helps with that, not by wh
 
 **In version 1**
 - Purchase orders and vendors, entered by hand, imported from CSV or Excel, or loaded from a QuickBooks "Open POs" report.
-- Customers and the purchase orders they send RaceSpec (a separate workflow, DEC-56): entered by hand or imported from CSV or Excel, with revisions a person approves. Matching them to QuickBooks sales invoices is planned, not built.
+- Customers and the purchase orders they send RaceSpec (a separate workflow, DEC-56): entered by hand or imported from CSV or Excel, with revisions a person approves. QuickBooks sales invoices can be uploaded and kept (nothing is connected to QuickBooks); matching them to the customer POs is planned, not built.
 - One shared purchasing mailbox, read-only (Gmail for the build, the company's own system at go-live).
 - Reading each email and attachment (PDF, scan, spreadsheet, Word) into acknowledgement, shipment and invoice facts.
 - A review queue where a person accepts, edits or rejects every extracted document before it changes a PO.
@@ -59,7 +59,7 @@ would notice on their own. It is judged by whether it helps with that, not by wh
 | 5 | Alerts and follow-up | Not started |
 | 6 | The company's mail system, the office Mac, running for real | Not started |
 | 7 | A second machine, the final audit, release | Not started |
-| 8 | Customer orders: customer POs reconciled against QuickBooks sales invoices (asked for 2026-11-12, built before Phase 4 resumes) | In progress: customers and customer POs built (entry, import, revisions); the QuickBooks sales import and the reconciliation are next |
+| 8 | Customer orders: customer POs reconciled against QuickBooks sales invoices (asked for 2026-11-12, built before Phase 4 resumes) | In progress: customers, customer POs and the QuickBooks sales invoice import are built; the matching and the exception screens are next |
 
 ## The documents
 

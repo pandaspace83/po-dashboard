@@ -195,6 +195,19 @@ Purchase orders (what RaceSpec sends to vendors). Everyone signed in can use it.
 
 Nothing here reads email yet: customer orders come in by hand or by file until the email reader is built (PD-8.8).
 
+**Sales invoices (PD-8.3).** From Customer orders, Sales invoices, upload a QuickBooks Desktop sales export (CSV or Excel).
+Until a real export has been seen the app is tested on made-up files only (OPEN-22), so check the preview each time.
+
+1. **Upload, then read the preview.** It says which row holds the column names, whether matching will be by line or by
+   invoice total, how many invoices are new, already known, changed or sharing a number, and which rows were not read and
+   why. Nothing is kept yet.
+2. **Check the columns** under "Which column holds what"; change any that are wrong and press Show again.
+3. **Say what dates the export covers** (suggested from the invoice dates). The app never calls an order unbilled without them.
+4. **Keep this upload.** The file, every row and the dates are stored. An invoice already accepted is never overwritten: one
+   that changed shows "needs review" with what the later upload said. The same file again is refused.
+5. **Customers the export names that the app does not know** are kept without a customer; choose each one under
+   "choose the customer". The name is then remembered for the next export.
+
 ## 16. Connecting the Gmail test mailbox (PD-3.5, DEC-50)
 
 Use a **dedicated test Gmail account** that holds only made-up mail (DEC-13). The app reads it with the `gmail.readonly`

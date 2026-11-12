@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block title %}{{ invoice.invoice_number }} · Sales invoice · {{ app_name }}{% endblock %}
+{% block content %}
+<p class="muted"><a href="/sales-invoices">Sales invoices</a> /</p>
+<h1>{{ "Credit memo" if invoice.kind == "credit_memo" else "Invoice" }} {{ invoice.invoice_number }}</h1>
+{% if invoice.state == "needs_review" %}<p class="error" role="alert">{{ icon("alert") }}<span>This invoice needs a person to look at it before it is trusted. Its accepted figures below are what was first read; later uploads that differ are listed under Seen in uploads.</span></p>{% endif %}
+<div class="card">
+  <table class="facts"><tbody>
+    <tr><th scope="row">Customer</th><td>{% if customer %}<a href="/customers/{{ customer.id }}">{{ customer.name }}</a>{% else %}<span class="pill bad">{{ icon("alert") }}not chosen: {{ invoice.customer_name_exported or "none" }}</span> <a href="/sales-invoices/names">choose the customer</a>{% endif %}</td></tr>
+    <tr><th scope="row">Name as exported</th><td>{{ invoice.customer_name_exported or "" }}</td></tr>
+    <tr><th scope="row">Date</th><td>{{ invoice.invoice_date|day }}</td></tr>
+    <tr><th scope="row">Customer's PO reference</th><td>{{ invoice.po_reference or "not in the export" }}</td></tr>
+    <tr><th scope="row">QuickBooks reference</th><td>{{ invoice.qb_reference or "not in the export" }}</td></tr>
+    <tr><th scope="row">Total</th><td>{{ invoice.total|money(invoice.currency) }}{% if invoice.level == "line" %} <span class="muted">(the sum of its lines)</span>{% endif %}</td></tr>
+    <tr><th scope="row">Read</th><td>{{ "by line" if invoice.level == "line" else "invoice total only: the export had no lines" }}</td></tr>
+  </tbody></table>
+</div>
+{% if lines %}
+<h2>Lines</h2>
+<div class="table-wrap table-scroll"><table>
+  <thead><tr><th scope="col">#</th><th scope="col">Item</th><th scope="col">Description</th><th scope="col" class="num">Quantity</th><th scope="col" class="num">Unit price</th><th scope="col" class="num">Amount</th><th scope="col">Kind</th></tr></thead>
+  <tbody>{% for l in lines %}<tr><td>{{ l.position }}</td><td>{{ l.item or "" }}</td><td>{{ l.description or "" }}</td><td class="num">{{ l.qty|quantity }}</td><td class="num">{{ l.unit_price|money }}</td><td class="num">{{ l.amount|money }}</td><td>{% if l.kind == "goods" %}goods{% else %}<span class="pill">{{ l.kind }}: not goods</span>{% endif %}</td></tr>{% endfor %}</tbody>
+</table></div>
+{% endif %}
+<h2>Seen in uploads</h2>
+<div class="table-wrap"><table>
+  <thead><tr><th scope="col">Upload</th><th scope="col">Outcome</th><th scope="col" class="num">Total in that upload</th><th scope="col">Notes</th></tr></thead>
+  <tbody>
+  {% for s in seen %}
+  <tr><td><a href="/sales-invoices/imports/{{ s.batch.id }}">{{ s.batch.created_at|moment }}</a> {{ s.batch.file_name }}</td>
+    <td>{% if s.obs.outcome == "first" %}first seen{% elif s.obs.outcome == "same" %}the same{% elif s.obs.outcome == "changed" %}<span class="pill bad">{{ icon("alert") }}different</span>{% else %}<span class="pill bad">{{ icon("alert") }}another invoice with this number</span>{% endif %}</td>
+    <td class="num">{{ s.total }}</td><td>{% for n in s.review + s.notes %}{{ n }}{{ "; " if not loop.last }}{% endfor %}</td></tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+{% endblock %}

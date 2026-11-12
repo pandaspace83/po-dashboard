@@ -4,9 +4,9 @@
 
 PO Dashboard (RaceSpec Internal Dashboard). Scope: Phase 0 and Phase 1: sign-in, people, vendors, purchase orders, imports, the QuickBooks starting load, entries by hand, Home, Open items, Audit, page behaviour, security and speed.
 
-**135 cases:** 46 Critical, 73 High, 16 Medium; 2 terminal, 68 automated, 62 browser, 3 owner only.
+**139 cases:** 46 Critical, 77 High, 16 Medium; 2 terminal, 71 automated, 63 browser, 3 owner only.
 
-Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.18, by Claude, scripts/browser_evidence.py, on commit d557baf with uncommitted changes: **62 of 62** browser cases pass. Automated tests: `uv run pytest`. Defects: [DEFECTS.md](DEFECTS.md). Sign-off: [SIGN_OFF.md](SIGN_OFF.md).
+Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.18, by Claude, scripts/browser_evidence.py, on commit 5d3bd46 with uncommitted changes: **63 of 63** browser cases pass. Automated tests: `uv run pytest`. Defects: [DEFECTS.md](DEFECTS.md). Sign-off: [SIGN_OFF.md](SIGN_OFF.md).
 
 **To run them by hand:**
 
@@ -151,6 +151,10 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.18, by Claude, scripts/b
 | [TC-CO-06](#tc-co-06) | A revised customer PO keeps the original and every revision, and changes nothing until a person approves it | High | Automated | Automated tests | — |
 | [TC-CO-07](#tc-co-07) | A customer PO file (CSV or Excel) is read, previewed, and filed all or nothing | High | Automated | Automated tests | — |
 | [TC-CO-08](#tc-co-08) | The customer screens: add a customer, file orders by hand and by file, approve a revision, resolve a waiting order | High | Browser | Pass 11/12/2026 | Not yet run |
+| [TC-CO-10](#tc-co-10) | A QuickBooks sales export is read by a configurable column mapping, and nothing is invented | High | Automated | Automated tests | — |
+| [TC-CO-11](#tc-co-11) | An upload is planned without changing anything, then kept with its file, rows and period, and never overwrites an accepted invoice | High | Automated | Automated tests | — |
+| [TC-CO-12](#tc-co-12) | A customer name an export uses that the app does not know is linked by a person, never guessed, and remembered | High | Automated | Automated tests | — |
+| [TC-CO-09](#tc-co-09) | The Sales invoices screens: upload, check the columns, see what it would do, keep it, and look at invoices, uploads and unknown names | High | Browser | Pass 11/12/2026 | Not yet run |
 | [TC-OPS-01](#tc-ops-01) | A backup restores to exactly what was backed up; it never overwrites, never deletes, and refuses unsafe places | Critical | Automated | Automated tests | — |
 | [TC-OPS-02](#tc-ops-02) | Two people, or a double click, cannot corrupt a record | High | Automated | Automated tests | — |
 | [TC-OPS-03](#tc-ops-03) | A model server that is down fails fast and leaves the document waiting; the health check sees a broken database | High | Automated | Automated tests | — |
@@ -2900,6 +2904,115 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.18, by Claude, scripts/b
 <details><summary>Screenshot 8</summary>
 
 ![TC-CO-08 in Chrome](screenshots/TC-CO-08-8.png)
+
+</details>
+
+
+<a id="tc-co-10"></a>
+
+### TC-CO-10: A QuickBooks sales export is read by a configurable column mapping, and nothing is invented
+
+**Priority:** High · **How:** Automated · **Refs:** PD-8.3, DEC-58, REQ-CO-06, REQ-CO-08
+
+**Steps**
+
+1. Covered by the tests named.
+
+**Expected:** Columns are found by name below title rows and a leading empty column; the order does not matter. A customer comes from a column or a heading row; total rows and headings are recognised; every row is accounted for. Amounts are read as QuickBooks writes them, exactly. Credit memos are told from invoices and payments are not sales documents. Freight, tax, discount and other charges are lines of their own kind, never goods, and the charge names are a setting. A row that cannot be read is listed and marks its invoice for review. A whole invoice or a row listed twice is counted once and noted; two different invoices with one number are a conflict. Formulas stay text; Excel reads like CSV. A file that is not a sales export, a missing required column and a bad mapping are each refused in plain words.
+
+**Automated tests:** `test_sales_import.py::test_the_columns_are_found_by_name_below_title_rows_and_a_leading_empty_column`, `test_sales_import.py::test_the_order_of_columns_does_not_matter_and_names_are_compared_loosely`, `test_sales_import.py::test_a_file_that_is_not_a_sales_export_is_refused_in_plain_words`, `test_sales_import.py::test_a_required_column_that_is_not_set_is_named`, `test_sales_import.py::test_a_mapping_chosen_in_the_preview_is_checked_against_the_file`, `test_sales_import.py::test_a_saved_mapping_is_a_setting_that_suits_only_a_file_that_has_its_columns`, `test_sales_import.py::test_headings_totals_and_the_title_are_recognised_and_every_row_is_accounted_for`, `test_sales_import.py::test_a_customer_comes_from_the_heading_row_when_there_is_no_name_column`, `test_sales_import.py::test_a_row_with_no_customer_at_all_is_not_read_and_says_why`, `test_sales_import.py::test_amounts_are_read_as_quickbooks_writes_them_and_exactly`, `test_sales_import.py::test_a_row_that_cannot_be_read_is_listed_and_the_invoice_it_touches_is_marked_for_review`, `test_sales_import.py::test_credit_memos_are_told_from_invoices_and_payments_are_not_sales_documents`, `test_sales_import.py::test_charges_discounts_and_tax_are_lines_of_their_own_kind_and_never_goods`, `test_sales_import.py::test_a_line_with_an_amount_and_no_item_or_quantity_waits_for_a_person`, `test_sales_import.py::test_the_charge_names_are_a_setting`, `test_sales_import.py::test_the_currency_is_a_column_or_the_default_and_a_bad_one_is_not_read`, `test_sales_import.py::test_several_po_references_on_one_invoice_are_kept_as_exported_and_never_corrected`, `test_sales_import.py::test_invoice_numbers_group_whatever_their_case_and_spacing`, `test_sales_import.py::test_a_whole_invoice_listed_twice_is_counted_once_and_noted`, `test_sales_import.py::test_an_invoice_level_row_repeated_exactly_is_counted_once_and_a_different_amount_is_a_conflict`, `test_sales_import.py::test_two_line_level_invoices_with_one_number_for_different_customers_conflict`, `test_sales_import.py::test_quantities_prices_and_totals_of_a_line_level_invoice_are_exact`, `test_sales_import.py::test_a_formula_in_a_cell_is_text_and_nothing_is_evaluated`, `test_sales_import.py::test_an_excel_file_reads_like_a_csv_file`
+
+**Latest:** Owner: not recorded.
+
+
+<a id="tc-co-11"></a>
+
+### TC-CO-11: An upload is planned without changing anything, then kept with its file, rows and period, and never overwrites an accepted invoice
+
+**Priority:** High · **How:** Automated · **Refs:** PD-8.3, DEC-58, REQ-CO-06, REQ-CO-07, NFR-03
+
+**Steps**
+
+1. Covered by the tests named.
+
+**Expected:** The plan says which invoices are new, the same, changed or conflicting and changes nothing. Keeping an upload stores the file under its hash, every row, the dates it covers (needed, forwards) and a first sighting of each invoice, and audits it. The same file again is refused. A later file with the same invoice only adds a sighting; one that changed keeps its accepted figures, waits for review and keeps the new content beside it. Two invoices with one number are kept for review with both sightings. A credit memo may share a number with an invoice. A failure part way keeps nothing. Trailing zeros and case are not a change.
+
+**Automated tests:** `test_sales_import.py::test_the_plan_changes_nothing_and_says_which_invoices_are_new`, `test_sales_import.py::test_unknown_customer_names_are_counted_and_known_ones_are_found_exactly`, `test_sales_import.py::test_an_upload_keeps_the_file_every_row_the_period_and_a_first_sighting_of_each_invoice`, `test_sales_import.py::test_the_same_file_again_is_refused_and_adds_nothing`, `test_sales_import.py::test_the_period_is_needed_and_must_run_forwards_and_a_file_with_no_invoice_is_refused`, `test_sales_import.py::test_a_later_file_with_the_same_invoice_adds_a_sighting_and_changes_nothing`, `test_sales_import.py::test_an_invoice_that_changed_keeps_its_accepted_content_and_waits_for_a_person`, `test_sales_import.py::test_two_invoices_with_one_number_are_kept_for_review_with_both_sightings`, `test_sales_import.py::test_a_credit_memo_and_an_invoice_may_share_a_number`, `test_sales_import.py::test_an_invoice_the_export_marks_for_review_is_kept_for_review`, `test_sales_import.py::test_a_failure_part_way_keeps_nothing_once_rolled_back`, `test_sales_import.py::test_the_content_compared_is_the_same_from_the_file_and_from_the_database`
+
+**Latest:** Owner: not recorded.
+
+
+<a id="tc-co-12"></a>
+
+### TC-CO-12: A customer name an export uses that the app does not know is linked by a person, never guessed, and remembered
+
+**Priority:** High · **How:** Automated · **Refs:** PD-8.3, DEC-58, DEC-59, REQ-CO-01
+
+**Steps**
+
+1. Covered by the tests named.
+
+**Expected:** Unknown names are listed with their invoice counts. A person chooses a customer or makes one; the name becomes one of that customer's QuickBooks names so the next export finds it by itself, and every invoice with that exact name is linked. A name another customer already has cannot be given to a second.
+
+**Automated tests:** `test_sales_import.py::test_a_name_the_app_does_not_know_is_mapped_to_a_customer_and_found_by_itself_next_time`, `test_sales_import.py::test_mapping_a_name_needs_a_customer_and_cannot_take_a_name_another_customer_has`
+
+**Latest:** Owner: not recorded.
+
+
+<a id="tc-co-09"></a>
+
+### TC-CO-09: The Sales invoices screens: upload, check the columns, see what it would do, keep it, and look at invoices, uploads and unknown names
+
+**Priority:** High · **How:** Browser · **Refs:** PD-8.3, DEC-56, DEC-58, DEC-45, REQ-CO-06, REQ-CO-07
+
+**Steps**
+
+1. Upload the made-up Sales by Customer Detail file.
+2. Read the preview: the column names row, level, counts, period and unknown customers.
+3. Clear item, quantity and price, press Show again (by invoice total only), then choose them again.
+4. Keep the upload; open invoice 2001 and see the freight line marked not goods.
+5. Upload the same file again: it is recognised and cannot be kept.
+6. Choose a customer for an exported name.
+
+**Expected:** Everyone signed in can use them; every change needs the security token; a status or message in the address changes nothing. The preview names the header row, the level, the counts and the rows not read with reasons, suggests the period, and keeps nothing. A wrong mapping is shown again without losing the file; a chosen mapping changes the level. Confirming keeps the upload, the file downloads unchanged, and a repeated file is recognised and cannot be kept. A forgotten date leaves the preview to try again. A changed invoice shows needs review and what the later upload said. Markup is shown as text. In Chrome: the preview, a changed mapping, keeping the upload, an invoice page, an exact repeat and choosing a customer all work.
+
+**Automated tests:** `test_sales_pages.py::test_everyone_signed_in_can_use_the_screens_and_each_change_needs_the_token`, `test_sales_pages.py::test_a_status_or_message_in_the_address_cannot_change_a_page`, `test_sales_pages.py::test_the_preview_says_what_the_file_would_do_and_keeps_nothing`, `test_sales_pages.py::test_a_wrong_mapping_is_shown_again_without_losing_the_file_and_a_chosen_one_changes_the_level`, `test_sales_pages.py::test_rows_that_are_not_read_are_counted_with_their_reasons`, `test_sales_pages.py::test_a_file_that_is_not_a_sales_export_or_is_damaged_gets_one_plain_message`, `test_sales_pages.py::test_confirming_keeps_the_upload_and_the_pages_show_it`, `test_sales_pages.py::test_a_saved_mapping_is_suggested_for_the_next_file_that_has_its_columns`, `test_sales_pages.py::test_the_dates_are_needed_and_a_forgotten_one_leaves_the_preview_to_try_again`, `test_sales_pages.py::test_the_same_file_again_is_recognised_and_cannot_be_kept`, `test_sales_pages.py::test_a_later_export_that_changes_an_invoice_leaves_the_accepted_figures_and_says_so`, `test_sales_pages.py::test_an_invoice_page_shows_its_lines_and_what_is_not_goods`, `test_sales_pages.py::test_markup_in_a_file_name_a_customer_or_a_reference_is_shown_as_text`, `test_sales_pages.py::test_the_list_filters_by_search_kind_state_and_whether_the_customer_is_chosen`, `test_sales_pages.py::test_a_name_the_app_does_not_know_is_linked_by_choosing_or_making_a_customer`, `test_sales_pages.py::test_an_invoice_or_upload_that_does_not_exist_is_a_readable_page`
+
+**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Not yet run.
+
+<details><summary>Screenshot</summary>
+
+![TC-CO-09 in Chrome](screenshots/TC-CO-09.png)
+
+</details>
+
+<details><summary>Screenshot 2</summary>
+
+![TC-CO-09 in Chrome](screenshots/TC-CO-09-2.png)
+
+</details>
+
+<details><summary>Screenshot 3</summary>
+
+![TC-CO-09 in Chrome](screenshots/TC-CO-09-3.png)
+
+</details>
+
+<details><summary>Screenshot 4</summary>
+
+![TC-CO-09 in Chrome](screenshots/TC-CO-09-4.png)
+
+</details>
+
+<details><summary>Screenshot 5</summary>
+
+![TC-CO-09 in Chrome](screenshots/TC-CO-09-5.png)
+
+</details>
+
+<details><summary>Screenshot 6</summary>
+
+![TC-CO-09 in Chrome](screenshots/TC-CO-09-6.png)
 
 </details>
 

@@ -37,6 +37,7 @@ from po_dashboard.pages import (
     orders,
     quickbooks,
     reports,
+    sales_invoices,
     vendors,
 )
 from po_dashboard.pages.formats import money, quantity
@@ -97,6 +98,7 @@ def create_app(
     app.include_router(documents.router)
     app.include_router(customers.router)
     app.include_router(customer_orders.router)
+    app.include_router(sales_invoices.router)
     app.include_router(mailboxes.router)
     app.include_router(mailboxes.public)
     app.include_router(audit.router)

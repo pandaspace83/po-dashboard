@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% from "_table.html" import pager %}
+{% block title %}Sales invoices · {{ app_name }}{% endblock %}
+{% block content %}
+<p class="muted"><a href="/customer-orders">Customer orders</a> /</p>
+<div class="page-head">
+  <h1>Sales invoices</h1>
+  <div class="actions"><a class="button primary" href="/sales-invoices/upload">{{ icon("upload") }}Upload a QuickBooks export</a></div>
+</div>
+<p class="muted">The invoices RaceSpec has sent its customers, as read from QuickBooks Desktop exports a person uploads. The app only reads what an export says: nothing is connected to QuickBooks.</p>
+{% if flash is not none %}<p class="notice" role="status">{{ icon("check-circle") }}<span>Kept the upload: {{ flash }} new invoice{{ "" if flash == 1 else "s" }}.</span></p>{% endif %}
+{% if unmapped %}<p class="notice" role="status">{{ icon("alert") }}<span>{{ unmapped }} invoice{{ "" if unmapped == 1 else "s" }} name{{ "s" if unmapped == 1 else "" }} a customer the app does not know: <a href="/sales-invoices/names">choose the customer</a>.</span></p>{% endif %}
+<form method="get" action="/sales-invoices" class="filters card" role="search">
+  <div class="form-row">
+    <div class="wide"><label for="q">Search</label><input id="q" name="q" type="search" placeholder="Invoice number, customer or PO reference" value="{{ f.q }}" maxlength="100" autofocus></div>
+    <div><label for="kind">Kind</label><select id="kind" name="kind"><option value="">Any</option>{% for key, label in kinds.items() %}<option value="{{ key }}" {{ "selected" if f.kind == key }}>{{ label }}</option>{% endfor %}</select></div>
+    <div><label for="state">State</label><select id="state" name="state"><option value="">Any</option>{% for key, label in states.items() %}<option value="{{ key }}" {{ "selected" if f.state == key }}>{{ label }}</option>{% endfor %}</select></div>
+    <div class="shrink"><label class="check"><input type="checkbox" name="unmapped" value="1" {{ "checked" if f.unmapped }}> Customer not chosen</label></div>
+    <div class="shrink"><button class="primary" type="submit">{{ icon("search") }}Show</button> <a class="button" href="/sales-invoices">Clear</a></div>
+  </div>
+</form>
+{% if rows %}
+<div class="table-wrap table-scroll"><table>
+  <thead><tr><th scope="col">Invoice</th><th scope="col">Kind</th><th scope="col">Customer</th><th scope="col">Date</th><th scope="col">PO reference</th><th scope="col" class="num">Total</th><th scope="col">Read as</th><th scope="col">State</th></tr></thead>
+  <tbody>
+  {% for inv, customer in rows %}
+  <tr>
+    <td class="nowrap"><a href="/sales-invoices/{{ inv.id }}">{{ inv.invoice_number }}</a></td>
+    <td>{{ kinds.get(inv.kind, inv.kind) }}</td>
+    <td>{% if customer %}<a href="/customers/{{ inv.customer_id }}">{{ customer }}</a>{% else %}<span class="pill bad">{{ icon("alert") }}not chosen: {{ inv.customer_name_exported or "none" }}</span>{% endif %}</td>
+    <td>{{ inv.invoice_date|day }}</td>
+    <td>{{ inv.po_reference or "" }}</td>
+    <td class="num">{{ inv.total|money(inv.currency) }}</td>
+    <td>{{ "by line" if inv.level == "line" else "invoice total only" }}</td>
+    <td>{% if inv.state == "needs_review" %}<span class="pill bad">{{ icon("alert") }}needs review</span>{% else %}<span class="pill ok">{{ icon("check-circle") }}accepted</span>{% endif %}</td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+{{ pager(page, "invoice") }}
+{% elif f.q or f.kind or f.state or f.unmapped %}
+<div class="card empty">{{ icon("search") }}<p><strong>No invoice matches.</strong></p><p><a href="/sales-invoices">Clear the filters</a>.</p></div>
+{% else %}
+<div class="card empty">{{ icon("upload") }}<p><strong>No sales invoices yet.</strong></p><p><a href="/sales-invoices/upload">Upload a QuickBooks export</a> to begin.</p></div>
+{% endif %}
+<h2>Uploads</h2>
+{% if history %}
+<div class="table-wrap"><table>
+  <thead><tr><th scope="col">When</th><th scope="col">File</th><th scope="col">By</th><th scope="col">Covers</th><th scope="col" class="num">New</th><th scope="col" class="num">Same</th><th scope="col" class="num">Changed</th><th scope="col" class="num">Conflicts</th></tr></thead>
+  <tbody>
+  {% for h in history %}
+  <tr><td><a href="/sales-invoices/imports/{{ h.id }}">{{ h.created_at|moment }}</a></td><td>{{ h.file_name }}</td><td>{{ who.get(h.created_by, "") }}</td><td>{{ h.period_from|day }} to {{ h.period_to|day }}</td>
+    <td class="num">{{ counts[h.id].get("new", 0) }}</td><td class="num">{{ counts[h.id].get("same", 0) }}</td><td class="num">{{ counts[h.id].get("changed", 0) }}</td><td class="num">{{ counts[h.id].get("conflicting", 0) }}</td></tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+{% else %}<p class="muted">No uploads yet.</p>{% endif %}
+{% endblock %}

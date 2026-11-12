@@ -756,7 +756,12 @@ each PO once the person confirms.
 
 ### 16.3 Sales invoices in (DEC-58)
 
-Code: `quickbooks/importers/` (reader, mapping profiles, normalising) and `quickbooks/snapshots/` (the saved upload, its rows and observations).
+Code (built in PD-8.3): `quickbooks/importers/mapping.py` (column names, aliases, the two presets, saved mappings kept as
+`setting` rows named `sales_mapping.<name>`), `quickbooks/importers/sales.py` (the reader: header row below title rows,
+headings, totals, invoice or credit memo, goods or charge, repeats and conflicts) and `quickbooks/snapshots/imports.py`
+(the plan, the sightings, keeping an upload, and linking unknown customer names). Behaviour choices are DEC-61. The
+pages are `pages/sales_invoices.py` (`/sales-invoices`: the list and upload history, the upload with its mapping preview,
+one invoice, one upload with every row and the original file, and the unknown names).
 
 Upload, map, preview, apply. The upload reader refuses what it refuses for every upload (size, zip bombs, macros, entity
 tricks). The mapping profile names which column holds what; the preview names every required field that is missing,

@@ -21,6 +21,7 @@ Every failure is logged here the moment it is found, by whoever finds it: the ca
 | [DEF-013](#def-013) | 11/12/2026 | [TC-QB-08](TEST_CASES.md#tc-qb-08) | Low | The check for the QuickBooks refusal read the page before the answer arrived | Fixed and retested |
 | [DEF-014](#def-014) | 11/12/2026 | [TC-CO-08](TEST_CASES.md#tc-co-08) | Low | The top bar wrapped onto two rows when the Customer orders link was added | Fixed and retested |
 | [DEF-015](#def-015) | 11/12/2026 | [TC-CO-08](TEST_CASES.md#tc-co-08) | Low | An order showed a different spelling of its number after a revision was approved | Fixed and retested |
+| [DEF-016](#def-016) | 11/12/2026 | [TC-CO-09](TEST_CASES.md#tc-co-09) | Low | The names page said '1 invoice carry this name' | Fixed and retested |
 
 <a id="def-001"></a>
 
@@ -386,3 +387,25 @@ Every failure is logged here the moment it is found, by whoever finds it: the ca
 **Retest:** 11/12/2026, Claude in Chrome: pass (all 62 cases; the list shows CP-100 after the revision was approved).
 
 ![DEF-015 retested](screenshots/TC-CO-08-5.png)
+
+
+<a id="def-016"></a>
+
+## DEF-016: The names page said '1 invoice carry this name'
+
+**Found:** 11/12/2026 by Claude, reading the Chrome run of the sales import · **Case:** TC-CO-09 · **Browser:** Google Chrome (scripts/browser_evidence.py) · **Severity:** Low · **Status:** Fixed and retested
+
+**Steps to reproduce**
+
+1. Upload an export that names one customer on one invoice.
+2. Open Customers the exports name.
+
+**Expected:** Correct grammar: 1 invoice carries this name.
+
+**Actual:** 1 invoice carry this name.
+
+**Cause:** The page chose the plural only for the word invoice, not for the verb.
+
+**Fix:** The verb now follows the count (carries or carry), and a test pins the wording. Not committed yet.
+
+**Retest:** 11/12/2026: pass in the tests; the Chrome run no longer shows the sentence with a count of one. Owner's retest: not needed.

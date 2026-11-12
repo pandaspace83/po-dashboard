@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block title %}Upload a QuickBooks export · {{ app_name }}{% endblock %}
+{% block content %}
+<p class="muted"><a href="/sales-invoices">Sales invoices</a> /</p>
+<h1>Upload a QuickBooks sales export</h1>
+{% if error %}<p class="error" role="alert">{{ icon("alert") }}<span>{{ error }}</span></p>{% endif %}
+{% if plan %}
+<div class="card">
+  <div class="card-head">{{ icon("clipboard") }}<h2>What the file would do: {{ filename }}</h2></div>
+  <p>The column names are on row {{ plan.parsed.header_row }}. Matching will be <strong>{{ "by line" if plan.parsed.mapping.level == "line" else "by invoice total only" }}</strong>{% if plan.parsed.mapping.level == "invoice" %} (the file has no item, quantity and price columns, so line differences cannot be found){% endif %}. Nothing has been kept yet.</p>
+  <ul>
+    <li><strong>{{ plan.items|length }}</strong> invoice{{ "" if plan.items|length == 1 else "s" }} found: {{ plan.count("new") }} new, {{ plan.count("same") }} already known and unchanged, {{ plan.count("changed") }} changed since they were accepted, {{ plan.count("conflicting") }} sharing a number with a different invoice.</li>
+    <li>Rows: {{ plan.parsed.count("line") }} read, {{ plan.parsed.count("heading") }} headings, {{ plan.parsed.count("total") }} totals, <strong>{{ plan.parsed.count("unusable") }} not read</strong>.</li>
+    {% if plan.needs_review %}<li>{{ plan.needs_review }} invoice{{ "" if plan.needs_review == 1 else "s" }} will wait for a person to look at {{ "it" if plan.needs_review == 1 else "them" }}.</li>{% endif %}
+  </ul>
+  {% if reasons %}<p>Rows not read, and why:</p><ul>{% for why, n in reasons %}<li>{{ n }} &times; {{ why }}</li>{% endfor %}</ul>{% endif %}
+  {% if plan.unknown_names %}<p class="notice" role="status">{{ icon("alert") }}<span>The export names customers the app does not know ({{ plan.unknown_names|length }}): {% for name, n in plan.unknown_names.items() %}{{ name }}{{ ", " if not loop.last }}{% endfor %}. They are kept, and you choose the customer afterwards.</span></p>{% endif %}
+  {% if plan.earlier %}<p class="error" role="alert">{{ icon("alert") }}<span>This exact file was already imported on {{ plan.earlier.created_at|moment }}. Uploading it again would add nothing.</span></p>{% endif %}
+</div>
+<form method="post" action="/sales-invoices/preview" id="mapping">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <input type="hidden" name="token" value="{{ token }}">
+  <div class="card">
+    <div class="card-head">{{ icon("search") }}<h2>Which column holds what</h2></div>
+    <p class="muted">The app suggested these from the column names. Change any that are wrong and press Show again. Required: {% for f in required %}{{ labels[f] }}{{ ", " if not loop.last }}{% endfor %}, and a customer, from a column or from a heading row above its rows.</p>
+    <div class="form-row">
+      {% for f in fields %}
+      <div><label for="map_{{ f }}">{{ labels[f] }}</label>
+        <select id="map_{{ f }}" name="map_{{ f }}"><option value="">(not used)</option>
+        {% for h in headers if h.strip() %}<option value="{{ h.strip() }}" {{ "selected" if current.get(f) == h.strip() }}>{{ h.strip() }}</option>{% endfor %}</select></div>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-head">{{ icon("clock") }}<h2>The dates this export covers</h2></div>
+    <p class="muted">The app only calls an order unbilled when an export covers its dates, so say what the export's own date range was. Suggested from the invoice dates.</p>
+    <div class="form-row">
+      <div><label for="period_from">From</label><input id="period_from" name="period_from" type="date" required value="{{ period.from }}"></div>
+      <div><label for="period_to">To</label><input id="period_to" name="period_to" type="date" required value="{{ period.to }}"></div>
+      <div><label for="remember">Remember this mapping as (optional)</label><input id="remember" name="remember" maxlength="40" value="{{ remember }}" placeholder="for example: sales by customer"{% if profiles %} list="saved"{% endif %}>
+        {% if profiles %}<datalist id="saved">{% for n in profiles %}<option value="{{ n }}">{% endfor %}</datalist>{% endif %}</div>
+    </div>
+    <p class="form-actions"><button type="submit">{{ icon("refresh") }}Show again</button>
+      <button class="primary" type="submit" formaction="/sales-invoices/confirm" {{ "disabled" if plan.earlier or not plan.items }}>{{ icon("check") }}Keep this upload</button>
+      <a class="button" href="/sales-invoices/upload">Cancel</a></p>
+    <p class="muted">The file is held here for 15 minutes, only in memory. Keeping it stores the file, every row and the dates, and never overwrites an invoice that was already accepted.</p>
+  </div>
+</form>
+{% if plan.items %}
+<h2>Invoices in the file</h2>
+<div class="table-wrap table-scroll"><table>
+  <thead><tr><th scope="col">Invoice</th><th scope="col">Kind</th><th scope="col">Customer</th><th scope="col">Date</th><th scope="col">PO reference</th><th scope="col" class="num">Lines</th><th scope="col" class="num">Total</th><th scope="col">What happens</th></tr></thead>
+  <tbody>
+  {% for item in plan.items[:shown] %}
+  {% set r = item.group.primary %}
+  <tr>
+    <td>{{ r.number }}</td><td>{{ "Credit memo" if r.kind == "credit_memo" else "Invoice" }}</td>
+    <td>{% if item.customer %}{{ item.customer.name }}{% else %}<span class="pill bad">{{ icon("alert") }}not known: {{ r.customer_name }}</span>{% endif %}</td>
+    <td>{{ r.date|day }}</td><td>{{ r.po_reference or "" }}</td><td class="num">{{ r.lines|length }}</td><td class="num">{{ r.total|money(r.currency) }}</td>
+    <td>{% if item.outcome == "new" %}<span class="pill ok">{{ icon("check-circle") }}new</span>{% elif item.outcome == "same" %}<span class="pill">{{ icon("check") }}already known, unchanged</span>{% elif item.outcome == "changed" %}<span class="pill bad">{{ icon("alert") }}changed: waits for review</span>{% else %}<span class="pill bad">{{ icon("alert") }}shares its number with another invoice</span>{% endif %}
+      {% for why in r.review %}<br><span class="muted">{{ why }}</span>{% endfor %}{% for note in r.notes %}<br><span class="muted">{{ note }}</span>{% endfor %}</td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+{% if plan.items|length > shown %}<p class="muted">The first {{ shown }} of {{ plan.items|length }} are listed. The counts above cover them all.</p>{% endif %}
+{% endif %}
+{% else %}
+<div class="card">
+  <div class="card-head">{{ icon("upload") }}<h2>Choose a CSV or Excel file</h2></div>
+  <p>Export the sales report from QuickBooks Desktop (for example Sales by Customer Detail, with item, quantity, price and amount) as CSV or Excel and upload it. You will see how its columns were read, and what it would do, before anything is kept.</p>
+  <form method="post" action="/sales-invoices/upload" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <label for="file">CSV or Excel (.xlsx) file</label>
+    <input id="file" name="file" type="file" accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required autofocus>
+    <p class="form-actions"><button class="primary" type="submit">{{ icon("search") }}Show what it would do</button></p>
+  </form>
+</div>
+<div class="card">
+  <h2>What the app does with it</h2>
+  <ul class="muted">
+    <li>Nothing is invented. A reference, quantity or price the export does not carry stays empty, and an invoice that cannot be read with certainty waits for a person.</li>
+    <li>Uploading the same file again adds nothing. An invoice that changed since it was accepted keeps its accepted figures and waits for review.</li>
+    <li>Credit memos, freight, tax and discounts are listed apart from goods and never change what was billed by themselves.</li>
+    <li>An invoice missing from a partial or old export is never called unbilled: the app needs the dates the export covers.</li>
+  </ul>
+</div>
+{% endif %}
+{% endblock %}
