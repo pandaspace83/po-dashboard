@@ -95,13 +95,13 @@ Tables, with the fields that matter. Every table has `id`, `created_at`; accepte
 | `mailbox` | address (lower case, unique), provider (gmail, graph, folder), location (the folder a folder mailbox reads), connected_by (emptied if that person is removed), connected_at, state (connected, needs_reconnect, disconnected), read_since (only mail from then on is read, DEC-51). Its token or secret is in the Keychain, never here. Built in PD-3.1 (migration 0004) |
 | `source_message` | mailbox_id, folder, provider_id, sender, recipients (To and Cc), subject, received_at, message_id_header, raw_path, content_hash (unique: the same bytes are one message, even through another mailbox), size. Built in PD-3.2 (migration 0005) |
 | `source_document` | message_id, filename (display only, never a path), kind (body, pdf, image, spreadsheet, word, text, email, other), content_type, stored_path, content_hash, size, state (stored, not_read, read, failed), not_read_reason, text_path, pages. A message's body is a document that points at the raw message. An attachment with bytes already stored is not stored again (unique among non-bodies); a body is per message, because many say only "Thanks". Built in PD-3.2 |
-| `extraction` | document_id, model, prompt_version, raw JSON, doc_type, po_number, vendor_match, validation flags, state (pending, accepted, rejected, unmatched) |
-| `extraction_line` | extraction_id, line_no, item, qty, price, promised_date, flags |
+| `extraction` | one model reading of one document (DEC-54, §6.1): document_id, model, prompt_version, schema_version; the queue: state (queued, running, done, failed), attempts, last_error (fixed words), next_attempt_at, started_at, finished_at, seconds, prompt_tokens; what was read: answer (the model's JSON, numbers kept exact), doc_type, po_number as read; matching and review: review_state (waiting, unmatched, no_facts, accepted, rejected, dismissed, superseded), po_id, vendor_id, flags (name, level, line), final (the values accepted, after a person's edits), the entry it created, reviewed_by, reviewed_at, review_note, version (DEC-52). Unique per document, prompt version and model. Lines stay inside `answer` and `final`: the ledger rows an Accept writes are where lines are queried |
 | `acknowledgement` / `ack_line` | accepted extraction: po_id, line_id, confirmed_qty, confirmed_price, promised_date, accepted_by, accepted_at |
 | `promised_date_history` | line_id, date, source ack, recorded_at: one row per accepted date, so a slip is visible |
 | `shipment` / `shipment_line` | carrier, tracking_number, shipped_at, eta; line_id, qty |
 | `invoice` / `invoice_line` | invoice_number, invoice_date, total; line_id, qty, price |
 | `invoice_charge` | invoice_id, kind (freight, tariff, tax, other), label as printed, amount: charges that are not goods (DEC-48, Phase 4) |
+| `shipment_tracking` | shipment_id, tracking_number, carrier: every tracking number of a shipment notice (a notice can list several boxes); `shipment.tracking_number` keeps the first for display (Phase 4) |
 | `alert` | po_line_id (or po_id), rule, state (open, snoozed, dismissed, cleared), snoozed_until, first_seen, last_changed |
 | `contact_log` | alert_id, user_id, note, contacted_at: "marked contacted" entries |
 | `app_user` | email (lower case, unique), password hash, role, sealed TOTP secret, totp_confirmed_at, last_totp_step, failed attempts, locked_until, must_change_password, temp_password_expires_at, disabled_at |
@@ -115,7 +115,7 @@ Tables, with the fields that matter. Every table has `id`, `created_at`; accepte
 `ack_line`, `promised_date_history`, `shipment`, `shipment_line`, `invoice`, `invoice_line`. The rest of the table
 arrives with its phase (mail, Phase 3; documents and extraction, Phase 4; alerts, Phase 5). Until Phase 4,
 `source_document_id` on an acknowledgement, shipment or invoice is an empty number with no link, because entries are
-made by hand. Rules the database enforces itself: a unique PO number, a unique line number within a PO, a three-letter
+made by hand; the Phase 4 migration makes it a real link to `source_document` (an entry typed by hand keeps it empty). Rules the database enforces itself: a unique PO number, a unique line number within a PO, a three-letter
 upper-case currency, a positive ordered, shipped and invoiced quantity, a price not below zero, a lower-case and unique
 vendor domain, and one invoice number per PO. **Deletes:** a PO's lines go with it, but a PO with an acknowledgement,
 shipment or invoice, a vendor with POs, and a line that anything refers to refuse to be deleted (a PO is cancelled, not
@@ -206,23 +206,111 @@ so someone always decides about the missing quantity. A PO with no lines is Open
    earlier messages in a thread are marked so they are not mistaken for the current message. Each document is read
    in its own short-lived process in the macOS sandbox, with a time and memory limit (DEC-53), so a hostile file
    costs that document and nothing else.
-4. **Extract.** One model call per document with the system prompt below, the fenced text and the JSON schema:
-   the fields of extraction schema v1 ([SCORING.md](SCORING.md) §2): `doc_type` (including `purchase_order`),
-   `po_number`, the vendor's own order number, invoice number and date, carrier and tracking numbers, shipment-level
-   dates, goods `lines` (`line_no` only when the document gives the company's line number), `charges` (DEC-48) and the
-   total. The prompt is versioned (`prompt_version`) so results can be compared across changes.
-5. **Validate** (plain code, no model):
-   - the PO number exists and the sender's domain belongs to the PO's vendor, else **Unmatched**. For a `purchase_order`
-  document the PO number must be new, and the vendor is found from the recipient domain (DEC-17);
-   - each line number exists on the PO; the item agrees with the PO line, else flagged;
-   - quantity is a positive number and not above what is still open; dates parse and are plausible (not years away);
-   - where a total is given, the goods (quantity × price) plus the charges equal it to the cent, else the invoice is
-     flagged (DEC-48). A charge itself is never a flag: freight and tariffs are information only (OPEN-21);
-   - a value present in the document text. The extracted PO number and each date must appear in the source text,
-     so a value the model invented cannot pass;
-   - differences against the PO (price, quantity, date) are listed beside the line.
-6. **Queue.** The extraction waits for a person (DEC-08). Accept writes the ledger rows, the history rows and an
+4. **Extract** (DEC-54). Each document the text step read gets one `extraction` row, `queued`, in the same transaction
+   that records the text. The **extractor**, a loop of its own inside the app, takes the oldest queued row, reads it with
+   the system prompt below, the fenced text and the JSON schema (extraction schema v1, [SCORING.md](SCORING.md) §2:
+   `doc_type`, `po_number`, the vendor's own order number, invoice number and date, carrier and tracking numbers,
+   shipment-level dates, goods `lines`, `charges` (DEC-48) and the total), and stores the answer. One document at a time,
+   because the model takes one at a time; apart from the scanner, so mail keeps arriving while the model works. The
+   prompt and schema are versioned, and a document is read once per prompt version and model.
+5. **Match** (plain code). Find the PO, the vendor and each PO line, exactly or not at all (below). A document with no
+   order facts is filed, not queued.
+6. **Validate** (plain code). Compute the flags (below) and the differences against the PO.
+7. **Review.** The extraction waits for a person (DEC-08). Accept writes the ledger rows, the history rows and an
    audit entry in one transaction. Reject keeps the extraction, marked rejected, with a reason.
+
+### 6.1 The queue (DEC-54, PD-4.0a)
+
+The `extraction` table is the queue; there is no other queue software. Its machine state is `queued`, `running`, `done`
+or `failed`:
+
+- **Claiming.** `UPDATE extraction SET state = 'running', attempts = attempts + 1 ... WHERE id = ? AND state = 'queued'`,
+  and the row is the extractor's only if one row changed. At start, a row left `running` by a crash goes back to `queued`.
+- **Errors.** A timeout, a dropped connection or a server error is tried again after 1, 5 and 30 minutes, then the row
+  is `failed`. An answer that is not the schema, or that stopped at the reply limit, is `failed` at once: at temperature
+  0 the same text gives the same answer. `last_error` holds fixed words, never document text (DEC-13).
+- **Model not reachable** (`ModelUnavailable`): no attempt is counted, the extractor waits a minute and tries again, and
+  the health strip says "model not reachable". Nothing is marked failed for it.
+- **Failed list** (the dead-letter queue): each failed document with its reason, Retry (back to `queued`, attempts
+  reset) and Dismiss (filed, with who and why). The health strip counts them.
+- **The reading window.** The model reads 8,192 tokens and may answer with 2,048, so a document gets about 15,000
+  characters (counted at 3 characters a token, which is cautious for part numbers). A longer text loses its quoted
+  earlier messages first (everything after the quote note, with a note that they were left out), then is cut and the
+  extraction flagged `read_in_part`. Ollama's own count of the prompt is stored; if it reaches the window the flag is
+  set too. A document is never silently cut and never split into parts in v1.
+- **Transactions.** A model call is never inside a transaction. Claiming, and storing an answer with its matches and
+  flags, are each one short write transaction (`BEGIN IMMEDIATE`, as the scanner).
+
+### 6.2 Matching (DEC-54, PD-4.3)
+
+Nothing is guessed (DEC-09). Matching either finds one answer or leaves the choice to a person.
+
+- **PO number.** Compared as letters and digits only, ignoring case, spaces, dashes and a leading `PO`. Equal or not;
+  never "close".
+- **A vendor's document** (acknowledgement, shipment notice, invoice). The PO must exist. If the sender's domain is one
+  of that PO's vendor's domains, it is matched. If not (a colleague forwarding it, a carrier, a vendor writing from
+  Gmail), it goes to Review flagged `sender_not_vendor`, and Accept needs the tick "I checked the sender" (owner,
+  2026-11-12). No PO number, or one that does not exist, goes to **Unmatched**; there the sender's vendor's open POs are
+  offered as choices, and a person picks one or rejects the document.
+- **An emailed purchase order** (DEC-17, from the company's own mailbox or Sent Items). The vendor is found from a
+  recipient's domain (To and Cc, leaving out the mailbox's own domain). No vendor, or two, goes to Unmatched. The PO
+  number must be new; if it exists already (resent or revised), it is flagged `po_already_exists`, Review shows how it
+  differs, and Accept changes nothing: a person edits the PO by hand (owner, 2026-11-12).
+- **Lines.** A line matches the PO line with the company line number the document states; else the one PO line whose
+  item is the same (ignoring case and spaces); else it is left unassigned (`line_unassigned`) for the person to assign
+  from a list of the PO's lines, or to leave out.
+- **No order facts.** A document read as `other`, or with no PO number, no lines, no tracking number and no invoice
+  number, is filed under **No order facts**: kept, searchable, and one click from Review, but never in the queue (owner,
+  2026-11-12). The "please see attached" body of a message whose attachment carries the facts lands here. So does any
+  document from Sent Items that is not a purchase order, because the company's own mail never changes a PO.
+
+### 6.3 Flags (DEC-54, PD-4.2)
+
+The names are the golden set's, so PD-4.7 can score them (T-5). A **check** asks a person to look; a **note** is
+information only. Three checks need a tick before Accept, and an unassigned line blocks it until it is assigned or left
+out. A flag never changes anything by itself (DEC-38: flagged, not blocked).
+
+| Flag | Level | When |
+|---|---|---|
+| `sender_not_vendor` | check, tick | the sender's domain is not the PO's vendor's |
+| `value_not_in_source` | check, tick | a PO number, invoice or tracking number, date, quantity, price or total the model gave is not in the document text. Numbers are compared as decimals (commas, currency signs and trailing zeros ignored), dates in the usual US ways of writing them, codes as letters and digits; in OCR text, O and 0, l and 1, S and 5, B and 8 count as equal |
+| `planted_instruction` | check, tick | the text has words addressed to software that reads it ("ignore previous instructions", "automated reader", and the like: a fixed list, tested against the golden set's eight planted documents and its 92 clean ones) |
+| `line_unassigned` | check, blocks | a line matched no PO line |
+| `po_already_exists` | check | an emailed PO's number exists already; Accept changes nothing |
+| `duplicate` | check | the same PO, type and lines as an extraction already accepted or waiting; or an invoice number or tracking number already recorded for the PO. "Dismiss as a copy" is offered first |
+| `qty_below_order` | check on an acknowledgement (confirmed short, DEC-36), note otherwise (a partial) | a quantity below what is still open on the line |
+| `confirmed_over_order`, `shipped_over_order`, `billed_over_order` | check | more than the line's ordered quantity |
+| `price_differs` | check | a unit price not equal to the PO line's |
+| `unit_differs` | check | a unit not the PO line's; units are never converted (DEC-24) |
+| `no_promised_date` | check | an acknowledgement line with no promised date |
+| `date_changed` | check | a promised date not equal to the line's last accepted one (a later one is a slip) |
+| `date_implausible` | check | a date over a year from today, or before the PO's own date |
+| `totals_disagree` | check | goods (quantity × price) plus charges differ from the printed total by a cent or more (DEC-48) |
+| `read_in_part` | check | the text was longer than the reading window (§6.1) |
+| `lines_not_covered` | note | the document covers some, not all, of the PO's open lines |
+| `charge_present` | note | the document lists a charge; shown, never an alert (DEC-48, OPEN-21) |
+
+### 6.4 Review and accept (DEC-54, PD-4.4, PD-4.5)
+
+- **Review screen.** One message at a time: its documents, each with its text on the left (escaped, the quote note
+  visible, a link to the original) and the fields on the right, every field editable. Each line shows the PO line it
+  matched with the ordered and open quantity, price, unit and requested date beside it, differences marked, and its
+  flags. Charges and the total are shown on an invoice. Actions: Accept, Reject (a reason is required), File as no order
+  facts, and for Unmatched, Attach to a PO (search) which matches and validates again.
+- **Accept** is one transaction through the code that records entries by hand (`ledger/events.py`, DEC-38), with
+  `source_document_id` now a real link and the person as `accepted_by`: an acknowledgement by `record_ack` (one with no
+  lines can be accepted as "acknowledged, no details" for every line), a shipment notice by `record_shipment` with every
+  tracking number in `shipment_tracking`, an invoice by `record_invoice` with its charges in `invoice_charge` (the person
+  types an invoice number if none was read), a new emailed PO by the PO import's code with `source = document` (currency:
+  the company default, USD, which the person can change, since schema v1 reads no currency). The extraction keeps the
+  model's answer and the values accepted, so a corrected field is visible later and can join the golden set.
+- **Twice.** The extraction's `version` (DEC-52) is in the form, so a second Accept of the same document, by anyone, is
+  refused with "changed by someone else". Anyone signed in may accept (DEC-29, DEC-38).
+- **Originals.** The original file is downloaded, never shown inside the app's page: `Content-Disposition: attachment`,
+  `X-Content-Type-Options: nosniff`, and the type from the stored kind. A PDF or picture may open in the browser's own
+  viewer in a new tab with `Content-Security-Policy: sandbox`; HTML and anything else only as a download.
+- **A new prompt or model** never touches an accepted, rejected or filed extraction. A waiting one can be read again
+  (a button for admins, and a command), and the new row replaces it on the Review screen.
 
 **Prompt rule (DEC-09).** The system prompt says the document is untrusted data and instructions inside it are to be
 ignored; the document sits inside a delimited block. The trial prompt scored 8/8 on a document with a planted
@@ -350,15 +438,16 @@ Server-rendered pages; HTMX updates parts of a page (accept a document, snooze a
 | Screen | Purpose |
 |---|---|
 | Dashboard | the counts in REQ-DB-01, the alerts needing action today, a health strip (last scan, model reachable) |
-| Review | each pending document beside its extracted fields, validator flags, price and quantity differences; accept, edit, reject |
-| Unmatched | documents with no PO or vendor; attach to a PO by hand or reject |
+| Review | one message at a time: each document's text beside its extracted fields, flags, and differences against the PO; accept, edit, reject, file as no order facts (§6.4, PD-4.4) |
+| Unmatched | documents with no PO, or an emailed PO with no vendor; the sender's vendor's open POs offered; attach to a PO by hand or reject (§6.2) |
+| No order facts | documents filed without review (thank-yous, out-of-office, "see attached" bodies, Sent Items that are not POs); searchable, one click back to Review (DEC-54) |
+| Failed documents | documents the model could not read, with the reason; Retry or Dismiss; counted on the health strip (§6.1) |
 | POs | list with search and filters; PO detail with a line timeline and the source documents |
 | Open items | the open-items report, filters, CSV export |
 | Follow-ups | the alert queue with Contacted, Snooze, Dismiss and the drafted message |
-| Vendors | vendors, their domains and contacts |
 | Mailboxes | connect, reconnect and disconnect, with each mailbox's last scan |
 | Vendors | add, edit and list vendors and their email domains (PD-1.2) |
-| Sign-in, Users | sign-in with a second factor; admins add and disable people |
+| Sign-in, People | sign-in (the second factor is paused, DEC-34); admins add, disable and reset people |
 | Settings and health | interval, thresholds, model name, scan status, backup status, audit trail |
 
 **Recording by hand (PD-1.4, DEC-38).** `ledger/events.py` holds the rules and `pages/entries.py` the pages: a form for each of an

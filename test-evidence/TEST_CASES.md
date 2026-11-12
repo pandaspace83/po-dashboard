@@ -607,7 +607,7 @@ Latest Chrome run: 11/11/2026, Google Chrome 158.0.8127.18, by Claude, scripts/b
 
 ### TC-VEN-01: A vendor is added on its own page and lands on its vendor page
 
-**Priority:** High · **How:** Browser · **Refs:** REQ-PO-01, PD-1.2, DEC-45 · **Was:** PO check #1, #2; Design check #3
+**Priority:** High · **How:** Browser · **Refs:** REQ-PO-04, PD-1.2, DEC-45 · **Was:** PO check #1, #2; Design check #3
 
 **Steps**
 
@@ -801,7 +801,7 @@ Latest Chrome run: 11/11/2026, Google Chrome 158.0.8127.18, by Claude, scripts/b
 
 ### TC-PO-01: A PO entered by hand keeps exact numbers and starts as Sent
 
-**Priority:** Critical · **How:** Browser · **Refs:** REQ-PO-02, PD-1.2 · **Was:** PO check #6, #8
+**Priority:** Critical · **How:** Browser · **Refs:** REQ-PO-01, PD-1.2 · **Was:** PO check #6, #8
 
 **Steps**
 
@@ -1003,7 +1003,7 @@ Latest Chrome run: 11/11/2026, Google Chrome 158.0.8127.18, by Claude, scripts/b
 
 ### TC-PIMP-01: A PO file imports every PO and line, and the template downloads
 
-**Priority:** High · **How:** Browser · **Refs:** REQ-PO-04, DEC-47 · **Was:** PO check #11, #12; Design check #10
+**Priority:** High · **How:** Browser · **Refs:** REQ-PO-02, DEC-47 · **Was:** PO check #11, #12; Design check #10
 
 **Steps**
 
@@ -1027,7 +1027,7 @@ Latest Chrome run: 11/11/2026, Google Chrome 158.0.8127.18, by Claude, scripts/b
 
 ### TC-PIMP-02: Importing the same file again adds nothing and overwrites nothing
 
-**Priority:** Critical · **How:** Browser · **Refs:** REQ-PO-04 · **Was:** PO check #13; Design check #10
+**Priority:** Critical · **How:** Browser · **Refs:** REQ-PO-02 · **Was:** PO check #13; Design check #10
 
 **Steps**
 
@@ -1050,7 +1050,7 @@ Latest Chrome run: 11/11/2026, Google Chrome 158.0.8127.18, by Claude, scripts/b
 
 ### TC-PIMP-03: One bad row rejects the whole file, naming the row
 
-**Priority:** Critical · **How:** Browser · **Refs:** REQ-PO-04 · **Was:** PO check #14
+**Priority:** Critical · **How:** Browser · **Refs:** REQ-PO-02 · **Was:** PO check #14
 
 **Steps**
 

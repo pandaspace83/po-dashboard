@@ -173,19 +173,47 @@ Then the same through the Gmail test account.
 
 ## Phase 4: Extraction, validation, review queue
 
-- [ ] PD-4.0 Documentation pass (DEC-25).
-- [ ] PD-4.0a **Before the first extraction row exists** (engineering review): add to `source_document` the queue columns `attempts`, `last_error` (a type and a reason, never document text) and `next_attempt_at`, and the states `pending` and `processing`; a retry cap after which a document is "failed" and listed for a person to Retry or Dismiss, with a count on the health strip (this is the dead letter queue); documents left "processing" by a crash go back to "pending" on start; rows are claimed with one guarded `UPDATE` and its row count. A database table is the queue: no Redis, RabbitMQ or Kafka.
-- [ ] PD-4.1 Model gateway `models/llm.py` and the versioned prompt and schema (ARCHITECTURE §6); they start in PD-2.4
-  and are finished here (retries, time-outs, the health strip).
-- [ ] PD-4.2 The validator (§6.5), each check with a test; the "value must appear in the source" check.
-- [ ] PD-4.3 Matching a message to a vendor and PO; the Unmatched queue (REQ-ACK-05). For an emailed PO the vendor comes from the recipient address and a new PO is created on accept (REQ-PO-03, DEC-17).
-- [ ] PD-4.4 The Review screen: source beside fields, differences against the PO, accept, edit, reject
-  (REQ-ACK-03, -06, REQ-DB-04).
-- [ ] PD-4.5 Accept writes ledger rows, history rows and audit in one transaction; promised-date history and slips
-  (REQ-ACK-04).
-- [ ] PD-4.6 Pipeline tests with a stub model; security tests with a stub that obeys planted instructions, proving
-  the validator and queue contain it.
-- [ ] PD-4.7 Re-run the golden set through the whole pipeline; record the score.
+*Design: ARCHITECTURE §6.1 to §6.4 and DEC-54 (written on Opus in PD-4.0). Sonnet for building, Opus for PD-4.6's
+security tests and the PD-4.7 scoring. Tests use a stub model; only PD-4.7 needs the 14b model (about 9 GB of memory,
+already downloaded).*
+
+- [x] PD-4.0 Documentation pass (DEC-25), 2026-11-12. The owner's answers: a document from someone other than the PO's
+  vendor goes to Review with a tick-to-accept check; documents with no order facts are filed, not queued; a resent or
+  revised emailed PO shows its differences and changes nothing; the QuickBooks load skips charge rows (DEC-55, closes
+  the check OPEN-21 left). Written: DEC-54 (the pipeline), ARCHITECTURE §4 (the `extraction`, `shipment_tracking` and
+  `invoice_charge` tables) and §6.1 to §6.4 (queue, matching, flags, review), the screens in §9. Brought in line:
+  AUDIT.md (not updated since Phase 0: 12 requirements met, 22 partly), the test record's swapped PO references,
+  DEC-53's table row. **Waiting:** the owner's confirmation of DEC-54's design (the parts marked Assumed).
+- [ ] PD-4.0a The tables and the queue (§6.1): one migration for `extraction` (queue and review columns, `version`),
+  `shipment_tracking`, `invoice_charge`, and a real link from acknowledgements, shipments and invoices to their
+  document. The scanner queues each document it reads, in the same transaction. The extractor loop (one at a time,
+  claim by a guarded `UPDATE`, `running` back to `queued` at start, retries 1, 5 and 30 minutes for timeouts and server
+  errors, fail at once for a bad answer, wait without counting when the model is down), the reading window (quoted
+  earlier messages dropped first, then `read_in_part`), and the Failed list with Retry and Dismiss.
+- [ ] PD-4.1 The model gateway finished: Ollama's prompt count kept, errors sorted into "try again" and "will fail the
+  same way", the health strip's "model not reachable", waiting and failed counts. A test that only `models/llm.py`
+  calls the model server (NFR-10).
+- [ ] PD-4.2 The validator (§6.3): every flag, each with a test, named as in the golden set; `value_not_in_source` with
+  numbers, US dates and codes (OCR look-alikes equal); `planted_instruction` caught on all 8 golden documents that
+  have one and on none of the other 92.
+- [ ] PD-4.3 Matching (§6.2): PO number exactly, the sender's domain, lines by stated number or one equal item; an
+  emailed PO's vendor from its recipients; the Unmatched list with the sender's vendor's open POs; the No order facts
+  list (including Sent Items that are not POs).
+- [ ] PD-4.4 The Review screen (§6.4): a message's documents, text beside fields, every field editable, lines beside
+  their PO lines with differences and flags, the three ticks, Accept, Reject with a reason, File, Attach to a PO; the
+  original served as a download (a PDF or picture may open in the browser's own viewer under a sandbox policy). Home's
+  counts gain "waiting for review" and "unmatched" (REQ-DB-01).
+- [ ] PD-4.5 Accept and reject in one transaction through `ledger/events.py` (acknowledgement, shipment with every
+  tracking number, invoice with its charges, a new emailed PO), the document linked, the person named, the model's
+  answer and the accepted values both kept; a second Accept refused by `version`; a revised emailed PO shows its
+  differences only. The PO's timeline shows each line's source document (REQ-DB-02).
+- [ ] PD-4.5a The QuickBooks load skips charge rows, Shipping and Freight by default and more in a setting, and the
+  preview lists them (DEC-55).
+- [ ] PD-4.6 Pipeline tests with a stub model; security tests with a stub that obeys planted instructions, proving the
+  validator, the ticks and the person contain it (Opus).
+- [ ] PD-4.7 The golden set through the whole pipeline: each PDF, scan and spreadsheet inside an email from its vendor's
+  domain (a "please see attached" body, which must land in No order facts); a database built from each case's
+  `po_context`; T-1 to T-5 and seconds per document (NFR-11) on the 14b model (Opus).
 
 **Demo:** the golden mailbox flows to the review queue; accepting documents moves the lines through their statuses.
 

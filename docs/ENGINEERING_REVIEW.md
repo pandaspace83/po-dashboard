@@ -23,7 +23,7 @@ report says so instead of padding.
 - **Logging did not exist.** Now: `logs/app.log`, a request id and timing on every response, no message text ever, with
   a test that proves it.
 - **Needed soon, built into the work already planned:** retries with backoff for Gmail (PD-3.5); one scan at a time, a work
-  cap and a "model down" state (PD-3.4); the queue and dead-letter columns (PD-4.0a); the network hardening (PD-6.3a).
+  cap and a "model down" state (PD-3.4); the queue and dead-letter columns (PD-4.0a, on the `extraction` table: DEC-54); the network hardening (PD-6.3a).
 
 ## Done in this review
 
