@@ -2,7 +2,8 @@
 
 A local-first purchasing dashboard. It watches the company's purchasing mailbox or mailboxes for vendor replies to purchase orders (acknowledgements,
 shipment notices, invoices), extracts them with a local model, lets a person accept them, tracks every PO line to
-closed, and raises in-app alerts for lines that need a vendor follow-up. Python (FastAPI, SQLite), server-rendered
+closed, and raises in-app alerts for lines that need a vendor follow-up. A second, separate workflow (Phase 8, DEC-56)
+reconciles customer POs against QuickBooks sales invoices that a person uploads. Python (FastAPI, SQLite), server-rendered
 pages with HTMX, Ollama with `qwen2.5:14b-instruct`.
 
 Requirements: [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md). Decisions and open questions (`DEC-nn`, never

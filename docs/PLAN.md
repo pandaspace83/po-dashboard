@@ -2,7 +2,9 @@
 
 > **Status, 2026-11-12:** Phases 0 to 3 are built. **Phase 4 is in progress:** its design is written (PD-4.0, DEC-54) and
 > the queue and the extractor are built (PD-4.0a); the model gateway, validator, matching, Review screen and Accept come
-> next. Left from Phase 3: the owner's check of the Mailboxes screen with the real Google account (TC-MAIL-28).
+> next, after **Phase 8 (customer orders and invoice reconciliation)**, which the owner asked for first; its design is
+> written (PD-8.0) and waits for the go-ahead. Left from Phase 3: the owner's check of the Mailboxes screen with the real
+> Google account (TC-MAIL-28).
 > **Sources:** [REQUIREMENTS.md](REQUIREMENTS.md), [ARCHITECTURE.md](ARCHITECTURE.md), [DECISIONS.md](DECISIONS.md).
 
 **How this file works.** Each task has an ID (`PD-3.2`) and a checkbox. Phases run in order and each ends with a demo
@@ -263,3 +265,36 @@ signs in over the office network. It survives a restart, and the health page say
 
 More than one mailbox, with keyword rules for mailboxes that are not purchasing-only (DEC-33), automatic vendor email (DEC-10), Windows or Linux service (DEC-12),
 a malware scan, auto-accept for very high-confidence documents.
+
+## Phase 8: Customer orders and invoice reconciliation
+
+*The owner's request of 2026-11-12, built before Phase 4 resumes (DEC-56). A separate workflow: customer POs against
+QuickBooks sales invoices. Design: ARCHITECTURE §16, DEC-56 to DEC-59, written on Opus. Sonnet for building, Opus for the
+PD-8.4 rules review. Synthetic data only until the owner shows a real export (OPEN-22).*
+
+- [x] PD-8.0 Documentation pass (DEC-25), 2026-11-12. The owner's four answers (the export is not known yet; customer POs
+  come to the purchasing mailbox; everyone signed in sees it; "possibly unbilled" after 30 days); REQ-CO-01 to 16 and
+  T-7; DEC-56 to DEC-59; OPEN-22 to OPEN-25 (the export, tolerances, Customer:Job names, where customers come from, each
+  with a working assumption); ARCHITECTURE §16 and RISK-16, RISK-17. The owner gave the go-ahead on this plan, 2026-11-12.
+- [ ] PD-8.1 The tables (§16.1) in migration 0010, new tables only, and `db/customers.py`; the `setting` table and its
+  defaults. A test that a database with purchasing records upgrades with every record unchanged.
+- [ ] PD-8.2 Customers (list, add, edit, QuickBooks names, domains) and customer POs: the intake service (§16.2), the form,
+  the CSV and Excel import with its template and preview, revisions with Approve and Reject, and the waiting list for
+  unknown customers.
+- [ ] PD-8.3 The sales invoice import (§16.3): mapping profiles with the two presets, the preview with missing fields
+  named, the period, observations (new, same, changed, conflicting), credit memos and charges, the upload history with the
+  file kept, and "map to a customer or create one" for an unknown name.
+- [ ] PD-8.4 The matching engine and status (§16.4, §16.5): order of evidence, tolerances, allocations by rule and by a
+  person, the confirmed and preliminary levels, coverage and the 30-day rule, history. The owner's ten scenarios and their
+  variants are each a test (T-7). Opus reviews the rules before they are ticked.
+- [ ] PD-8.5 The screens (§16.6): order list with filters and CSV, order page with every action, exception queue, sales
+  invoices and uploads, customers; Chrome cases for each.
+- [ ] PD-8.6 Security and regression: malformed and hostile uploads, the route sweep, an audit row for every action, the
+  purchasing tests unchanged and green, the migration on a copy of a populated database.
+- [ ] PD-8.7 End to end on synthetic records (customers, POs, two uploads, every scenario), then AUDIT.md, the README,
+  BUILD_HISTORY and the completion report.
+- [ ] PD-8.8 (after Phase 4) Customer POs from email (§16.7): the `customer_purchase_order` type, a new prompt version,
+  golden-set cases and a re-score, the customer found by sender domain, Accept through the intake service.
+
+**Demo:** upload a synthetic QuickBooks export; the order list shows matched, partial, over-invoiced, not found and needs
+review, each linked to its evidence; a person settles an ambiguous match and the audit trail shows it.

@@ -712,3 +712,84 @@ po-dashboard/
 | RISK-13 | There is no always-on Mac after all (the owner: "hoping") | Revisit DEC-28. Only where the app runs changes; a copy on each laptop would lose the shared view |
 | RISK-14 | Apple removes `sandbox-exec` (deprecated for years, still shipped), or a parser has a flaw the sandbox does not cover | Documents are still read in a separate process with time and memory limits, and the log says the sandbox is missing; a test fails on any Mac without it. Keep pypdf, Pillow, openpyxl, python-docx and lxml current (CI) |
 | RISK-15 | A burst of hostile documents, each held to the 10-minute limit, delays new mail by hours | At most 25 documents per scan; each refused document is not tried again. Lower `DOCUMENT_SECONDS` if real scans are always short |
+| RISK-16 | The uploaded QuickBooks sales export is partial or out of date, and an order looks unbilled when it is not | "Not found" is only a status; "possibly unbilled" needs 30 days and an uploaded period that covers them (DEC-59); every upload states its period |
+| RISK-17 | An invoice is edited in QuickBooks after it was imported, and the app keeps the old figures | Each upload compares every invoice with what was accepted; a change waits for a person, with old and new side by side (DEC-58) |
+
+## 16. Customer orders and invoice reconciliation (Phase 8, DEC-56 to DEC-59)
+
+A second workflow, apart from purchasing. Customers send POs to RaceSpec; RaceSpec invoices them in QuickBooks Desktop;
+a person uploads a QuickBooks export; the app matches the two and lists where they disagree. The code lives in
+`src/po_dashboard/customers/`, the pages in `pages/customers*.py`, the tables in `db/customers.py`. It shares only
+sign-in, the audit trail, the upload reader (`ledger/sheets.py`), the exact number types, the file store and the new
+`setting` table. Nothing in purchasing reads or writes these tables.
+
+### 16.1 Tables
+
+| Table | Holds |
+|---|---|
+| `customer` | name (unique, case ignored), contact name and email, notes, active, version (DEC-52) |
+| `customer_name` | customer_id, name as QuickBooks writes it in an export (unique, case and spacing ignored): how an export finds its customer, exactly |
+| `customer_domain` | customer_id, email domain (unique): how the email reader will find a customer (PD-8.8). A domain may also be a vendor's; the document type then decides |
+| `customer_po` | customer_id, po_number (the customer's), revision (0 is the original), state (pending, active, superseded, rejected, closed, cancelled), po_date, currency, stated_total (as written, may be empty), source (manual, import, document), source_document_id, import file id, created_by, approved_by and at, close reason, version. Unique per customer, number (case ignored) and revision |
+| `customer_po_line` | customer_po_id, line_no, item, description, qty, unit, unit_price, stated_amount (as written, may be empty) |
+| `customer_po_intake` | the structured data that came in, its source, why it waits (no customer found), state (waiting, done, rejected): the review list for POs whose customer is unknown |
+| `sales_import` | who and when, file name (display only), file hash and stored path, the mapping used, the period it covers, counts per outcome |
+| `sales_import_row` | import_id, row number, the cells as read (JSON), outcome (invoice line, heading or total skipped, not usable, with a reason) |
+| `sales_invoice` | kind (invoice, credit_memo), invoice_number, customer_id (empty until the export's name is mapped), the name as exported, invoice_date, currency, total, po_reference (as exported), qb_reference, level (line or invoice), state (accepted, needs_review), version. Unique per kind and number (case ignored) |
+| `sales_invoice_observation` | invoice_id, import_id, a fingerprint of the content, the content as read, outcome (first, same, changed, conflicting): every time an upload showed this invoice |
+| `sales_invoice_line` | invoice_id, position, item, description, qty, unit_price, amount, kind (goods, freight, tax, discount, other) |
+| `allocation` | customer_po_id, customer_po_line_id (empty for an invoice-level match), sales_invoice_id, sales_invoice_line_id (empty likewise), qty, amount, basis (exact rule, or a person), state (proposed, confirmed, rejected), who, when, reason, version |
+| `reconciliation_event` | customer_po_id, when, status before and after, the exceptions then, what caused it (an upload, a person, a revision): the history on the detail page |
+| `setting` | key, value: tolerances, the unbilled days, charge item names, the default currency (also DEC-55's QuickBooks charge rows) |
+
+### 16.2 Customer POs in (DEC-57)
+
+One service, `customers/intake.py`, takes structured PO data (customer, number, date, currency, stated total, lines)
+from every source: the form, a file, and later the email reader. It checks the customer, currency, quantities and prices
+with the purchasing rules (exact decimals, nothing rounded), then: a new number for that customer is created active; the
+same number with the same terms is skipped as a copy; the same number with different terms is stored as the next
+revision, **pending**, and changes nothing until a person approves it. A PO whose customer cannot be found (no explicit
+choice, no exact QuickBooks name, no known email domain) waits in `customer_po_intake` for a person to pick or create the
+customer. The CSV and Excel import reads its file with `ledger/sheets.py`, shows a preview, and calls the same service for
+each PO once the person confirms.
+
+### 16.3 Sales invoices in (DEC-58)
+
+Upload, map, preview, apply. The upload reader refuses what it refuses for every upload (size, zip bombs, macros, entity
+tricks). The mapping profile names which column holds what; the preview names every required field that is missing,
+every row that cannot be used and why, which invoices are new, unchanged, changed or conflicting, and which customer
+names the app does not know. Apply writes, in one transaction, the upload, its rows, each invoice's observation, new
+invoices and their lines. A changed or conflicting invoice is marked needs review and keeps its accepted content until a
+person chooses. The file goes to the file store under its hash; the same file again is recognised and adds nothing.
+
+### 16.4 Matching (DEC-59)
+
+`customers/reconcile.py` is plain code with no model. It runs after every upload, PO change, revision approval and
+person's decision, and is a function of the data: the same data always gives the same result. Order of evidence:
+customer (exact name), QuickBooks reference, PO reference (exact, per customer, possibly a list), then lines by exactly
+equal item, then quantities, prices and currency. Decisions by people are kept and never undone by a re-run; automatic
+matches are worked out again each time. Anything with two candidates, or none, waits for a person with suggestions.
+
+### 16.5 Status and exceptions (DEC-59)
+
+The status of a customer PO is computed from its active revision and its allocations, never typed. Exceptions carry a
+level: a **confirmed discrepancy** rests on line evidence on both sides; a **preliminary alert** rests on missing data,
+invoice-level figures only, or an unconfirmed match. "No invoice in the uploaded files" becomes "possibly unbilled" only
+after the set number of days, and only when the uploaded periods cover them. Credit memos and charges are listed apart and
+never change billed quantities.
+
+### 16.6 Screens
+
+**Customer orders** in the top bar, for everyone signed in (DEC-56): the order list (customer, PO number, date, amount,
+invoiced, apparent remaining, status, the latest upload's date; filters, paging, a CSV export through `safe_cell`); the
+order page (lines with ordered, invoiced and remaining, the matching invoices and allocations, differences, the source
+document or upload, revisions, history, and the actions); the exception queue (filters by customer, type, level, status
+and date); sales invoices with the upload history; customers. Every action is a form post with the security token,
+answered with a redirect, and written to the audit trail with before and after; an override needs a reason.
+
+### 16.7 Customer POs from email (PD-8.8, after Phase 4)
+
+Customer POs arrive in the purchasing mailbox (DEC-56), next to vendor mail and the company's own POs. Reading them needs
+a new document type, `customer_purchase_order`, a new prompt version and golden-set cases, with the sender's domain found
+in `customer_domain`. A person accepts it on the Review screen like any document (DEC-08), and Accept calls the intake
+service of §16.2. Until then customer POs come in by hand or by file.

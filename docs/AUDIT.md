@@ -12,12 +12,12 @@ test; **HT** is a step in `test-evidence/HUMAN_TEST_CHECKLIST.md`; **SOAK** is t
 
 | | Count |
 |---|---|
-| Requirements (33 REQ and 14 NFR) | 47 |
+| Requirements (49 REQ and 14 NFR) | 63 |
 | Met | 12 |
 | Partly met | 22 |
 | Not met | 0 |
-| Not built or not measured yet | 13 (including REQ-FU-04, which is Later) |
-| Targets (T-1 to T-6) met | 0 of 6 |
+| Not built or not measured yet | 29 (including REQ-FU-04 and REQ-CO-16, which are Later) |
+| Targets (T-1 to T-7) met | 0 of 7 |
 
 Updated at the documentation pass before Phase 4 (PD-4.0, 2026-11-12): Phases 0 to 3 are built (PD-3.7 waits for
 the owner's real-Google check). It had not been updated since Phase 0, so this brings it in line. 12 requirements are
@@ -62,6 +62,22 @@ measured yet: the owner skipped the full Phase 2 score, and the first one is PD-
 | REQ-FU-02 | Contacted, snooze, dismiss, reopen | Not built (Phase 5) | | |
 | REQ-FU-03 | Drafted follow-up message | Not built (Phase 5) | | |
 | REQ-FU-04 | Automatic vendor email | Later (DEC-10) | | |
+| REQ-CO-01 | Customers and their QuickBooks names | Not built (Phase 8) | | |
+| REQ-CO-02 | Customer PO by hand | Not built (Phase 8) | | |
+| REQ-CO-03 | Customer PO import | Not built (Phase 8) | | |
+| REQ-CO-04 | Revisions kept, approved by a person | Not built (Phase 8) | | |
+| REQ-CO-05 | One intake service; unknown customer waits | Not built (Phase 8) | | |
+| REQ-CO-06 | QuickBooks sales import with mapping, preview, history | Not built (Phase 8) | | |
+| REQ-CO-07 | Repeated uploads safe | Not built (Phase 8) | | |
+| REQ-CO-08 | Credit memos and charges apart | Not built (Phase 8) | | |
+| REQ-CO-09 | Deterministic matching, ambiguity to a person | Not built (Phase 8) | | |
+| REQ-CO-10 | Reconciliation status from evidence | Not built (Phase 8) | | |
+| REQ-CO-11 | Exception queue, confirmed or preliminary | Not built (Phase 8) | | |
+| REQ-CO-12 | Possibly unbilled after 30 days, when covered | Not built (Phase 8) | | |
+| REQ-CO-13 | Overrides with a reason, audited | Not built (Phase 8) | | |
+| REQ-CO-14 | Customer orders section and CSV | Not built (Phase 8) | | |
+| REQ-CO-15 | Customer POs from email | Not built (PD-8.8, after Phase 4) | | |
+| REQ-CO-16 | Payments and ageing | Later | | |
 
 ## 3. Non-functional requirements
 
@@ -92,3 +108,4 @@ measured yet: the owner skipped the full Phase 2 score, and the first one is PD-
 | T-4 | Planted instructions followed: 0 | Not measured (PD-4.7) | 0 in the 3-document check; the trial: 0 on the 14b model, 1 of 1 on the others |
 | T-5 | Wrong-PO matches the validator missed | Not measured (PD-4.7) | The validator is PD-4.2 |
 | T-6 | 24 hour run, no loss or duplicate | Not measured (Phase 6) | |
+| T-7 | Reconciliation set: every case right | Not measured (PD-8.4) | |

@@ -8,7 +8,8 @@ that leaves the office is the connection to the mailbox.
 
 Python (FastAPI, SQLite), server-rendered pages with HTMX, and Ollama with `qwen2.5:14b-instruct`. macOS only for now.
 
-> **Status: Phases 0 to 3 are built; Phase 4 (reading documents with the model) is in progress.** The table below is
+> **Status: Phases 0 to 3 are built. Phase 4 (reading documents with the model) is in progress and paused for Phase 8
+> (customer orders), whose design is written.** The table below is
 > updated at the end of every phase, and the detail is in [docs/PLAN.md](docs/PLAN.md).
 
 ## What it is for
@@ -57,6 +58,7 @@ would notice on their own. It is judged by whether it helps with that, not by wh
 | 5 | Alerts and follow-up | Not started |
 | 6 | The company's mail system, the office Mac, running for real | Not started |
 | 7 | A second machine, the final audit, release | Not started |
+| 8 | Customer orders: customer POs reconciled against QuickBooks sales invoices (asked for 2026-11-12, built before Phase 4 resumes) | Designed; building (nothing built yet) |
 
 ## The documents
 
