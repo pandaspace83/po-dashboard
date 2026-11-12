@@ -179,6 +179,22 @@ does: create vendors, change a PO already in the app, read `Other 1`, `Print` or
 emails), or close anything. Closing from the weekly export waits for OPEN-20.
 
 
+## 15a. Customer orders (PD-8.2)
+
+**Customer orders** in the top bar is for the purchase orders that customers send to RaceSpec; it is separate from
+Purchase orders (what RaceSpec sends to vendors). Everyone signed in can use it.
+
+1. **Add the customer first** (Customers). Write the names QuickBooks uses for it, spelt the same, and the email domains
+   its orders come from. A customer is found only by an exact name or domain, never by a similar one.
+2. **File an order** with New customer order, or Import CSV or Excel (download the template). A file is previewed first:
+   it shows what each order would do and files nothing until you confirm.
+3. **Same order again:** the same number with the same terms changes nothing. The same number with different terms
+   becomes a revision that waits: open the order, read the changes listed, then Approve or Reject (a reason is needed).
+4. **Waiting for a customer:** an order whose customer was not found waits on that page. Choose the customer, or write the
+   name of a new one, and it is filed as it came. Reject one that is not yours, with a reason.
+
+Nothing here reads email yet: customer orders come in by hand or by file until the email reader is built (PD-8.8).
+
 ## 16. Connecting the Gmail test mailbox (PD-3.5, DEC-50)
 
 Use a **dedicated test Gmail account** that holds only made-up mail (DEC-13). The app reads it with the `gmail.readonly`

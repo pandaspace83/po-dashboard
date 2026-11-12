@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% from "_picker.html" import customer_picker %}
+{% from "_table.html" import sort_th, pager, live_filters with context %}
+{% block title %}Customer orders · {{ app_name }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Customer orders</h1>
+  <div class="actions">
+    <a class="button" href="/customers">{{ icon("users") }}Customers</a>
+    <a class="button" href="/customer-orders/import">{{ icon("upload") }}Import CSV or Excel</a>
+    <a class="button primary" href="/customer-orders/new">{{ icon("plus") }}New customer order</a>
+  </div>
+</div>
+<p class="muted">Purchase orders that customers send to RaceSpec. These are separate from the purchase orders RaceSpec sends to vendors.</p>
+{% if error %}<p class="error" role="alert">{{ icon("alert") }}<span>{{ error }}</span></p>{% endif %}
+{% if flash.imported is not none %}<p class="notice" role="status">{{ icon("check-circle") }}<span>Filed {{ flash.imported }} customer order{{ "" if flash.imported == 1 else "s" }}.{% if flash.revisions %} {{ flash.revisions }} {{ "is a revision" if flash.revisions == 1 else "are revisions" }} waiting for approval.{% endif %}{% if flash.skipped %} {{ flash.skipped }} already here with the same terms, so not filed again.{% endif %}{% if flash.waiting %} {{ flash.waiting }} waiting for a customer: see <a href="/customer-orders/waiting">Waiting for a customer</a>.{% endif %}</span></p>{% endif %}
+{% if waiting %}<p class="notice" role="status">{{ icon("alert") }}<span>Some customer orders are waiting for a customer to be chosen: <a href="/customer-orders/waiting">Waiting for a customer</a>.</span></p>{% endif %}
+<form method="get" action="/customer-orders" id="filters" class="filters card" role="search" {{ live_filters("/customer-orders") }}>
+  <div class="form-row">
+    <div class="wide"><label for="q">Search</label><input id="q" name="q" type="search" placeholder="PO number or customer" value="{{ f.q }}" maxlength="100" autofocus data-search aria-keyshortcuts="/"></div>
+    <div><label for="state">State</label>
+      <select id="state" name="state"><option value="">Any</option>
+      {% for key, label in states.items() %}<option value="{{ key }}" {{ "selected" if f.state == key }}>{{ label }}</option>{% endfor %}</select></div>
+    <div>{{ customer_picker("customer", "Customer", f.customer_id, customer_name, false, "Any customer", true) }}</div>
+    <div class="shrink"><button class="primary js-hide" type="submit">{{ icon("search") }}Show</button> <a class="button" href="/customer-orders">Clear</a></div>
+  </div>
+</form>
+<div id="results">
+<input type="hidden" name="sort" value="{{ sorting.value }}" form="filters">
+{% if rows %}
+<div class="table-wrap table-scroll">
+<table>
+  <thead><tr>{{ sort_th("Customer", "customer", sorting) }}{{ sort_th("PO", "po", sorting) }}{{ sort_th("PO date", "date", sorting) }}<th scope="col">Currency</th>{{ sort_th("Lines", "lines", sorting, "num") }}{{ sort_th("Total of the lines", "total", sorting, "num") }}{{ sort_th("State", "state", sorting) }}</tr></thead>
+  <tbody>
+  {% for r in rows %}
+  <tr>
+    <td><a href="/customers/{{ r.customer.id }}">{{ r.customer.name }}</a></td>
+    <td class="nowrap"><a href="/customer-orders/{{ r.order.id }}">{{ r.number }}</a>{% if r.order.revision %} <span class="muted">rev {{ r.order.revision }}</span>{% endif %}</td>
+    <td>{{ r.order.po_date|day }}</td>
+    <td>{{ r.order.currency }}</td>
+    <td class="num">{{ r.lines }}</td>
+    <td class="num">{{ r.total|money }}</td>
+    <td>{% if r.order.state == "closed" %}<span class="pill ok">{{ icon("check-circle") }}Closed</span>{% elif r.order.state == "cancelled" %}<span class="pill">{{ icon("ban") }}Cancelled</span>{% else %}<span class="pill">{{ icon("clock") }}Open</span>{% endif %}{% if r.pending %} <a class="pill bad" href="/customer-orders/{{ r.pending.id }}">{{ icon("alert") }}revision {{ r.pending.revision }} waiting</a>{% endif %}</td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{{ pager(page, "customer order") }}
+{% elif f.q or f.state or f.customer_id %}
+<div class="card empty">{{ icon("search") }}<p><strong>No customer order matches.</strong></p><p><a href="/customer-orders">Clear the filters</a>.</p></div>
+{% else %}
+<div class="card empty">{{ icon("clipboard") }}<p><strong>No customer orders yet.</strong></p><p><a href="/customer-orders/new">Enter one</a>, <a href="/customer-orders/import">import a file</a>, or <a href="/customers/new">add a customer</a> first.</p></div>
+{% endif %}
+</div>
+{% endblock %}

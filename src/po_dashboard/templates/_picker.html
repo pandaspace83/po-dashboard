@@ -8,3 +8,14 @@
   <ul id="{{ field }}_list" class="picker-list" role="listbox" hidden></ul>
 </div>
 {%- endmacro %}
+
+{# The same search box for customers: it asks /customers/search and says so in its own words. #}
+{% macro customer_picker(field, label, chosen_id, chosen_name, required=false, empty="Type a customer name", search=false) -%}
+<div class="picker" data-picker data-search-url="/customers/search" data-none="No customer matches. Add it under Customers first." data-pick="Pick a customer from the list.">
+  <label for="{{ field }}_text">{{ label }}</label>
+  <input id="{{ field }}_text" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="{{ field }}_list"
+         autocomplete="off" maxlength="100" placeholder="{{ empty }}" value="{{ chosen_name }}" {{ "required" if required }}{{ " data-search" if search }}>
+  <input type="hidden" id="{{ field }}" name="{{ field }}" value="{{ chosen_id or '' }}">
+  <ul id="{{ field }}_list" class="picker-list" role="listbox" hidden></ul>
+</div>
+{%- endmacro %}

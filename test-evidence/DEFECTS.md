@@ -19,6 +19,8 @@ Every failure is logged here the moment it is found, by whoever finds it: the ca
 | [DEF-011](#def-011) | 11/12/2026 | [TC-MAIL-23](TEST_CASES.md#tc-mail-23) | High | With python.org's Python, every document failed: the sandbox refused Python's own restart | Fixed and retested |
 | [DEF-012](#def-012) | 11/12/2026 | [TC-HOME-01](TEST_CASES.md#tc-home-01) | Low | The Home check counted the new Failed documents tile as a seventh purchasing count | Fixed and retested |
 | [DEF-013](#def-013) | 11/12/2026 | [TC-QB-08](TEST_CASES.md#tc-qb-08) | Low | The check for the QuickBooks refusal read the page before the answer arrived | Fixed and retested |
+| [DEF-014](#def-014) | 11/12/2026 | [TC-CO-08](TEST_CASES.md#tc-co-08) | Low | The top bar wrapped onto two rows when the Customer orders link was added | Fixed and retested |
+| [DEF-015](#def-015) | 11/12/2026 | [TC-CO-08](TEST_CASES.md#tc-co-08) | Low | An order showed a different spelling of its number after a revision was approved | Fixed and retested |
 
 <a id="def-001"></a>
 
@@ -328,3 +330,59 @@ Every failure is logged here the moment it is found, by whoever finds it: the ca
 **Retest:** 11/12/2026, Claude in Chrome: pass (all 61 cases passed). Owner's retest: not needed (test script only).
 
 ![DEF-013 retested](screenshots/TC-QB-08.png)
+
+
+<a id="def-014"></a>
+
+## DEF-014: The top bar wrapped onto two rows when the Customer orders link was added
+
+**Found:** 11/12/2026 by Claude, browser evidence run in Chrome · **Case:** TC-CO-08 · **Browser:** Google Chrome (scripts/browser_evidence.py) · **Severity:** Low · **Status:** Fixed and retested
+
+**Steps to reproduce**
+
+1. Sign in as an admin at a 1280-pixel-wide window and look at the top bar.
+
+**Expected:** All the links fit on one row, as before.
+
+**Actual:** With eight links the last one (People) dropped to a second row.
+
+**Seen:** screenshots/DEF-014-before.png
+
+![DEF-014 as found](screenshots/DEF-014-before.png)
+
+**Cause:** The new link was long (Customer orders) and the admin's top bar was already full.
+
+**Fix:** The link says Customers (its page is Customer orders, kept as its tooltip); the spacing between the top bar's links is a little tighter; and an admin's email is no longer written beside the account icon, because it never fits (it stays as the icon's tooltip and for screen readers). Measured in Chrome: one row from 1280 to 1920 pixels wide for an admin and for a buyer. The first attempt (only the label) was not enough, as the second Chrome run showed. Below about 1200 pixels an admin's bar still wraps onto two rows, as designed for narrow windows. The Chrome case now checks the bar stays on one row. Not committed yet.
+
+**Retest:** 11/12/2026, Claude in Chrome: pass (all 62 cases; the screenshot shows the whole top bar on one row).
+
+![DEF-014 retested](screenshots/TC-CO-08-7.png)
+
+
+<a id="def-015"></a>
+
+## DEF-015: An order showed a different spelling of its number after a revision was approved
+
+**Found:** 11/12/2026 by Claude, browser evidence run in Chrome · **Case:** TC-CO-08 · **Browser:** Google Chrome (scripts/browser_evidence.py) · **Severity:** Low · **Status:** Fixed and retested
+
+**Steps to reproduce**
+
+1. File customer order CP-100.
+2. File the same order again spelt cp 100 at another price and approve it.
+3. Open the list.
+
+**Expected:** The order is still CP-100 on the list and its page.
+
+**Actual:** The list showed cp 100 rev 1: the number as the revision was typed.
+
+**Seen:** screenshots/DEF-015-before.png
+
+![DEF-015 as found](screenshots/DEF-015-before.png)
+
+**Cause:** The list and the page title used the counting revision's own number, and a revision keeps the spelling it arrived with.
+
+**Fix:** The list, its search and sort, and the page title use the order's number as first written; a revision's spelling is still kept on the revision. A test and the Chrome case check it. Not committed yet.
+
+**Retest:** 11/12/2026, Claude in Chrome: pass (all 62 cases; the list shows CP-100 after the revision was approved).
+
+![DEF-015 retested](screenshots/TC-CO-08-5.png)

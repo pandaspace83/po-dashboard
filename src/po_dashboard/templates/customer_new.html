@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block title %}Add a customer · {{ app_name }}{% endblock %}
+{% block content %}
+<p class="muted"><a href="/customers">Customers</a> /</p>
+<h1>Add a customer</h1>
+{% if error %}<p class="error" role="alert">{{ icon("alert") }}<span>{{ error }}</span></p>{% endif %}
+<div class="card">
+  <form method="post" action="/customers/create">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="form-row">
+      <div><label for="name">Name</label><input id="name" name="name" required maxlength="200" value="{{ form.name }}" autofocus></div>
+      <div><label for="domains">Email domains</label><input id="domains" name="domains" placeholder="globex.com, mail.globex.com" value="{{ form.domains }}"></div>
+    </div>
+    <label for="qb_names">Names QuickBooks uses for this customer, if different</label>
+    <textarea id="qb_names" name="qb_names" rows="2" placeholder="One per line, for example: Globex Racing Inc">{{ form.qb_names }}</textarea>
+    <div class="form-row">
+      <div><label for="contact_name">Contact name</label><input id="contact_name" name="contact_name" maxlength="200" value="{{ form.contact_name }}"></div>
+      <div><label for="contact_email">Contact email</label><input id="contact_email" name="contact_email" type="email" maxlength="254" value="{{ form.contact_email }}"></div>
+    </div>
+    <p class="form-actions"><button class="primary" type="submit">{{ icon("plus") }}Add customer</button> <a class="button" href="/customers">Cancel</a></p>
+  </form>
+  <p class="muted">An export or an email finds its customer only through a name or domain written here, spelt the same: a customer is never guessed from a similar name.</p>
+</div>
+{% endblock %}

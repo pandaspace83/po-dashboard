@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% from "_picker.html" import customer_picker %}
+{% block title %}New customer order · {{ app_name }}{% endblock %}
+{% block content %}
+<p class="muted"><a href="/customer-orders">Customer orders</a> /</p>
+<h1>New customer order</h1>
+{% if errors %}
+<div class="error" role="alert">{{ icon("alert") }}<div>
+  {% if errors|length == 1 %}{{ errors[0] }}{% else %}Please fix these:<ul>{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+</div></div>
+{% endif %}
+<form method="post" action="/customer-orders/create">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <div class="card">
+    <div class="form-row">
+      <div><label for="po_number">Customer's PO number</label><input id="po_number" name="po_number" required maxlength="64" value="{{ header.po_number }}" autofocus></div>
+      <div>{{ customer_picker("customer_id", "Customer", header.customer_id, customer_name, true) }}</div>
+    </div>
+    <div class="form-row">
+      <div><label for="currency">Currency</label>
+        <input id="currency" name="currency" required maxlength="3" minlength="3" list="currencies" placeholder="USD" value="{{ header.currency }}" autocomplete="off">
+        <datalist id="currencies">{% for c in currencies %}<option value="{{ c }}">{% endfor %}</datalist></div>
+      <div><label for="po_date">PO date</label><input id="po_date" name="po_date" type="date" value="{{ header.po_date }}"></div>
+      <div><label for="stated_total">Total on the PO, if it states one</label><input id="stated_total" name="stated_total" inputmode="decimal" value="{{ header.stated_total }}"></div>
+    </div>
+    <p class="muted">Each order has one currency. Amounts are never converted. If the PO's own total differs from its lines, the lines decide and the difference is flagged.</p>
+  </div>
+  <div class="table-wrap">
+  <table class="entry">
+    <thead><tr><th>#</th><th>Item</th><th>Description</th><th>Quantity</th><th>Unit</th><th>Unit price</th><th>Amount, if stated</th></tr></thead>
+    <tbody>
+    {% for r in rows %}
+    <tr>
+      <td class="muted">{{ loop.index }}</td>
+      <td><input name="line_item" maxlength="100" aria-label="Item, line {{ loop.index }}" value="{{ r.item }}"></td>
+      <td><input name="line_description" maxlength="500" aria-label="Description, line {{ loop.index }}" value="{{ r.description }}"></td>
+      <td><input name="line_quantity" inputmode="decimal" aria-label="Quantity, line {{ loop.index }}" value="{{ r.quantity }}"></td>
+      <td><input name="line_unit" maxlength="16" aria-label="Unit, line {{ loop.index }}" placeholder="EA" value="{{ r.unit }}"></td>
+      <td><input name="line_unit_price" inputmode="decimal" aria-label="Unit price, line {{ loop.index }}" value="{{ r.unit_price }}"></td>
+      <td><input name="line_line_amount" inputmode="decimal" aria-label="Amount stated on the PO, line {{ loop.index }}" value="{{ r.line_amount }}"></td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  <p class="muted">Leave unused rows empty. A stated amount must equal quantity times price. Quantities can have up to four decimal places and prices up to six. If this number already exists for the customer, the same terms change nothing and different terms become a revision that waits for approval.</p>
+  <p class="form-actions"><button class="primary" type="submit">{{ icon("check") }}File customer order</button>
+    <a class="button" href="/customer-orders">Cancel</a></p>
+</form>
+{% endblock %}

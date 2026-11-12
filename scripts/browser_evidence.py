@@ -1214,6 +1214,84 @@ def failed_documents(r: Run) -> None:
     r.shot(r.a)
 
 
+@case("TC-CO-08")
+def customer_orders(r: Run) -> None:
+    r.go(r.a, "/customers/new")
+    if "/sign-in" in r.a.url:
+        r.sign_in(r.a, ADMIN, PASSWORD)
+        r.go(r.a, "/customers/new")
+    check(r.a.locator("nav a[href='/customer-orders']").count() == 1, "no Customer orders link in the top bar")
+    r.a.fill("#name", "Globex Racing")
+    r.a.fill("#domains", "globex.example")
+    r.a.fill("#qb_names", "Globex Racing Inc")
+    r.a.click("form[action='/customers/create'] button.primary")
+    r.a.wait_for_url(re.compile(r".*/customers/\d+$"))
+    check("Globex Racing Inc" in r.main(r.a) and "globex.example" in r.main(r.a), "the customer page lacks its names")
+    r.shot(r.a)
+    # an order by hand, choosing the customer in the search box
+    r.go(r.a, "/customer-orders/new")
+    r.a.fill("#po_number", "CP-100")
+    r.a.fill("#customer_id_text", "Glob")
+    r.a.wait_for_selector("#customer_id_list li[role='option']")
+    r.a.click("#customer_id_list li[role='option']")
+    check(r.a.input_value("#customer_id") != "", "picking the customer did not set it")
+    for row, (item, qty, price) in enumerate((("WIDGET-1", "10", "100"), ("WIDGET-2", "5", "20")), start=1):
+        r.a.fill(f"input[aria-label='Item, line {row}']", item)
+        r.a.fill(f"input[aria-label='Quantity, line {row}']", qty)
+        r.a.fill(f"input[aria-label='Unit price, line {row}']", price)
+    r.shot(r.a)
+    r.a.click("form[action='/customer-orders/create'] button.primary")
+    r.a.wait_for_url(re.compile(r".*/customer-orders/\d+$"))
+    check("Revision 0: active" in r.main(r.a) and "1100.00 USD" in r.main(r.a), "the order page is wrong")
+    r.shot(r.a)
+    # the same number at another price is a revision that waits for a person
+    r.go(r.a, "/customer-orders/new")
+    r.a.fill("#po_number", "cp 100")
+    r.a.fill("#customer_id_text", "Glob")
+    r.a.wait_for_selector("#customer_id_list li[role='option']")
+    r.a.click("#customer_id_list li[role='option']")
+    r.a.fill("input[aria-label='Item, line 1']", "WIDGET-1")
+    r.a.fill("input[aria-label='Quantity, line 1']", "10")
+    r.a.fill("input[aria-label='Unit price, line 1']", "110")
+    r.a.fill("input[aria-label='Item, line 2']", "WIDGET-2")
+    r.a.fill("input[aria-label='Quantity, line 2']", "5")
+    r.a.fill("input[aria-label='Unit price, line 2']", "20")
+    r.a.click("form[action='/customer-orders/create'] button.primary")
+    r.a.wait_for_selector("text=Revision 1 is waiting for approval")
+    check("Line 1 unit price: 100 to 110" in r.main(r.a), "the page does not show what changed")
+    r.shot(r.a)
+    r.a.click("form[action$='/approve'] button")
+    r.a.wait_for_selector("text=Revision 1: active")
+    r.shot(r.a)
+    # a file: one known customer, one unknown (it waits)
+    known = r.work / "customer-orders-known.csv"
+    known.write_text(
+        "customer,po_number,currency,line_no,item,quantity,unit_price\nGlobex Racing,CP-2001,USD,1,Gear,4,25\n"
+        "Initech Corp,CP-3001,USD,1,Cog,2,10\n"
+    )
+    r.go(r.a, "/customer-orders/import")
+    r.upload(r.a, known, "button:has-text('Show what it would do')")
+    r.a.wait_for_selector("text=What the file would do")
+    check("will be filed" in r.main(r.a) and "not found: Initech Corp" in r.main(r.a), "the preview is wrong")
+    r.shot(r.a)
+    r.a.click("button:has-text('File these')")
+    r.a.wait_for_url(re.compile(r".*/customer-orders\?imported=1.*"))
+    check("waiting for a customer" in r.main(r.a), "the list does not say an order is waiting")
+    r.a.click("a:has-text('Waiting for a customer')")
+    r.a.wait_for_url(re.compile(r".*/customer-orders/waiting$"))
+    r.a.fill("input[name='new_customer']", "Initech Corp")
+    r.shot(r.a)
+    r.a.click("button:has-text('File it')")
+    r.a.wait_for_url(re.compile(r".*/customer-orders/\d+.*"))
+    check("CP-3001" in r.main(r.a) and "Initech Corp" in r.main(r.a), "the waiting order was not filed")
+    r.go(r.a, "/customer-orders")
+    listed = r.main(r.a)
+    check("CP-2001" in listed and "CP-3001" in listed and "CP-100" in listed, "the list lacks an order")
+    check("cp 100" not in listed, "a revision changed how the order's number is shown")  # DEF-015
+    check(r.a.locator("nav").first.bounding_box()["height"] < 80, "the top bar wraps onto two rows")  # DEF-014
+    r.shot(r.a)
+
+
 @case("TC-WEB-06")
 def readable_errors(r: Run) -> None:
     r.go(r.a, "/no-such-page")

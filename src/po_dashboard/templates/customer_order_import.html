@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block title %}Import customer orders · {{ app_name }}{% endblock %}
+{% block content %}
+<p class="muted"><a href="/customer-orders">Customer orders</a> /</p>
+<h1>Import customer orders</h1>
+{% if plan %}
+<div class="card">
+  <div class="card-head">{{ icon("clipboard") }}<h2>What the file would do: {{ filename }}</h2></div>
+  <p>{{ plan.pos|length }} customer order{{ "" if plan.pos|length == 1 else "s" }} in {{ plan.rows }} row{{ "" if plan.rows == 1 else "s" }}:
+    {{ plan.count("created") }} to file, {{ plan.count("revision") }} revision{{ "" if plan.count("revision") == 1 else "s" }} to wait for approval, {{ plan.count("skipped") }} already here unchanged, {{ plan.count("waiting") }} waiting for a customer.
+    {% if plan.ignored_columns %}Columns not used and skipped: {{ plan.ignored_columns|join(", ") }}.{% endif %} Nothing has been filed yet.</p>
+  <div class="table-wrap table-scroll"><table>
+    <thead><tr><th scope="col">Row</th><th scope="col">Customer</th><th scope="col">PO</th><th scope="col">Lines</th><th scope="col">What happens</th></tr></thead>
+    <tbody>
+    {% for p in plan.pos %}
+    <tr>
+      <td>{{ p.row }}</td>
+      <td>{% if p.customer %}{{ p.customer }}{% else %}<span class="pill bad">{{ icon("alert") }}not found: {{ p.data.customer_name }}</span>{% endif %}</td>
+      <td>{{ p.data.po_number }}</td>
+      <td class="num">{{ p.data.lines|length }}</td>
+      <td>{% if p.outcome == "created" %}<span class="pill ok">{{ icon("check-circle") }}will be filed</span>
+        {% elif p.outcome == "skipped" %}<span class="pill">{{ icon("check") }}already here, unchanged</span>
+        {% elif p.outcome == "revision" %}<span class="pill bad">{{ icon("alert") }}a revision: waits for approval</span>
+        {% else %}<span class="pill bad">{{ icon("clock") }}waits until a customer is chosen</span>{% endif %}
+        {% for w in p.warnings %}<br><span class="muted">{{ w }}</span>{% endfor %}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  <form method="post" action="/customer-orders/import/confirm">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <input type="hidden" name="token" value="{{ token }}">
+    <p class="form-actions"><button class="primary" type="submit">{{ icon("check") }}File these</button> <a class="button" href="/customer-orders/import">Cancel</a></p>
+  </form>
+  <p class="muted">The file is held here for 15 minutes, only in memory, and read again when you confirm. Nothing existing is changed: a different PO under an existing number becomes a revision for you to approve.</p>
+</div>
+{% else %}
+<div class="card">
+  <div class="card-head">{{ icon("upload") }}<h2>Choose a CSV or Excel file</h2></div>
+  <p>One row per PO line. Rows with the same customer and PO number make one order. You see what the file would do before anything is filed.</p>
+  <form method="post" action="/customer-orders/import" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <label for="file">CSV or Excel (.xlsx) file</label>
+    <input id="file" name="file" type="file" accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required autofocus>
+    <p class="form-actions"><button class="primary" type="submit">{{ icon("search") }}Show what it would do</button>
+      <a class="button" hx-boost="false" download href="/customer-orders/import/template">{{ icon("download") }}Download a template</a></p>
+  </form>
+  <div id="import-result" aria-live="polite">
+  {% if errors %}
+    <div class="error" role="alert">{{ icon("alert") }}<div>
+      {% if errors|length == 1 and errors[0].row is none %}{{ errors[0].message }}
+      {% else %}Nothing was filed. Fix these and try again:
+      <ul>{% for e in errors %}<li>{% if e.row is not none %}Row {{ e.row }}: {% endif %}{{ e.message }}</li>{% endfor %}</ul>
+      {% if truncated %}<p>Only the first {{ errors|length }} problems are shown.</p>{% endif %}{% endif %}
+    </div></div>
+  {% endif %}
+  </div>
+</div>
+<div class="card">
+  <h2>Columns</h2>
+  <p>The first row names the columns, in any order. Required: <strong>{{ required|join(", ") }}</strong>. Optional: {{ columns|reject("in", required)|join(", ") }}.</p>
+  <ul class="muted">
+    <li>Dates are year-month-day, like 2026-12-31. Quantities and prices use digits and a dot, with no thousands separator.</li>
+    <li>The customer is found only by its name, or a QuickBooks name, written on the <a href="/customers">customer's page</a>, spelt the same. A customer that is not found does not stop the file: its order waits until you choose one.</li>
+    <li>Every row of an order repeats the same customer, currency, PO date and total. A stated line amount must equal quantity times price.</li>
+    <li>An order already here with the same terms is skipped; the same number with different terms becomes a revision that waits for your approval. Nothing is overwritten.</li>
+  </ul>
+</div>
+{% endif %}
+{% endblock %}

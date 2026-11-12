@@ -1573,6 +1573,67 @@ steps = ["Covered by the tests named."]
 expected = "The setting table is seeded with the amount tolerance of one cent, an exact quantity, 30 unbilled days, the charge item names, the default currency and the Customer:Job rule. A changed value wins; a missing, non-numeric, negative or fractional-days value falls back to the default instead of stopping reconciliation."
 tests = ["test_customer_tables.py::test_the_defaults_are_in_the_table_and_read_with_their_types", "test_customer_tables.py::test_a_changed_setting_wins_and_a_missing_or_damaged_one_falls_back"]
 
+[[case]]
+id = "TC-CO-04"
+area = "Customer orders"
+title = "Customers keep their QuickBooks names and domains, are found exactly and never by resemblance, and every change is audited"
+priority = "High"
+kind = "automated"
+refs = ["PD-8.2", "DEC-57", "DEC-59", "REQ-CO-01", "DEC-52", "NFR-03"]
+steps = ["Covered by the tests named."]
+expected = "A customer is added with its names and domains. A name or domain is used by one customer only, whatever its case or spacing; a customer is found by an exact name or domain, never a near one. The Customer:Job rule is a setting. An inactive customer keeps its records and takes no new orders. A stale edit is refused. Every change writes before and after to the audit trail."
+tests = ["test_customers.py::test_names_and_po_numbers_compare_only_by_their_keys", "test_customers.py::test_a_customer_is_created_with_its_names_and_domains_and_audited", "test_customers.py::test_a_name_is_taken_once_whatever_its_case_and_a_name_never_means_two_customers", "test_customers.py::test_customer_details_are_checked", "test_customers.py::test_a_customer_is_updated_with_before_and_after_and_a_stale_page_is_refused", "test_customers.py::test_an_inactive_customer_takes_no_new_po_but_keeps_its_records", "test_customers.py::test_names_and_domains_are_added_and_removed_and_audited", "test_customers.py::test_a_customer_is_found_exactly_and_never_by_resemblance", "test_customers.py::test_a_customer_job_counts_for_its_customer_only_while_that_setting_is_on", "test_customers.py::test_the_customer_search_and_counts"]
+
+
+[[case]]
+id = "TC-CO-05"
+area = "Customer orders"
+title = "Every customer PO goes through one intake: created, skipped as a copy, a pending revision, or waiting for a customer"
+priority = "High"
+kind = "automated"
+refs = ["PD-8.2", "DEC-57", "REQ-CO-02", "REQ-CO-05", "DEC-24"]
+steps = ["Covered by the tests named."]
+expected = "A new number is filed active and approved by the person filing it. The same number for another customer is another order. The same terms (spelt any way) change nothing; different terms are the next revision, pending, replacing nothing. Data is checked with the purchasing rules: exact decimals, positive quantity, a stated line amount equal to quantity times price, a stated total that differs is kept and flagged. The customer is found by choice, exact name, then known domain; otherwise the data waits as it came and a person picks or makes the customer. Checking changes nothing."
+tests = ["test_customers.py::test_a_new_po_is_filed_active_and_the_person_filing_it_approves_it", "test_customers.py::test_the_same_number_for_another_customer_is_another_order", "test_customers.py::test_the_same_order_with_the_same_terms_is_a_copy_and_changes_nothing", "test_customers.py::test_the_same_number_with_other_terms_is_a_pending_revision_that_replaces_nothing", "test_customers.py::test_a_change_to_the_date_currency_total_unit_or_a_line_is_a_revision", "test_customers.py::test_the_data_is_checked_with_the_purchasing_rules", "test_customers.py::test_a_free_line_and_a_line_with_no_unit_are_allowed_and_lines_are_numbered_when_left_out", "test_customers.py::test_a_stated_line_amount_must_equal_quantity_times_price_to_the_cent", "test_customers.py::test_a_stated_total_that_is_not_the_sum_of_the_lines_is_kept_as_written_and_flagged", "test_customers.py::test_checking_changes_nothing_in_the_database", "test_customers.py::test_the_customer_is_found_by_choice_then_exact_name_then_domain", "test_customers.py::test_a_po_for_an_unknown_customer_waits_as_it_came_and_files_nothing", "test_customers.py::test_a_waiting_po_is_filed_when_a_person_picks_a_customer", "test_customers.py::test_a_waiting_po_can_make_its_customer_and_is_still_checked", "test_customers.py::test_a_waiting_po_that_is_a_copy_resolves_to_the_existing_order", "test_customers.py::test_a_waiting_po_can_be_rejected_with_a_reason", "test_customers.py::test_the_defaults_are_used_for_the_tolerance"]
+
+
+[[case]]
+id = "TC-CO-06"
+area = "Customer orders"
+title = "A revised customer PO keeps the original and every revision, and changes nothing until a person approves it"
+priority = "High"
+kind = "automated"
+refs = ["PD-8.2", "DEC-57", "REQ-CO-04", "REQ-CO-13"]
+steps = ["Covered by the tests named."]
+expected = "Approving a revision makes it the order's terms and keeps the old one as superseded, with before and after in the audit trail. Rejecting needs a reason and leaves the order alone; the rejected terms arriving again are not asked about twice. A page that is out of date is refused."
+tests = ["test_customers.py::test_approving_a_revision_makes_it_the_order_and_keeps_the_old_one", "test_customers.py::test_rejecting_a_revision_needs_a_reason_and_leaves_the_order_alone", "test_customers.py::test_a_revision_made_from_an_old_page_is_refused"]
+
+
+[[case]]
+id = "TC-CO-07"
+area = "Customer orders"
+title = "A customer PO file (CSV or Excel) is read, previewed, and filed all or nothing"
+priority = "High"
+kind = "automated"
+refs = ["PD-8.2", "DEC-57", "REQ-CO-03", "DEC-47"]
+steps = ["Covered by the tests named."]
+expected = "The template is a file the import reads. Reading changes nothing. Applying files each PO through the intake and audits the import. The same file again adds nothing; a changed price is a pending revision; an unknown customer waits while the rest is filed; rows of one PO are grouped however the number is spelt; Excel reads like CSV; a formula in a cell stays text. Every problem is listed by row and one bad PO stops the whole file; unused columns are reported; wrong columns, hostile or damaged files and over-long error lists are handled with plain messages."
+tests = ["test_customer_po_import.py::test_the_template_is_a_file_the_import_reads", "test_customer_po_import.py::test_reading_a_file_changes_nothing", "test_customer_po_import.py::test_applying_files_each_po_and_audits_the_import", "test_customer_po_import.py::test_the_same_file_again_adds_nothing_and_a_changed_price_is_a_pending_revision", "test_customer_po_import.py::test_a_customer_is_found_by_an_exact_quickbooks_name_but_not_by_a_similar_one", "test_customer_po_import.py::test_an_unknown_customer_waits_and_the_rest_of_the_file_is_filed", "test_customer_po_import.py::test_rows_of_one_po_are_grouped_even_when_the_number_is_spelt_differently", "test_customer_po_import.py::test_an_excel_file_is_read_like_a_csv_file", "test_customer_po_import.py::test_a_formula_in_a_cell_stays_text_and_nothing_is_evaluated", "test_customer_po_import.py::test_columns_the_import_does_not_use_are_reported_and_skipped", "test_customer_po_import.py::test_a_file_with_the_wrong_columns_is_refused_naming_them", "test_customer_po_import.py::test_every_problem_is_listed_by_row_and_nothing_is_filed", "test_customer_po_import.py::test_one_bad_po_stops_the_whole_file", "test_customer_po_import.py::test_the_rows_of_one_po_must_agree_and_line_numbers_are_used_once", "test_customer_po_import.py::test_a_line_amount_that_is_not_quantity_times_price_is_refused", "test_customer_po_import.py::test_a_total_that_is_not_the_sum_of_the_lines_is_a_warning_not_a_refusal", "test_customer_po_import.py::test_an_inactive_customer_is_a_problem_with_its_row", "test_customer_po_import.py::test_a_file_that_is_not_a_spreadsheet_is_refused_with_one_plain_message", "test_customer_po_import.py::test_at_most_forty_problems_are_listed_and_the_rest_are_counted"]
+
+
+[[case]]
+id = "TC-CO-08"
+area = "Customer orders"
+title = "The customer screens: add a customer, file orders by hand and by file, approve a revision, resolve a waiting order"
+priority = "High"
+kind = "browser"
+refs = ["PD-8.2", "DEC-56", "DEC-57", "DEC-45", "REQ-CO-14"]
+steps = ["Add a customer on its own page.", "File an order by hand, choosing the customer in the search box.", "File the same number at another price: a revision waits; approve it.", "Upload a file with a known and an unknown customer: preview, then file.", "On Waiting for a customer, make the new customer and file the order."]
+expected = "Everyone signed in can use Customers and Customer orders; every change needs the security token and is audited. A customer's page shows its names and domains. An order is filed by hand (the customer chosen in a search box), the page shows its lines and totals; the same order again changes nothing; different terms wait as a revision with the changes listed, and Approve makes it the order. A file is previewed before anything is filed, a used preview is forgotten, and an order for an unknown customer waits until a person chooses or makes the customer. Markup typed anywhere is shown as text. The list filters by search, customer and state. In Chrome the whole flow works."
+tests = ["test_customer_pages.py::test_everyone_signed_in_can_use_the_customer_screens_and_the_nav_shows_them", "test_customer_pages.py::test_every_change_needs_the_security_token", "test_customer_pages.py::test_a_customer_is_added_and_its_page_shows_the_names_and_domains", "test_customer_pages.py::test_a_bad_customer_is_refused_and_the_boxes_keep_what_was_typed", "test_customer_pages.py::test_a_customer_is_changed_with_a_saved_note_and_a_stale_page_is_refused", "test_customer_pages.py::test_names_and_domains_are_added_and_removed_from_the_page", "test_customer_pages.py::test_a_customer_can_be_made_inactive_and_then_takes_no_new_orders", "test_customer_pages.py::test_the_customer_search_answers_with_names_only_and_a_wildcard_is_just_text", "test_customer_pages.py::test_markup_in_a_customer_or_po_number_is_shown_as_text", "test_customer_pages.py::test_an_order_is_filed_by_hand_and_its_page_shows_the_lines_and_totals", "test_customer_pages.py::test_a_bad_order_lists_every_problem_and_keeps_every_box", "test_customer_pages.py::test_the_same_order_again_changes_nothing_and_says_so", "test_customer_pages.py::test_a_changed_order_is_a_revision_the_page_shows_the_changes_and_a_person_approves_it", "test_customer_pages.py::test_a_revision_can_be_rejected_with_a_reason_and_a_stale_page_is_refused", "test_customer_pages.py::test_an_order_that_does_not_exist_is_a_readable_page", "test_customer_pages.py::test_the_template_downloads_and_is_a_file_the_import_reads", "test_customer_pages.py::test_a_file_is_previewed_first_then_filed_when_confirmed_and_nothing_is_filed_before", "test_customer_pages.py::test_a_wrong_or_missing_preview_token_files_nothing", "test_customer_pages.py::test_the_same_file_again_is_skipped_and_a_changed_one_becomes_a_revision", "test_customer_pages.py::test_an_unknown_customer_waits_and_a_person_files_it_by_choosing_one", "test_customer_pages.py::test_a_waiting_order_can_make_its_customer_or_be_rejected_with_a_reason", "test_customer_pages.py::test_a_bad_file_files_nothing_and_every_problem_is_listed_by_row", "test_customer_pages.py::test_a_file_over_the_size_limit_or_with_no_file_is_refused", "test_customer_pages.py::test_an_upload_without_the_header_token_is_refused", "test_customer_pages.py::test_the_list_filters_by_search_customer_and_state_and_sorts"]
+owner = "Not yet run"
+
+
 # =====================================================================================================================
 # Operations (engineering review, 2026-11-10)
 
@@ -1863,6 +1924,42 @@ cause = "The script read the page straight after the click, before the answer wa
 fix = "The check waits up to 10 seconds for the refusal, and for the app's own file's message, before it reads them."
 retest = "11/12/2026, Claude in Chrome: pass (all 61 cases passed). Owner's retest: not needed (test script only)."
 retest_evidence = "screenshots/TC-QB-08.png"
+status = "Fixed and retested"
+
+[[defect]]
+id = "DEF-014"
+found = "11/12/2026"
+found_by = "Claude, browser evidence run in Chrome"
+case = "TC-CO-08"
+browser = "Google Chrome (scripts/browser_evidence.py)"
+severity = "Low"
+title = "The top bar wrapped onto two rows when the Customer orders link was added"
+steps = ["Sign in as an admin at a 1280-pixel-wide window and look at the top bar."]
+expected = "All the links fit on one row, as before."
+actual = "With eight links the last one (People) dropped to a second row."
+failure_evidence = "screenshots/DEF-014-before.png"
+cause = "The new link was long (Customer orders) and the admin's top bar was already full."
+fix = "The link says Customers (its page is Customer orders, kept as its tooltip); the spacing between the top bar's links is a little tighter; and an admin's email is no longer written beside the account icon, because it never fits (it stays as the icon's tooltip and for screen readers). Measured in Chrome: one row from 1280 to 1920 pixels wide for an admin and for a buyer. The first attempt (only the label) was not enough, as the second Chrome run showed. Below about 1200 pixels an admin's bar still wraps onto two rows, as designed for narrow windows. The Chrome case now checks the bar stays on one row."
+retest = "11/12/2026, Claude in Chrome: pass (all 62 cases; the screenshot shows the whole top bar on one row)."
+retest_evidence = "screenshots/TC-CO-08-7.png"
+status = "Fixed and retested"
+
+[[defect]]
+id = "DEF-015"
+found = "11/12/2026"
+found_by = "Claude, browser evidence run in Chrome"
+case = "TC-CO-08"
+browser = "Google Chrome (scripts/browser_evidence.py)"
+severity = "Low"
+title = "An order showed a different spelling of its number after a revision was approved"
+steps = ["File customer order CP-100.", "File the same order again spelt cp 100 at another price and approve it.", "Open the list."]
+expected = "The order is still CP-100 on the list and its page."
+actual = "The list showed cp 100 rev 1: the number as the revision was typed."
+failure_evidence = "screenshots/DEF-015-before.png"
+cause = "The list and the page title used the counting revision's own number, and a revision keeps the spelling it arrived with."
+fix = "The list, its search and sort, and the page title use the order's number as first written; a revision's spelling is still kept on the revision. A test and the Chrome case check it."
+retest = "11/12/2026, Claude in Chrome: pass (all 62 cases; the list shows CP-100 after the revision was approved)."
+retest_evidence = "screenshots/TC-CO-08-5.png"
 status = "Fixed and retested"
 
 # =====================================================================================================================

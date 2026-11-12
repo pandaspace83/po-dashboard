@@ -278,13 +278,13 @@ PD-8.4 rules review. Synthetic data only until the owner shows a real export (OP
   with a working assumption); ARCHITECTURE §16 and RISK-16, RISK-17. The owner gave the go-ahead on this plan, 2026-11-12.
 - [x] PD-8.1 The tables (§16.1) in migration 0010, new tables only, and `db/customers.py`; the `setting` table and its
   defaults. **Done 2026-11-12 (TC-CO-01 to 03: 27 tests).** 14 new tables; a database with purchasing records upgrades with every purchasing table definition and row identical, and downgrades cleanly; `customers/config.py` reads the settings (one cent, exact quantities, 30 days, charge names, USD, Customer:Job) with a fallback to the default for a missing or damaged value. A unique "ignoring case" rule is carried by a stored key column, so the database itself refuses the second spelling. No purchasing module imports the customer side (a test).
-- [ ] PD-8.2 Customers (list, add, edit, QuickBooks names, domains) and customer POs: the intake service (§16.2), the form,
+- [x] PD-8.2 Customers (list, add, edit, QuickBooks names, domains) and customer POs: the intake service (§16.2), the form,
   the CSV and Excel import with its template and preview, revisions with Approve and Reject, and the waiting list for
-  unknown customers.
-- [ ] PD-8.3 The sales invoice import (§16.3): mapping profiles with the two presets, the preview with missing fields
+  unknown customers. **Done 2026-11-12 (TC-CO-04 to 08: 74 tests, and the whole flow checked in real Chrome, 62 of 62).** `customers/` (`keys.py`, `service.py`, `intake.py`, `po_import.py`, `listing.py`) and `pages/customers.py`, `pages/customer_orders.py` with eight templates. Every customer PO goes through one `file_po`: created active (the person filing it approves it), skipped as a copy, the next revision pending, or waiting for a customer; nothing is guessed (an exact name or domain only). The import shows a preview and files all or nothing, holding the file in memory for 15 minutes. A Customer orders link for everyone signed in (DEC-56). The search box (`app.js`, `_picker.html`) now serves customers as well as vendors. Not here: reconciliation status on the list (PD-8.4), which for now shows Open, Closed or Cancelled and any revision waiting.
+- [ ] PD-8.3 The sales invoice import (§16.3, code in `quickbooks/importers/` and `quickbooks/snapshots/`, DEC-60): mapping profiles with the two presets, the preview with missing fields
   named, the period, observations (new, same, changed, conflicting), credit memos and charges, the upload history with the
   file kept, and "map to a customer or create one" for an unknown name.
-- [ ] PD-8.4 The matching engine and status (§16.4, §16.5): order of evidence, tolerances, allocations by rule and by a
+- [ ] PD-8.4 The matching engine and status (§16.4, §16.5, code in `quickbooks/reconciliation/`): order of evidence, tolerances, allocations by rule and by a
   person, the confirmed and preliminary levels, coverage and the 30-day rule, history. The owner's ten scenarios and their
   variants are each a test (T-7). Opus reviews the rules before they are ticked.
 - [ ] PD-8.5 The screens (§16.6): order list with filters and CSV, order page with every action, exception queue, sales

@@ -28,6 +28,8 @@ from po_dashboard.pages import (
     account,
     admin,
     audit,
+    customer_orders,
+    customers,
     documents,
     entries,
     errors,
@@ -93,6 +95,8 @@ def create_app(
     app.include_router(account.router)
     app.include_router(admin.router)
     app.include_router(documents.router)
+    app.include_router(customers.router)
+    app.include_router(customer_orders.router)
     app.include_router(mailboxes.router)
     app.include_router(mailboxes.public)
     app.include_router(audit.router)

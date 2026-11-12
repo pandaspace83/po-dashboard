@@ -223,7 +223,7 @@ function vendorPicker(box) {
     if (!vendors.length) {
       const none = document.createElement("li");
       none.className = "none";
-      none.textContent = "No vendor matches. Add it under Vendors first.";
+      none.textContent = box.dataset.none || "No vendor matches. Add it under Vendors first.";
       list.append(none);
     }
     list.hidden = false;
@@ -234,7 +234,7 @@ function vendorPicker(box) {
   const search = async () => {
     const mine = ++ticket;
     try {
-      const response = await fetch("/vendors/search?q=" + encodeURIComponent(text.value), {
+      const response = await fetch((box.dataset.searchUrl || "/vendors/search") + "?q=" + encodeURIComponent(text.value), {
         credentials: "same-origin",
         headers: { Accept: "application/json" },
       });
@@ -248,7 +248,7 @@ function vendorPicker(box) {
   text.addEventListener("input", (event) => {
     event.stopPropagation(); // typing a name is not yet a choice: the filter form waits for a pick
     if (text.value !== chosenName) setChoice("", "");
-    text.setCustomValidity(text.value.trim() ? "Pick a vendor from the list." : "");
+    text.setCustomValidity(text.value.trim() ? box.dataset.pick || "Pick a vendor from the list." : "");
     clearTimeout(timer);
     timer = setTimeout(search, 150);
   });

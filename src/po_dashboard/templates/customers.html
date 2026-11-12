@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% from "_table.html" import sort_th, pager, live_filters with context %}
+{% block title %}Customers · {{ app_name }}{% endblock %}
+{% block content %}
+<p class="muted"><a href="/customer-orders">Customer orders</a> /</p>
+<div class="page-head">
+  <h1>Customers</h1>
+  <div class="actions"><a class="button primary" href="/customers/new">{{ icon("plus") }}Add a customer</a></div>
+</div>
+{% if error %}<p class="error" role="alert">{{ icon("alert") }}<span>{{ error }}</span></p>{% endif %}
+<form method="get" action="/customers" id="filters" class="filters card" role="search" {{ live_filters("/customers") }}>
+  <div class="form-row">
+    <div class="wide"><label for="q">Search</label><input id="q" name="q" type="search" placeholder="Name, QuickBooks name, email domain or contact" value="{{ q }}" maxlength="100" autofocus data-search aria-keyshortcuts="/"></div>
+    <div class="shrink"><button class="primary js-hide" type="submit">{{ icon("search") }}Show</button> <a class="button" href="/customers">Clear</a></div>
+  </div>
+</form>
+<div id="results">
+<input type="hidden" name="sort" value="{{ sorting.value }}" form="filters">
+{% if customers %}
+<div class="table-wrap table-scroll">
+<table>
+  <thead><tr>{{ sort_th("Customer", "name", sorting) }}<th scope="col">QuickBooks names</th><th scope="col">Email domains</th>{{ sort_th("Contact", "contact", sorting) }}{{ sort_th("Orders", "orders", sorting, "num") }}{{ sort_th("Invoices", "invoices", sorting, "num") }}</tr></thead>
+  <tbody>
+  {% for c in customers %}
+  <tr>
+    <td><a href="/customers/{{ c.id }}">{{ c.name }}</a>{% if not c.active %} <span class="pill">{{ icon("ban") }}inactive</span>{% endif %}</td>
+    <td>{{ (names.get(c.id) or [])|join("; ") }}</td>
+    <td>{{ (domains.get(c.id) or [])|join(", ") }}</td>
+    <td>{{ c.contact_name or "" }}{% if c.contact_email %} <span class="muted">{{ c.contact_email }}</span>{% endif %}</td>
+    <td class="num">{{ counts.get(c.id, (0, 0))[0] }}</td>
+    <td class="num">{{ counts.get(c.id, (0, 0))[1] }}</td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{{ pager(page, "customer") }}
+{% elif q %}
+<div class="card empty">{{ icon("search") }}<p><strong>No customer matches "{{ q }}".</strong></p><p><a href="/customers/new">Add a customer</a> or <a href="/customers">clear the search</a>.</p></div>
+{% else %}
+<div class="card empty">{{ icon("users") }}<p><strong>No customers yet.</strong></p><p><a href="/customers/new">Add a customer</a>.</p></div>
+{% endif %}
+</div>
+{% endblock %}

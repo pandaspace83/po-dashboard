@@ -719,7 +719,8 @@ po-dashboard/
 
 A second workflow, apart from purchasing. Customers send POs to RaceSpec; RaceSpec invoices them in QuickBooks Desktop;
 a person uploads a QuickBooks export; the app matches the two and lists where they disagree. The code lives in
-`src/po_dashboard/customers/`, the pages in `pages/customers*.py`, the tables in `db/customers.py`. It shares only
+`src/po_dashboard/customers/` (customers, customer POs, revisions, intake) and `src/po_dashboard/quickbooks/` (`importers/`,
+`snapshots/`, `reconciliation/`: DEC-60), the pages in `pages/customers*.py`, the tables in `db/customers.py`. It shares only
 sign-in, the audit trail, the upload reader (`ledger/sheets.py`), the exact number types, the file store and the new
 `setting` table. Nothing in purchasing reads or writes these tables.
 
@@ -755,6 +756,8 @@ each PO once the person confirms.
 
 ### 16.3 Sales invoices in (DEC-58)
 
+Code: `quickbooks/importers/` (reader, mapping profiles, normalising) and `quickbooks/snapshots/` (the saved upload, its rows and observations).
+
 Upload, map, preview, apply. The upload reader refuses what it refuses for every upload (size, zip bombs, macros, entity
 tricks). The mapping profile names which column holds what; the preview names every required field that is missing,
 every row that cannot be used and why, which invoices are new, unchanged, changed or conflicting, and which customer
@@ -762,9 +765,10 @@ names the app does not know. Apply writes, in one transaction, the upload, its r
 invoices and their lines. A changed or conflicting invoice is marked needs review and keeps its accepted content until a
 person chooses. The file goes to the file store under its hash; the same file again is recognised and adds nothing.
 
-### 16.4 Matching (DEC-59)
+### 16.4 Matching (DEC-59, DEC-60)
 
-`customers/reconcile.py` is plain code with no model. It runs after every upload, PO change, revision approval and
+`quickbooks/reconciliation/` is plain code with no model, working on normalised records (dataclasses built from the tables),
+never on QuickBooks column names. It runs after every upload, PO change, revision approval and
 person's decision, and is a function of the data: the same data always gives the same result. Order of evidence:
 customer (exact name), QuickBooks reference, PO reference (exact, per customer, possibly a list), then lines by exactly
 equal item, then quantities, prices and currency. Decisions by people are kept and never undone by a re-run; automatic

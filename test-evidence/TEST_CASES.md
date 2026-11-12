@@ -4,9 +4,9 @@
 
 PO Dashboard (RaceSpec Internal Dashboard). Scope: Phase 0 and Phase 1: sign-in, people, vendors, purchase orders, imports, the QuickBooks starting load, entries by hand, Home, Open items, Audit, page behaviour, security and speed.
 
-**130 cases:** 46 Critical, 68 High, 16 Medium; 2 terminal, 64 automated, 61 browser, 3 owner only.
+**135 cases:** 46 Critical, 73 High, 16 Medium; 2 terminal, 68 automated, 62 browser, 3 owner only.
 
-Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.18, by Claude, scripts/browser_evidence.py, on commit c215fbc with uncommitted changes: **61 of 61** browser cases pass. Automated tests: `uv run pytest`. Defects: [DEFECTS.md](DEFECTS.md). Sign-off: [SIGN_OFF.md](SIGN_OFF.md).
+Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.18, by Claude, scripts/browser_evidence.py, on commit d557baf with uncommitted changes: **62 of 62** browser cases pass. Automated tests: `uv run pytest`. Defects: [DEFECTS.md](DEFECTS.md). Sign-off: [SIGN_OFF.md](SIGN_OFF.md).
 
 **To run them by hand:**
 
@@ -146,6 +146,11 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.18, by Claude, scripts/b
 | [TC-CO-01](#tc-co-01) | The customer-side tables are new, leave every purchasing record unchanged, and the two workflows stay apart | High | Automated | Automated tests | — |
 | [TC-CO-02](#tc-co-02) | The database itself enforces the customer-side rules | High | Automated | Automated tests | — |
 | [TC-CO-03](#tc-co-03) | The settings have owner-approved defaults, and a missing or damaged value falls back to its default | High | Automated | Automated tests | — |
+| [TC-CO-04](#tc-co-04) | Customers keep their QuickBooks names and domains, are found exactly and never by resemblance, and every change is audited | High | Automated | Automated tests | — |
+| [TC-CO-05](#tc-co-05) | Every customer PO goes through one intake: created, skipped as a copy, a pending revision, or waiting for a customer | High | Automated | Automated tests | — |
+| [TC-CO-06](#tc-co-06) | A revised customer PO keeps the original and every revision, and changes nothing until a person approves it | High | Automated | Automated tests | — |
+| [TC-CO-07](#tc-co-07) | A customer PO file (CSV or Excel) is read, previewed, and filed all or nothing | High | Automated | Automated tests | — |
+| [TC-CO-08](#tc-co-08) | The customer screens: add a customer, file orders by hand and by file, approve a revision, resolve a waiting order | High | Browser | Pass 11/12/2026 | Not yet run |
 | [TC-OPS-01](#tc-ops-01) | A backup restores to exactly what was backed up; it never overwrites, never deletes, and refuses unsafe places | Critical | Automated | Automated tests | — |
 | [TC-OPS-02](#tc-ops-02) | Two people, or a double click, cannot corrupt a record | High | Automated | Automated tests | — |
 | [TC-OPS-03](#tc-ops-03) | A model server that is down fails fast and leaves the document waiting; the health check sees a broken database | High | Automated | Automated tests | — |
@@ -2760,6 +2765,143 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.18, by Claude, scripts/b
 **Automated tests:** `test_customer_tables.py::test_the_defaults_are_in_the_table_and_read_with_their_types`, `test_customer_tables.py::test_a_changed_setting_wins_and_a_missing_or_damaged_one_falls_back`
 
 **Latest:** Owner: not recorded.
+
+
+<a id="tc-co-04"></a>
+
+### TC-CO-04: Customers keep their QuickBooks names and domains, are found exactly and never by resemblance, and every change is audited
+
+**Priority:** High · **How:** Automated · **Refs:** PD-8.2, DEC-57, DEC-59, REQ-CO-01, DEC-52, NFR-03
+
+**Steps**
+
+1. Covered by the tests named.
+
+**Expected:** A customer is added with its names and domains. A name or domain is used by one customer only, whatever its case or spacing; a customer is found by an exact name or domain, never a near one. The Customer:Job rule is a setting. An inactive customer keeps its records and takes no new orders. A stale edit is refused. Every change writes before and after to the audit trail.
+
+**Automated tests:** `test_customers.py::test_names_and_po_numbers_compare_only_by_their_keys`, `test_customers.py::test_a_customer_is_created_with_its_names_and_domains_and_audited`, `test_customers.py::test_a_name_is_taken_once_whatever_its_case_and_a_name_never_means_two_customers`, `test_customers.py::test_customer_details_are_checked`, `test_customers.py::test_a_customer_is_updated_with_before_and_after_and_a_stale_page_is_refused`, `test_customers.py::test_an_inactive_customer_takes_no_new_po_but_keeps_its_records`, `test_customers.py::test_names_and_domains_are_added_and_removed_and_audited`, `test_customers.py::test_a_customer_is_found_exactly_and_never_by_resemblance`, `test_customers.py::test_a_customer_job_counts_for_its_customer_only_while_that_setting_is_on`, `test_customers.py::test_the_customer_search_and_counts`
+
+**Latest:** Owner: not recorded.
+
+
+<a id="tc-co-05"></a>
+
+### TC-CO-05: Every customer PO goes through one intake: created, skipped as a copy, a pending revision, or waiting for a customer
+
+**Priority:** High · **How:** Automated · **Refs:** PD-8.2, DEC-57, REQ-CO-02, REQ-CO-05, DEC-24
+
+**Steps**
+
+1. Covered by the tests named.
+
+**Expected:** A new number is filed active and approved by the person filing it. The same number for another customer is another order. The same terms (spelt any way) change nothing; different terms are the next revision, pending, replacing nothing. Data is checked with the purchasing rules: exact decimals, positive quantity, a stated line amount equal to quantity times price, a stated total that differs is kept and flagged. The customer is found by choice, exact name, then known domain; otherwise the data waits as it came and a person picks or makes the customer. Checking changes nothing.
+
+**Automated tests:** `test_customers.py::test_a_new_po_is_filed_active_and_the_person_filing_it_approves_it`, `test_customers.py::test_the_same_number_for_another_customer_is_another_order`, `test_customers.py::test_the_same_order_with_the_same_terms_is_a_copy_and_changes_nothing`, `test_customers.py::test_the_same_number_with_other_terms_is_a_pending_revision_that_replaces_nothing`, `test_customers.py::test_a_change_to_the_date_currency_total_unit_or_a_line_is_a_revision`, `test_customers.py::test_the_data_is_checked_with_the_purchasing_rules`, `test_customers.py::test_a_free_line_and_a_line_with_no_unit_are_allowed_and_lines_are_numbered_when_left_out`, `test_customers.py::test_a_stated_line_amount_must_equal_quantity_times_price_to_the_cent`, `test_customers.py::test_a_stated_total_that_is_not_the_sum_of_the_lines_is_kept_as_written_and_flagged`, `test_customers.py::test_checking_changes_nothing_in_the_database`, `test_customers.py::test_the_customer_is_found_by_choice_then_exact_name_then_domain`, `test_customers.py::test_a_po_for_an_unknown_customer_waits_as_it_came_and_files_nothing`, `test_customers.py::test_a_waiting_po_is_filed_when_a_person_picks_a_customer`, `test_customers.py::test_a_waiting_po_can_make_its_customer_and_is_still_checked`, `test_customers.py::test_a_waiting_po_that_is_a_copy_resolves_to_the_existing_order`, `test_customers.py::test_a_waiting_po_can_be_rejected_with_a_reason`, `test_customers.py::test_the_defaults_are_used_for_the_tolerance`
+
+**Latest:** Owner: not recorded.
+
+
+<a id="tc-co-06"></a>
+
+### TC-CO-06: A revised customer PO keeps the original and every revision, and changes nothing until a person approves it
+
+**Priority:** High · **How:** Automated · **Refs:** PD-8.2, DEC-57, REQ-CO-04, REQ-CO-13
+
+**Steps**
+
+1. Covered by the tests named.
+
+**Expected:** Approving a revision makes it the order's terms and keeps the old one as superseded, with before and after in the audit trail. Rejecting needs a reason and leaves the order alone; the rejected terms arriving again are not asked about twice. A page that is out of date is refused.
+
+**Automated tests:** `test_customers.py::test_approving_a_revision_makes_it_the_order_and_keeps_the_old_one`, `test_customers.py::test_rejecting_a_revision_needs_a_reason_and_leaves_the_order_alone`, `test_customers.py::test_a_revision_made_from_an_old_page_is_refused`
+
+**Latest:** Owner: not recorded.
+
+
+<a id="tc-co-07"></a>
+
+### TC-CO-07: A customer PO file (CSV or Excel) is read, previewed, and filed all or nothing
+
+**Priority:** High · **How:** Automated · **Refs:** PD-8.2, DEC-57, REQ-CO-03, DEC-47
+
+**Steps**
+
+1. Covered by the tests named.
+
+**Expected:** The template is a file the import reads. Reading changes nothing. Applying files each PO through the intake and audits the import. The same file again adds nothing; a changed price is a pending revision; an unknown customer waits while the rest is filed; rows of one PO are grouped however the number is spelt; Excel reads like CSV; a formula in a cell stays text. Every problem is listed by row and one bad PO stops the whole file; unused columns are reported; wrong columns, hostile or damaged files and over-long error lists are handled with plain messages.
+
+**Automated tests:** `test_customer_po_import.py::test_the_template_is_a_file_the_import_reads`, `test_customer_po_import.py::test_reading_a_file_changes_nothing`, `test_customer_po_import.py::test_applying_files_each_po_and_audits_the_import`, `test_customer_po_import.py::test_the_same_file_again_adds_nothing_and_a_changed_price_is_a_pending_revision`, `test_customer_po_import.py::test_a_customer_is_found_by_an_exact_quickbooks_name_but_not_by_a_similar_one`, `test_customer_po_import.py::test_an_unknown_customer_waits_and_the_rest_of_the_file_is_filed`, `test_customer_po_import.py::test_rows_of_one_po_are_grouped_even_when_the_number_is_spelt_differently`, `test_customer_po_import.py::test_an_excel_file_is_read_like_a_csv_file`, `test_customer_po_import.py::test_a_formula_in_a_cell_stays_text_and_nothing_is_evaluated`, `test_customer_po_import.py::test_columns_the_import_does_not_use_are_reported_and_skipped`, `test_customer_po_import.py::test_a_file_with_the_wrong_columns_is_refused_naming_them`, `test_customer_po_import.py::test_every_problem_is_listed_by_row_and_nothing_is_filed`, `test_customer_po_import.py::test_one_bad_po_stops_the_whole_file`, `test_customer_po_import.py::test_the_rows_of_one_po_must_agree_and_line_numbers_are_used_once`, `test_customer_po_import.py::test_a_line_amount_that_is_not_quantity_times_price_is_refused`, `test_customer_po_import.py::test_a_total_that_is_not_the_sum_of_the_lines_is_a_warning_not_a_refusal`, `test_customer_po_import.py::test_an_inactive_customer_is_a_problem_with_its_row`, `test_customer_po_import.py::test_a_file_that_is_not_a_spreadsheet_is_refused_with_one_plain_message`, `test_customer_po_import.py::test_at_most_forty_problems_are_listed_and_the_rest_are_counted`
+
+**Latest:** Owner: not recorded.
+
+
+<a id="tc-co-08"></a>
+
+### TC-CO-08: The customer screens: add a customer, file orders by hand and by file, approve a revision, resolve a waiting order
+
+**Priority:** High · **How:** Browser · **Refs:** PD-8.2, DEC-56, DEC-57, DEC-45, REQ-CO-14
+
+**Steps**
+
+1. Add a customer on its own page.
+2. File an order by hand, choosing the customer in the search box.
+3. File the same number at another price: a revision waits; approve it.
+4. Upload a file with a known and an unknown customer: preview, then file.
+5. On Waiting for a customer, make the new customer and file the order.
+
+**Expected:** Everyone signed in can use Customers and Customer orders; every change needs the security token and is audited. A customer's page shows its names and domains. An order is filed by hand (the customer chosen in a search box), the page shows its lines and totals; the same order again changes nothing; different terms wait as a revision with the changes listed, and Approve makes it the order. A file is previewed before anything is filed, a used preview is forgotten, and an order for an unknown customer waits until a person chooses or makes the customer. Markup typed anywhere is shown as text. The list filters by search, customer and state. In Chrome the whole flow works.
+
+**Automated tests:** `test_customer_pages.py::test_everyone_signed_in_can_use_the_customer_screens_and_the_nav_shows_them`, `test_customer_pages.py::test_every_change_needs_the_security_token`, `test_customer_pages.py::test_a_customer_is_added_and_its_page_shows_the_names_and_domains`, `test_customer_pages.py::test_a_bad_customer_is_refused_and_the_boxes_keep_what_was_typed`, `test_customer_pages.py::test_a_customer_is_changed_with_a_saved_note_and_a_stale_page_is_refused`, `test_customer_pages.py::test_names_and_domains_are_added_and_removed_from_the_page`, `test_customer_pages.py::test_a_customer_can_be_made_inactive_and_then_takes_no_new_orders`, `test_customer_pages.py::test_the_customer_search_answers_with_names_only_and_a_wildcard_is_just_text`, `test_customer_pages.py::test_markup_in_a_customer_or_po_number_is_shown_as_text`, `test_customer_pages.py::test_an_order_is_filed_by_hand_and_its_page_shows_the_lines_and_totals`, `test_customer_pages.py::test_a_bad_order_lists_every_problem_and_keeps_every_box`, `test_customer_pages.py::test_the_same_order_again_changes_nothing_and_says_so`, `test_customer_pages.py::test_a_changed_order_is_a_revision_the_page_shows_the_changes_and_a_person_approves_it`, `test_customer_pages.py::test_a_revision_can_be_rejected_with_a_reason_and_a_stale_page_is_refused`, `test_customer_pages.py::test_an_order_that_does_not_exist_is_a_readable_page`, `test_customer_pages.py::test_the_template_downloads_and_is_a_file_the_import_reads`, `test_customer_pages.py::test_a_file_is_previewed_first_then_filed_when_confirmed_and_nothing_is_filed_before`, `test_customer_pages.py::test_a_wrong_or_missing_preview_token_files_nothing`, `test_customer_pages.py::test_the_same_file_again_is_skipped_and_a_changed_one_becomes_a_revision`, `test_customer_pages.py::test_an_unknown_customer_waits_and_a_person_files_it_by_choosing_one`, `test_customer_pages.py::test_a_waiting_order_can_make_its_customer_or_be_rejected_with_a_reason`, `test_customer_pages.py::test_a_bad_file_files_nothing_and_every_problem_is_listed_by_row`, `test_customer_pages.py::test_a_file_over_the_size_limit_or_with_no_file_is_refused`, `test_customer_pages.py::test_an_upload_without_the_header_token_is_refused`, `test_customer_pages.py::test_the_list_filters_by_search_customer_and_state_and_sorts`
+
+**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Not yet run.
+
+<details><summary>Screenshot</summary>
+
+![TC-CO-08 in Chrome](screenshots/TC-CO-08.png)
+
+</details>
+
+<details><summary>Screenshot 2</summary>
+
+![TC-CO-08 in Chrome](screenshots/TC-CO-08-2.png)
+
+</details>
+
+<details><summary>Screenshot 3</summary>
+
+![TC-CO-08 in Chrome](screenshots/TC-CO-08-3.png)
+
+</details>
+
+<details><summary>Screenshot 4</summary>
+
+![TC-CO-08 in Chrome](screenshots/TC-CO-08-4.png)
+
+</details>
+
+<details><summary>Screenshot 5</summary>
+
+![TC-CO-08 in Chrome](screenshots/TC-CO-08-5.png)
+
+</details>
+
+<details><summary>Screenshot 6</summary>
+
+![TC-CO-08 in Chrome](screenshots/TC-CO-08-6.png)
+
+</details>
+
+<details><summary>Screenshot 7</summary>
+
+![TC-CO-08 in Chrome](screenshots/TC-CO-08-7.png)
+
+</details>
+
+<details><summary>Screenshot 8</summary>
+
+![TC-CO-08 in Chrome](screenshots/TC-CO-08-8.png)
+
+</details>
 
 
 ## Operations

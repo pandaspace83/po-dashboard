@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block title %}{{ number }} · {{ customer.name }} · {{ app_name }}{% endblock %}
+{% block content %}
+<p class="muted"><a href="/customer-orders">Customer orders</a> /</p>
+<h1>{{ number }} <span class="muted">{{ customer.name }}</span></h1>
+{% if filed %}<p class="notice" role="status">{{ icon("check-circle") }}<span>That order {{ filed }}.</span></p>{% endif %}
+{% if error %}<p class="error" role="alert">{{ icon("alert") }}<span>{{ error }}</span></p>{% endif %}
+{% for r in revisions if r.state == "pending" %}
+<div class="card">
+  <div class="card-head">{{ icon("alert") }}<h2>Revision {{ r.revision }} is waiting for approval</h2></div>
+  <p>The customer sent this number again with different terms. Nothing changes until you approve it.</p>
+  {% if diffs.get(r.id) %}<ul>{% for d in diffs[r.id] %}<li>{{ d }}</li>{% endfor %}</ul>{% endif %}
+  <p><a href="/customer-orders/{{ r.id }}">See revision {{ r.revision }}</a></p>
+  <div class="actions">
+    <form method="post" action="/customer-orders/{{ r.id }}/approve" class="inline">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <input type="hidden" name="version" value="{{ r.version }}">
+      <button class="primary" type="submit">{{ icon("check") }}Approve revision {{ r.revision }}</button>
+    </form>
+    <form method="post" action="/customer-orders/{{ r.id }}/reject" class="inline">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <input type="hidden" name="version" value="{{ r.version }}">
+      <input name="reason" maxlength="500" required placeholder="Why reject?" aria-label="Reason for rejecting revision {{ r.revision }}">
+      <button type="submit">{{ icon("ban") }}Reject</button>
+    </form>
+  </div>
+</div>
+{% endfor %}
+<div class="card">
+  <div class="card-head">{{ icon("clipboard") }}<h2>Revision {{ order.revision }}: {{ order.state }}</h2></div>
+  <table class="facts"><tbody>
+    <tr><th scope="row">Customer</th><td><a href="/customers/{{ customer.id }}">{{ customer.name }}</a></td></tr>
+    <tr><th scope="row">PO date</th><td>{{ order.po_date|day or "not stated" }}</td></tr>
+    <tr><th scope="row">Currency</th><td>{{ order.currency }}</td></tr>
+    <tr><th scope="row">Total of the lines</th><td>{{ total|money(order.currency) }}</td></tr>
+    {% if order.stated_total is not none %}<tr><th scope="row">Total on the PO</th><td>{{ order.stated_total|money(order.currency) }}{% if mismatch %} <span class="pill bad">{{ icon("alert") }}not the sum of the lines: the lines decide</span>{% endif %}</td></tr>{% endif %}
+    <tr><th scope="row">Source</th><td>{{ order.source }}</td></tr>
+  </tbody></table>
+</div>
+<h2>Lines</h2>
+<div class="table-wrap table-scroll"><table>
+  <thead><tr><th scope="col">#</th><th scope="col">Item</th><th scope="col">Description</th><th scope="col" class="num">Quantity</th><th scope="col">Unit</th><th scope="col" class="num">Unit price</th><th scope="col" class="num">Amount</th></tr></thead>
+  <tbody>
+  {% for l in lines %}
+  <tr><td>{{ l.line_no }}</td><td>{{ l.item }}</td><td>{{ l.description or "" }}</td><td class="num">{{ l.qty|quantity }}</td><td>{{ l.unit or "" }}</td><td class="num">{{ l.unit_price|money }}</td><td class="num">{{ (l.qty * l.unit_price)|money }}</td></tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+<h2>Revisions</h2>
+<div class="table-wrap"><table>
+  <thead><tr><th scope="col">Revision</th><th scope="col">State</th><th scope="col">Filed</th><th scope="col">Approved by</th></tr></thead>
+  <tbody>
+  {% for r in revisions %}
+  <tr><td>{% if r.id == order.id %}{{ r.revision }} (this page){% else %}<a href="/customer-orders/{{ r.id }}">{{ r.revision }}</a>{% endif %}</td><td>{{ r.state }}{% if r.close_note and r.state == "rejected" %} <span class="muted">{{ r.close_note }}</span>{% endif %}</td><td>{{ r.created_at|moment }}{% if who.get(r.created_by) %} by {{ who[r.created_by] }}{% endif %}</td><td>{% if r.approved_at %}{{ r.approved_at|moment }}{% if who.get(r.approved_by) %} by {{ who[r.approved_by] }}{% endif %}{% endif %}</td></tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+{% endblock %}

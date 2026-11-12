@@ -47,13 +47,13 @@ a:hover { color: var(--accent); }
 /* Top bar */
 .topbar { background: var(--surface); border-bottom: 1px solid var(--line); box-shadow: var(--shadow); }
 .topbar nav { max-width: 76rem; margin: 0 auto; padding: 0 16px; min-height: 56px; display: flex; flex-wrap: wrap;
-  align-items: center; gap: 4px 6px; }
-.brand { display: flex; align-items: center; gap: 10px; margin-right: 18px; color: var(--fg); text-decoration: none; }
+  align-items: center; gap: 4px 0; }
+.brand { display: flex; align-items: center; gap: 10px; margin-right: 8px; color: var(--fg); text-decoration: none; }
 .brand .logo { height: 28px; width: auto; display: block; }
 .brand .mark { width: 28px; height: 28px; color: var(--accent); stroke-width: 1.6; }
 .brand-name { font-weight: 700; letter-spacing: 0.02em; }
 .brand-sub { color: var(--muted); font-weight: 500; padding-left: 10px; border-left: 1px solid var(--line-strong); }
-.navlink { display: inline-flex; align-items: center; gap: 7px; padding: 8px 12px; border-radius: var(--radius);
+.navlink { display: inline-flex; align-items: center; gap: 5px; padding: 8px 7px; border-radius: var(--radius);
   color: var(--fg); text-decoration: none; font-weight: 500; border-bottom: 2px solid transparent; }
 .navlink:hover { background: var(--hover); color: var(--fg); }
 .navlink[aria-current="page"] { color: var(--accent-hover); border-bottom-color: var(--accent); border-radius: var(--radius) var(--radius) 0 0; }
@@ -280,6 +280,8 @@ table.todo td:first-child a:hover { text-decoration: underline; }
 @media (max-width: 1400px) {
   .who-name { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 }
+/* An admin has eight links and the bar never grows past 76rem, so there is never room for the email (DEF-014). */
+.topbar nav.crowded .who-name { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 @media (max-width: 640px) {
   .account .menu { position: fixed; right: 8px; top: 56px; }
 }

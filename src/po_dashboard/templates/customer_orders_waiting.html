@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% from "_picker.html" import customer_picker %}
+{% block title %}Waiting for a customer · {{ app_name }}{% endblock %}
+{% block content %}
+<p class="muted"><a href="/customer-orders">Customer orders</a> /</p>
+<h1>Waiting for a customer</h1>
+<p class="muted">These customer orders came in without a customer the app knows. Choose the customer, or make a new one, and the order is filed as it came. Nothing is guessed.</p>
+{% if error %}<p class="error" role="alert">{{ icon("alert") }}<span>{{ error }}</span></p>{% endif %}
+{% if rows %}
+{% for r in rows %}
+<div class="card">
+  <div class="card-head">{{ icon("clock") }}<h2>PO {{ r.po_number }}</h2></div>
+  <p>{{ r.waiting.reason }} From {{ r.waiting.source }}, {{ r.waiting.created_at|moment }}; {{ r.lines }} line{{ "" if r.lines == 1 else "s" }}{% if r.customer %}; the customer was written as "{{ r.customer }}"{% endif %}{% if r.domain %}; sent from {{ r.domain }}{% endif %}.</p>
+  <form method="post" action="/customer-orders/waiting/{{ r.waiting.id }}/resolve">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="form-row">
+      <div>{{ customer_picker("customer_" ~ r.waiting.id, "Customer", "", "", false, "Choose a customer") }}</div>
+      <div><label for="new_{{ r.waiting.id }}">Or a new customer</label><input id="new_{{ r.waiting.id }}" name="new_customer" maxlength="200" placeholder="{{ r.customer or '' }}"></div>
+      <div class="shrink"><button class="primary" type="submit">{{ icon("check") }}File it</button></div>
+    </div>
+  </form>
+  <form method="post" action="/customer-orders/waiting/{{ r.waiting.id }}/reject">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="form-row">
+      <div><label for="why_{{ r.waiting.id }}">Not one of ours? Say why</label><input id="why_{{ r.waiting.id }}" name="reason" maxlength="500" required></div>
+      <div class="shrink"><button type="submit">{{ icon("ban") }}Reject</button></div>
+    </div>
+  </form>
+</div>
+{% endfor %}
+{% else %}
+<div class="card empty">{{ icon("check-circle") }}<p><strong>Nothing is waiting.</strong></p></div>
+{% endif %}
+{% endblock %}

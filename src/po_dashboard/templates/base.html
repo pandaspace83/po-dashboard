@@ -22,12 +22,13 @@
 {% block nav %}
 {% if me %}
 <header class="topbar">
-<nav aria-label="Main">
+<nav aria-label="Main"{% if me.role == 'admin' %} class="crowded"{% endif %}>
   <a class="brand" href="/">{{ logo() }}<span class="brand-sub">Internal Dashboard</span></a>
   <a class="navlink" href="/" {% if request.url.path == '/' %}aria-current="page"{% endif %}>{{ icon("home") }}Home</a>
   <a class="navlink" href="/orders" {% if request.url.path.startswith('/orders') %}aria-current="page"{% endif %}>{{ icon("clipboard") }}Purchase orders</a>
   <a class="navlink" href="/reports/open-items" {% if request.url.path.startswith('/reports') %}aria-current="page"{% endif %}>{{ icon("alert") }}Open items</a>
   <a class="navlink" href="/vendors" {% if request.url.path.startswith('/vendors') %}aria-current="page"{% endif %}>{{ icon("truck") }}Vendors</a>
+  <a class="navlink" href="/customer-orders" {% if request.url.path.startswith('/customer-orders') or request.url.path.startswith('/customers') %}aria-current="page"{% endif %}title="Customer orders">{{ icon("users") }}Customers</a>
   {% if me.role == 'admin' %}<a class="navlink" href="/admin/audit" {% if request.url.path.startswith('/admin/audit') %}aria-current="page"{% endif %}>{{ icon("clipboard") }}Audit</a>
   <a class="navlink" href="/mailboxes" {% if request.url.path.startswith('/mailboxes') %}aria-current="page"{% endif %}>{{ icon("mail") }}Mailboxes</a>
   <a class="navlink" href="/admin/users" {% if request.url.path.startswith('/admin/users') %}aria-current="page"{% endif %}>{{ icon("users") }}People</a>{% endif %}
