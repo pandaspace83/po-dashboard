@@ -276,8 +276,8 @@ PD-8.4 rules review. Synthetic data only until the owner shows a real export (OP
   come to the purchasing mailbox; everyone signed in sees it; "possibly unbilled" after 30 days); REQ-CO-01 to 16 and
   T-7; DEC-56 to DEC-59; OPEN-22 to OPEN-25 (the export, tolerances, Customer:Job names, where customers come from, each
   with a working assumption); ARCHITECTURE §16 and RISK-16, RISK-17. The owner gave the go-ahead on this plan, 2026-11-12.
-- [ ] PD-8.1 The tables (§16.1) in migration 0010, new tables only, and `db/customers.py`; the `setting` table and its
-  defaults. A test that a database with purchasing records upgrades with every record unchanged.
+- [x] PD-8.1 The tables (§16.1) in migration 0010, new tables only, and `db/customers.py`; the `setting` table and its
+  defaults. **Done 2026-11-12 (TC-CO-01 to 03: 27 tests).** 14 new tables; a database with purchasing records upgrades with every purchasing table definition and row identical, and downgrades cleanly; `customers/config.py` reads the settings (one cent, exact quantities, 30 days, charge names, USD, Customer:Job) with a fallback to the default for a missing or damaged value. A unique "ignoring case" rule is carried by a stored key column, so the database itself refuses the second spelling. No purchasing module imports the customer side (a test).
 - [ ] PD-8.2 Customers (list, add, edit, QuickBooks names, domains) and customer POs: the intake service (§16.2), the form,
   the CSV and Excel import with its template and preview, revisions with Approve and Reject, and the waiting list for
   unknown customers.

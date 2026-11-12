@@ -1538,6 +1538,41 @@ tests = ["test_failed_documents.py::test_the_list_shows_each_failed_document_wit
 owner = "Not yet run"
 
 
+[[case]]
+id = "TC-CO-01"
+area = "Customer orders"
+title = "The customer-side tables are new, leave every purchasing record unchanged, and the two workflows stay apart"
+priority = "High"
+kind = "automated"
+refs = ["PD-8.1", "DEC-56", "REQ-CO-02"]
+steps = ["Covered by the tests named."]
+expected = "Migration 0010 adds the 14 customer-side tables and nothing else: on a database with purchasing records, every purchasing table's definition and every row are identical before and after. Going back removes only the new tables. No purchasing module imports the customer side. The schema matches the models."
+tests = ["test_customer_tables.py::test_the_customer_tables_exist", "test_customer_tables.py::test_the_migration_adds_tables_only_and_every_purchasing_record_is_unchanged", "test_customer_tables.py::test_going_back_removes_only_the_new_tables", "test_customer_tables.py::test_purchasing_code_does_not_use_the_customer_side", "test_database.py::test_migration_matches_the_models"]
+
+
+[[case]]
+id = "TC-CO-02"
+area = "Customer orders"
+title = "The database itself enforces the customer-side rules"
+priority = "High"
+kind = "automated"
+refs = ["PD-8.1", "DEC-57", "DEC-59", "DEC-24", "DEC-52", "REQ-CO-01", "REQ-CO-02", "REQ-CO-07"]
+steps = ["Covered by the tests named."]
+expected = "A customer name, a QuickBooks name and a domain are each unique however they are cased or spaced. A customer PO number is unique for its customer and revision but not across customers, and a revision is allowed. States, sources, currency, quantity, price, line number, invoice kind, level, state and line kind are checked; a credit memo may share an invoice number with an invoice, and negative amounts are allowed where a credit or discount needs them. Numbers are exact and too many decimals are refused, never rounded. A customer with orders or invoices cannot be deleted; an order's lines, allocations and history go with it while an invoice stays. One PO may have many invoices and one invoice many POs. An upload's rows are kept once, and go only with their upload. A stale save is refused."
+tests = ["test_customer_tables.py::test_a_customer_name_is_unique_whatever_its_case_and_spacing", "test_customer_tables.py::test_a_domain_is_lower_case_and_belongs_to_one_customer", "test_customer_tables.py::test_a_customer_with_orders_cannot_be_deleted_but_an_empty_one_takes_its_names_with_it", "test_customer_tables.py::test_a_stale_save_of_a_customer_is_refused", "test_customer_tables.py::test_a_po_number_is_unique_for_its_customer_and_revision_not_across_customers", "test_customer_tables.py::test_a_customer_po_has_known_states_sources_currency_and_revision", "test_customer_tables.py::test_a_po_line_needs_a_positive_quantity_and_a_price_and_a_line_number_used_once", "test_customer_tables.py::test_the_lines_of_a_po_go_with_it_but_what_was_invoiced_stays", "test_customer_tables.py::test_numbers_are_exact_and_more_places_than_kept_are_refused_not_rounded", "test_customer_tables.py::test_intake_rows_have_known_states_and_survive_the_person_who_made_them", "test_customer_tables.py::test_an_invoice_number_is_unique_per_kind_so_a_credit_memo_may_share_it", "test_customer_tables.py::test_an_invoice_has_known_kind_level_state_and_currency", "test_customer_tables.py::test_invoice_lines_have_known_kinds_and_may_be_negative_or_have_no_item", "test_customer_tables.py::test_a_customer_with_invoices_cannot_be_deleted", "test_customer_tables.py::test_every_row_of_an_upload_is_kept_once_with_a_known_outcome_and_goes_with_its_upload", "test_customer_tables.py::test_two_uploads_may_show_the_same_invoice_and_one_upload_the_same_number_twice", "test_customer_tables.py::test_one_po_may_have_many_invoices_and_one_invoice_many_pos", "test_customer_tables.py::test_an_allocation_has_known_basis_and_state_and_lines_are_optional", "test_customer_tables.py::test_an_allocation_goes_when_its_invoice_goes_and_the_order_stays", "test_customer_tables.py::test_foreign_keys_are_enforced_on_the_customer_side"]
+
+
+[[case]]
+id = "TC-CO-03"
+area = "Customer orders"
+title = "The settings have owner-approved defaults, and a missing or damaged value falls back to its default"
+priority = "High"
+kind = "automated"
+refs = ["PD-8.1", "DEC-59", "REQ-CO-12"]
+steps = ["Covered by the tests named."]
+expected = "The setting table is seeded with the amount tolerance of one cent, an exact quantity, 30 unbilled days, the charge item names, the default currency and the Customer:Job rule. A changed value wins; a missing, non-numeric, negative or fractional-days value falls back to the default instead of stopping reconciliation."
+tests = ["test_customer_tables.py::test_the_defaults_are_in_the_table_and_read_with_their_types", "test_customer_tables.py::test_a_changed_setting_wins_and_a_missing_or_damaged_one_falls_back"]
+
 # =====================================================================================================================
 # Operations (engineering review, 2026-11-10)
 

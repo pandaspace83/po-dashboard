@@ -2,7 +2,7 @@
 
 from alembic import context
 
-from po_dashboard.db import ledger, mail, models  # noqa: F401  (registers the tables)
+from po_dashboard.db import customers, ledger, mail, models  # noqa: F401  (registers the tables)
 from po_dashboard.db.base import Base
 
 engine = context.config.attributes["engine"]

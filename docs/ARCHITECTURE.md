@@ -723,14 +723,14 @@ a person uploads a QuickBooks export; the app matches the two and lists where th
 sign-in, the audit trail, the upload reader (`ledger/sheets.py`), the exact number types, the file store and the new
 `setting` table. Nothing in purchasing reads or writes these tables.
 
-### 16.1 Tables
+### 16.1 Tables (built in PD-8.1, migration 0010)
 
 | Table | Holds |
 |---|---|
 | `customer` | name (unique, case ignored), contact name and email, notes, active, version (DEC-52) |
 | `customer_name` | customer_id, name as QuickBooks writes it in an export (unique, case and spacing ignored): how an export finds its customer, exactly |
 | `customer_domain` | customer_id, email domain (unique): how the email reader will find a customer (PD-8.8). A domain may also be a vendor's; the document type then decides |
-| `customer_po` | customer_id, po_number (the customer's), revision (0 is the original), state (pending, active, superseded, rejected, closed, cancelled), po_date, currency, stated_total (as written, may be empty), source (manual, import, document), source_document_id, import file id, created_by, approved_by and at, close reason, version. Unique per customer, number (case ignored) and revision |
+| `customer_po` | customer_id, po_number (the customer's), revision (0 is the original), state (pending, active, superseded, rejected, closed, cancelled), po_date, currency, stated_total (as written, may be empty), source (manual, import, document), source_document_id, import file id, created_by, approved_by and at, close reason, version. Unique per customer, `po_key` (the number as letters and digits only, lower case, so `CP-100` and `cp 100` are one) and revision |
 | `customer_po_line` | customer_po_id, line_no, item, description, qty, unit, unit_price, stated_amount (as written, may be empty) |
 | `customer_po_intake` | the structured data that came in, its source, why it waits (no customer found), state (waiting, done, rejected): the review list for POs whose customer is unknown |
 | `sales_import` | who and when, file name (display only), file hash and stored path, the mapping used, the period it covers, counts per outcome |

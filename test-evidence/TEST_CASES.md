@@ -4,7 +4,7 @@
 
 PO Dashboard (RaceSpec Internal Dashboard). Scope: Phase 0 and Phase 1: sign-in, people, vendors, purchase orders, imports, the QuickBooks starting load, entries by hand, Home, Open items, Audit, page behaviour, security and speed.
 
-**127 cases:** 46 Critical, 65 High, 16 Medium; 2 terminal, 61 automated, 61 browser, 3 owner only.
+**130 cases:** 46 Critical, 68 High, 16 Medium; 2 terminal, 64 automated, 61 browser, 3 owner only.
 
 Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.18, by Claude, scripts/browser_evidence.py, on commit c215fbc with uncommitted changes: **61 of 61** browser cases pass. Automated tests: `uv run pytest`. Defects: [DEFECTS.md](DEFECTS.md). Sign-off: [SIGN_OFF.md](SIGN_OFF.md).
 
@@ -143,6 +143,9 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.18, by Claude, scripts/b
 | [TC-QUE-05](#tc-que-05) | A long document is cut to the reading window, the quoted earlier messages first, and it says so | High | Automated | Automated tests | — |
 | [TC-QUE-06](#tc-que-06) | The gateway tells an answer that will fail again from an error worth trying again | High | Automated | Automated tests | — |
 | [TC-QUE-07](#tc-que-07) | Failed documents are listed on their own page, and a person can Retry or Dismiss them | High | Browser | Pass 11/12/2026 | Not yet run |
+| [TC-CO-01](#tc-co-01) | The customer-side tables are new, leave every purchasing record unchanged, and the two workflows stay apart | High | Automated | Automated tests | — |
+| [TC-CO-02](#tc-co-02) | The database itself enforces the customer-side rules | High | Automated | Automated tests | — |
+| [TC-CO-03](#tc-co-03) | The settings have owner-approved defaults, and a missing or damaged value falls back to its default | High | Automated | Automated tests | — |
 | [TC-OPS-01](#tc-ops-01) | A backup restores to exactly what was backed up; it never overwrites, never deletes, and refuses unsafe places | Critical | Automated | Automated tests | — |
 | [TC-OPS-02](#tc-ops-02) | Two people, or a double click, cannot corrupt a record | High | Automated | Automated tests | — |
 | [TC-OPS-03](#tc-ops-03) | A model server that is down fails fast and leaves the document waiting; the health check sees a broken database | High | Automated | Automated tests | — |
@@ -2704,6 +2707,59 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.18, by Claude, scripts/b
 ![TC-QUE-07 in Chrome](screenshots/TC-QUE-07-2.png)
 
 </details>
+
+
+## Customer orders
+
+<a id="tc-co-01"></a>
+
+### TC-CO-01: The customer-side tables are new, leave every purchasing record unchanged, and the two workflows stay apart
+
+**Priority:** High · **How:** Automated · **Refs:** PD-8.1, DEC-56, REQ-CO-02
+
+**Steps**
+
+1. Covered by the tests named.
+
+**Expected:** Migration 0010 adds the 14 customer-side tables and nothing else: on a database with purchasing records, every purchasing table's definition and every row are identical before and after. Going back removes only the new tables. No purchasing module imports the customer side. The schema matches the models.
+
+**Automated tests:** `test_customer_tables.py::test_the_customer_tables_exist`, `test_customer_tables.py::test_the_migration_adds_tables_only_and_every_purchasing_record_is_unchanged`, `test_customer_tables.py::test_going_back_removes_only_the_new_tables`, `test_customer_tables.py::test_purchasing_code_does_not_use_the_customer_side`, `test_database.py::test_migration_matches_the_models`
+
+**Latest:** Owner: not recorded.
+
+
+<a id="tc-co-02"></a>
+
+### TC-CO-02: The database itself enforces the customer-side rules
+
+**Priority:** High · **How:** Automated · **Refs:** PD-8.1, DEC-57, DEC-59, DEC-24, DEC-52, REQ-CO-01, REQ-CO-02, REQ-CO-07
+
+**Steps**
+
+1. Covered by the tests named.
+
+**Expected:** A customer name, a QuickBooks name and a domain are each unique however they are cased or spaced. A customer PO number is unique for its customer and revision but not across customers, and a revision is allowed. States, sources, currency, quantity, price, line number, invoice kind, level, state and line kind are checked; a credit memo may share an invoice number with an invoice, and negative amounts are allowed where a credit or discount needs them. Numbers are exact and too many decimals are refused, never rounded. A customer with orders or invoices cannot be deleted; an order's lines, allocations and history go with it while an invoice stays. One PO may have many invoices and one invoice many POs. An upload's rows are kept once, and go only with their upload. A stale save is refused.
+
+**Automated tests:** `test_customer_tables.py::test_a_customer_name_is_unique_whatever_its_case_and_spacing`, `test_customer_tables.py::test_a_domain_is_lower_case_and_belongs_to_one_customer`, `test_customer_tables.py::test_a_customer_with_orders_cannot_be_deleted_but_an_empty_one_takes_its_names_with_it`, `test_customer_tables.py::test_a_stale_save_of_a_customer_is_refused`, `test_customer_tables.py::test_a_po_number_is_unique_for_its_customer_and_revision_not_across_customers`, `test_customer_tables.py::test_a_customer_po_has_known_states_sources_currency_and_revision`, `test_customer_tables.py::test_a_po_line_needs_a_positive_quantity_and_a_price_and_a_line_number_used_once`, `test_customer_tables.py::test_the_lines_of_a_po_go_with_it_but_what_was_invoiced_stays`, `test_customer_tables.py::test_numbers_are_exact_and_more_places_than_kept_are_refused_not_rounded`, `test_customer_tables.py::test_intake_rows_have_known_states_and_survive_the_person_who_made_them`, `test_customer_tables.py::test_an_invoice_number_is_unique_per_kind_so_a_credit_memo_may_share_it`, `test_customer_tables.py::test_an_invoice_has_known_kind_level_state_and_currency`, `test_customer_tables.py::test_invoice_lines_have_known_kinds_and_may_be_negative_or_have_no_item`, `test_customer_tables.py::test_a_customer_with_invoices_cannot_be_deleted`, `test_customer_tables.py::test_every_row_of_an_upload_is_kept_once_with_a_known_outcome_and_goes_with_its_upload`, `test_customer_tables.py::test_two_uploads_may_show_the_same_invoice_and_one_upload_the_same_number_twice`, `test_customer_tables.py::test_one_po_may_have_many_invoices_and_one_invoice_many_pos`, `test_customer_tables.py::test_an_allocation_has_known_basis_and_state_and_lines_are_optional`, `test_customer_tables.py::test_an_allocation_goes_when_its_invoice_goes_and_the_order_stays`, `test_customer_tables.py::test_foreign_keys_are_enforced_on_the_customer_side`
+
+**Latest:** Owner: not recorded.
+
+
+<a id="tc-co-03"></a>
+
+### TC-CO-03: The settings have owner-approved defaults, and a missing or damaged value falls back to its default
+
+**Priority:** High · **How:** Automated · **Refs:** PD-8.1, DEC-59, REQ-CO-12
+
+**Steps**
+
+1. Covered by the tests named.
+
+**Expected:** The setting table is seeded with the amount tolerance of one cent, an exact quantity, 30 unbilled days, the charge item names, the default currency and the Customer:Job rule. A changed value wins; a missing, non-numeric, negative or fractional-days value falls back to the default instead of stopping reconciliation.
+
+**Automated tests:** `test_customer_tables.py::test_the_defaults_are_in_the_table_and_read_with_their_types`, `test_customer_tables.py::test_a_changed_setting_wins_and_a_missing_or_damaged_one_falls_back`
+
+**Latest:** Owner: not recorded.
 
 
 ## Operations
