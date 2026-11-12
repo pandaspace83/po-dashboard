@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block title %}Mailbox sign-in · {{ app_name }}{% endblock %}
+{% block content %}
+{% if ok %}
+<meta http-equiv="refresh" content="0; url=/mailboxes/finish">
+<h1>Finishing the connection</h1>
+<p>One moment. If nothing happens, <a href="/mailboxes/finish">finish connecting</a>.</p>
+{% else %}
+<h1>Not expected here</h1>
+<p>This address is only used when Google sends you back after you start Connect on the <a href="/mailboxes">Mailboxes</a> page.</p>
+{% endif %}
+{% endblock %}

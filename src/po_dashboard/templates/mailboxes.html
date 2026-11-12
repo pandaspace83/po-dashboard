@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block title %}Mailboxes · {{ app_name }}{% endblock %}
+{% block content %}
+<h1>Mailboxes</h1>
+{% if said %}<p class="{{ 'error' if said_is_error else 'notice' }}" role="{{ 'alert' if said_is_error else 'status' }}">{{ icon("alert" if said_is_error else "check-circle") }}<span>{{ said }}</span></p>{% endif %}
+<div class="table-wrap table-scroll">
+<table>
+  <thead><tr><th scope="col">Mailbox</th><th scope="col">Kind</th><th scope="col">State</th><th scope="col">Last check</th><th scope="col">Reads mail from</th><th scope="col">Connected</th><th scope="col">Actions</th></tr></thead>
+  <tbody>
+  {% for r in rows %}
+  <tr>
+    <td>{{ r.box.address }}</td>
+    <td>{{ r.provider }}</td>
+    <td>{% if r.box.state == 'connected' %}<span class="pill ok">{{ icon("check-circle") }}{{ r.state }}</span>{% else %}<span class="pill bad">{{ icon("alert") }}{{ r.state }}</span>{% endif %}
+      {% if r.problem %}<br><span class="muted">{{ r.problem }}</span>{% endif %}</td>
+    <td>{% if r.last_check %}{{ r.last_check | moment }}{% else %}not yet{% endif %}</td>
+    <td>{% if r.box.read_since %}{{ r.box.read_since | day }}{% else %}&ndash;{% endif %}</td>
+    <td>{% if r.box.connected_at %}{{ r.box.connected_at | moment }}{% if r.by %} by {{ r.by }}{% endif %}{% else %}&ndash;{% endif %}</td>
+    <td>
+      {% if r.box.provider == 'gmail' and r.box.state != 'disconnected' %}
+      <form method="post" action="/mailboxes/{{ r.box.id }}/disconnect" class="inline">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button type="submit" class="small">{{ icon("ban") }}Disconnect</button>
+      </form>
+      {% elif r.box.provider == 'folder' %}<span class="muted">set up in Terminal</span>{% endif %}
+    </td>
+  </tr>
+  {% else %}
+  <tr><td colspan="7">No mailbox is connected yet.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% if can_connect %}
+<div class="card">
+  <div class="card-head">{{ icon("mail") }}<h2>{{ "Reconnect your mailbox" if reconnecting else "Connect your mailbox" }}</h2></div>
+  <p>You&rsquo;ll sign in on Google&rsquo;s own page, so PO Dashboard never sees your password. It gets read-only access: it cannot send, move or delete your mail. The purchase orders and vendor emails it finds are stored on the office Mac, and everyone signed in to PO Dashboard can see them. You can disconnect it at any time.</p>
+  {% if cannot %}
+  <p class="notice" role="status">{{ icon("alert") }}<span>{{ cannot }}</span></p>
+  {% else %}
+  <form method="post" action="/mailboxes/connect">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="form-row">
+      <div class="shrink"><label for="days">Also read the last</label>
+        <input id="days" name="days" type="number" min="0" max="365" value="0" inputmode="numeric" required> days</div>
+      <div class="shrink"><button class="primary" type="submit">{{ icon("mail") }}{{ "Reconnect Gmail" if reconnecting else "Connect Gmail" }}</button></div>
+    </div>
+    <p class="muted">0 reads only mail that arrives from now on. Older mail already in the inbox is not read unless you ask for it here.</p>
+  </form>
+  {% endif %}
+</div>
+{% else %}
+<p class="muted">One mailbox is connected. To connect a different one, disconnect this one first.</p>
+{% endif %}
+{% endblock %}

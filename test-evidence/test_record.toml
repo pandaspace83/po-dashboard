@@ -1407,6 +1407,52 @@ steps = ["Covered by the tests named."]
 expected = "A Subject of 20,000 encoded words (which took the structured parser past 2 GB) is stored within a 500 MB cap and cut to 1,000 characters. A message with 2,500 parts, or nested 5,000 deep, is stored whole and not read; one nested 900 deep, or with 30 attachments, is read as normal. Encoded, RFC 2231 and raw Latin-1 names and senders are stored as readable text. A connection to the sign-in listener that never speaks is dropped and Google's return still arrives."
 tests = ["test_hostile.py::test_a_header_with_thousands_of_encoded_words_cannot_exhaust_memory", "test_hostile.py::test_a_message_with_thousands_of_parts_is_stored_whole_and_not_taken_apart", "test_hostile.py::test_a_deeply_nested_message_is_stored_whole_and_a_merely_deep_one_is_read", "test_hostile.py::test_a_normal_message_with_attachments_is_still_taken_apart", "test_hostile.py::test_raw_and_encoded_names_are_kept_as_readable_text", "test_hostile.py::test_a_silent_connection_cannot_hold_up_the_sign_in"]
 
+[[case]]
+id = "TC-MAIL-25"
+area = "Mailboxes screen"
+title = "An admin connects, reconnects and disconnects the one mailbox on the Mailboxes screen, and the return from Google is checked"
+priority = "High"
+kind = "automated"
+refs = ["PD-3.7", "REQ-IN-07", "DEC-50", "DEC-33", "DEC-13"]
+steps = ["Covered by the tests named, with a pretend Google."]
+expected = "Only an admin sees the screen and its link. The page says only what is true (own sign-in page, read-only, stored on the office Mac and visible to everyone signed in, can be disconnected). Connect sends the person to Google with PKCE and a fresh state; Google's return, which carries no cookie, is accepted only with a state this app issued, once, within 10 minutes, and the person who started it finishes it as themselves. A refused or expired sign-in says so in fixed words and saves nothing. Only one mailbox is connected at a time. A lapsed mailbox shows needs reconnect, its last check and why, and Reconnect makes it connected again. Disconnect forgets the token, keeps the mail and is audited. Every change needs the security token. A folder mailbox has no connect or disconnect here. The code, verifier, tokens and state are never on the page, in an audit row or in the app's log."
+tests = ["test_mailboxes.py::test_only_an_admin_sees_the_screen_and_its_link", "test_mailboxes.py::test_the_page_says_only_what_is_true", "test_mailboxes.py::test_connecting_goes_to_google_and_back_and_saves_the_mailbox", "test_mailboxes.py::test_the_return_from_google_needs_a_state_this_app_issued_and_works_once", "test_mailboxes.py::test_a_return_that_comes_too_late_is_refused", "test_mailboxes.py::test_finishing_needs_the_same_admin_and_works_once", "test_mailboxes.py::test_a_refused_sign_in_says_so_in_fixed_words", "test_mailboxes.py::test_google_refusing_the_code_leaves_nothing_saved", "test_mailboxes.py::test_starting_again_replaces_the_last_sign_in", "test_mailboxes.py::test_connect_checks_the_days_and_the_saved_client", "test_mailboxes.py::test_a_second_different_mailbox_is_refused_while_one_is_connected", "test_mailboxes.py::test_the_page_shows_the_state_the_last_check_and_why_it_failed", "test_mailboxes.py::test_reconnecting_a_lapsed_mailbox_makes_it_connected_again", "test_mailboxes.py::test_disconnecting_forgets_the_token_and_keeps_the_mail", "test_mailboxes.py::test_a_folder_mailbox_has_no_connect_or_disconnect_here", "test_mailboxes.py::test_every_change_needs_the_security_token", "test_mailboxes.py::test_the_message_gives_the_same_start_date_as_the_table_in_the_office_time_zone", "test_gate.py::test_every_route_refuses_a_request_with_no_session"]
+
+[[case]]
+id = "TC-MAIL-26"
+area = "Mailboxes screen"
+title = "From another computer or with HTTPS on, the screen explains how to connect instead of failing"
+priority = "Medium"
+kind = "automated"
+refs = ["PD-3.7", "DEC-50", "DEC-28"]
+steps = ["Covered by the tests named."]
+expected = "Google only returns the browser to an http address on the Mac the person is using, so Connect is offered only in a browser on the office Mac itself and while HTTPS is off. From another computer, or with HTTPS on, the page says what to do (open it on the office Mac; or use Terminal) and a stale form post is refused."
+tests = ["test_mailboxes.py::test_connecting_from_another_computer_is_explained_not_attempted", "test_mailboxes.py::test_connecting_is_done_in_terminal_while_https_is_on"]
+
+[[case]]
+id = "TC-MAIL-27"
+area = "Mailboxes screen"
+title = "In Chrome the connect round trip works, even though the sign-in cookie is not sent when Google sends the browser back"
+priority = "High"
+kind = "browser"
+refs = ["PD-3.7", "DEC-50", "DEC-45"]
+steps = ["Signed in as an admin, open Mailboxes.", "Set Also read the last to 2 days and press Connect Gmail.", "On the Continue page, check the link goes to accounts.google.com.", "Come back from another site, as Google does (a pretend Google answers; the real one is not contacted).", "Press Disconnect."]
+expected = "The Continue page has one plain link to Google (not a boosted or form redirect). After the return from another site the page ends on Mailboxes with 'Connected ... Mail from ... on will be read' and the mailbox listed as connected, though the cookie was not sent on the return. Disconnect says the mail already stored stays."
+tests = ["test_mailboxes.py::test_connecting_goes_to_google_and_back_and_saves_the_mailbox"]
+owner = "Not yet run"
+
+[[case]]
+id = "TC-MAIL-28"
+area = "Mailboxes screen"
+title = "The real Google account connects through the Mailboxes screen (owner's check)"
+priority = "High"
+kind = "owner"
+refs = ["PD-3.7", "DEC-50", "DEC-07"]
+steps = ["On the office Mac, with the server running, open http://127.0.0.1:8000/mailboxes as an admin.", "If the test account is connected, press Disconnect.", "Press Connect Gmail (0 days), then Continue to Google; sign in as the test account and allow access.", "Send the test account an email and wait for the next scan."]
+expected = "Google's page opens, then the Mailboxes page says Connected with the test account's address, state connected. The new email is read within about 5 minutes. In Gmail itself nothing changed."
+tests = []
+owner = "Not yet run"
+
 # =====================================================================================================================
 # Operations (engineering review, 2026-11-10)
 
@@ -1612,6 +1658,40 @@ cause = "image_text set Pillow's process-wide limit from the app's constant, and
 fix = "The app no longer changes Pillow's process-wide limit; it checks the size itself before decoding."
 retest = "11/11/2026, Claude: pass with the files in that order."
 status = "Fixed, not committed yet"
+
+[[defect]]
+id = "DEF-009"
+found = "11/11/2026"
+found_by = "Claude, browser evidence run in Chrome"
+case = "TC-SIGN-01"
+browser = "Google Chrome (scripts/browser_evidence.py)"
+severity = "Low"
+title = "The browser check for the cursor in Email failed on a slow first page load, though the cursor was there"
+steps = ["Run scripts/browser_evidence.py on a busy Mac.", "TC-SIGN-01 opens the app signed out and asks which box has the cursor."]
+expected = "The cursor is in the Email box."
+actual = "The check failed with: the cursor is not in Email. The failure screenshot (seen by Claude, which found the cursor in Email) was deleted by the retest run, which clears old screenshots; it was not kept. The first page of the run took 2.1 seconds instead of 0.5."
+cause = "The script read the focused box 300 ms after the page loaded, before the browser had applied autofocus on a slow first load. A flaw in the check, not in the app."
+fix = "The check now waits up to 5 seconds for the Email box to take focus before it judges."
+retest = "11/11/2026, Claude in Chrome: pass (all 60 browser cases, 0.6 s). Owner's retest: not needed (test script only)."
+retest_evidence = "screenshots/TC-SIGN-01.png"
+status = "Fixed, not committed yet"
+
+[[defect]]
+id = "DEF-010"
+found = "11/12/2026"
+found_by = "Claude, reading the Chrome screenshots before the first push"
+case = "TC-MAIL-27"
+browser = "Google Chrome (scripts/browser_evidence.py)"
+severity = "Low"
+title = "After connecting, the message gave a different start date from the table on the same page"
+steps = ["At 9:24 PM, connect a mailbox on the Mailboxes screen with Also read the last 2 days."]
+expected = "The message and the table give the same date, the office date mail is read from: 11/09/2026."
+actual = "The message said Mail from 11/10/2026 on will be read; the table said 11/09/2026. The Terminal command connect-gmail printed the same kind of date."
+failure_evidence = "screenshots/DEF-010-before.png"
+cause = "The message printed the stored time, which is in UTC, as a date; the table turns it into the office date first (DEC-45). In the evening in the US the two are different days. The browser check looked for the word Connected, not the date."
+fix = "The message and the Terminal command use the same date display as the table. A test pins the time to 2 AM UTC with the Mac in New York, and the browser check now compares the message date with the table date."
+retest = "11/12/2026, Claude: pass in the tests (the new test fails on the old code). Chrome retest: waiting for the next browser evidence run."
+status = "Fixed, Chrome retest waiting"
 
 # =====================================================================================================================
 # User sign-off: the checks that matter most before go-live. "Ready" items can be tested now; "Not built" items are

@@ -14,6 +14,8 @@ Every failure is logged here the moment it is found, by whoever finds it: the ca
 | [DEF-006](#def-006) | 11/11/2026 | [TC-MAIL-21](TEST_CASES.md#tc-mail-21) | Low | A file named .png that is really EPS reached Pillow's EPS reader | Fixed, not committed yet |
 | [DEF-007](#def-007) | 11/11/2026 | [TC-MAIL-24](TEST_CASES.md#tc-mail-24) | Low | A silent connection to the Gmail sign-in listener could hold up the sign-in | Fixed, not committed yet |
 | [DEF-008](#def-008) | 11/11/2026 | [TC-MAIL-10](TEST_CASES.md#tc-mail-10) | Low | A test lowered Pillow's pixel limit for the whole test run, so another test failed when the files ran in a different order | Fixed, not committed yet |
+| [DEF-009](#def-009) | 11/11/2026 | [TC-SIGN-01](TEST_CASES.md#tc-sign-01) | Low | The browser check for the cursor in Email failed on a slow first page load, though the cursor was there | Fixed, not committed yet |
+| [DEF-010](#def-010) | 11/12/2026 | [TC-MAIL-27](TEST_CASES.md#tc-mail-27) | Low | After connecting, the message gave a different start date from the table on the same page | Fixed, Chrome retest waiting |
 
 <a id="def-001"></a>
 
@@ -198,3 +200,52 @@ Every failure is logged here the moment it is found, by whoever finds it: the ca
 **Fix:** The app no longer changes Pillow's process-wide limit; it checks the size itself before decoding. Not committed yet.
 
 **Retest:** 11/11/2026, Claude: pass with the files in that order.
+
+
+<a id="def-009"></a>
+
+## DEF-009: The browser check for the cursor in Email failed on a slow first page load, though the cursor was there
+
+**Found:** 11/11/2026 by Claude, browser evidence run in Chrome · **Case:** TC-SIGN-01 · **Browser:** Google Chrome (scripts/browser_evidence.py) · **Severity:** Low · **Status:** Fixed, not committed yet
+
+**Steps to reproduce**
+
+1. Run scripts/browser_evidence.py on a busy Mac.
+2. TC-SIGN-01 opens the app signed out and asks which box has the cursor.
+
+**Expected:** The cursor is in the Email box.
+
+**Actual:** The check failed with: the cursor is not in Email. The failure screenshot (seen by Claude, which found the cursor in Email) was deleted by the retest run, which clears old screenshots; it was not kept. The first page of the run took 2.1 seconds instead of 0.5.
+
+**Cause:** The script read the focused box 300 ms after the page loaded, before the browser had applied autofocus on a slow first load. A flaw in the check, not in the app.
+
+**Fix:** The check now waits up to 5 seconds for the Email box to take focus before it judges. Not committed yet.
+
+**Retest:** 11/11/2026, Claude in Chrome: pass (all 60 browser cases, 0.6 s). Owner's retest: not needed (test script only).
+
+![DEF-009 retested](screenshots/TC-SIGN-01.png)
+
+
+<a id="def-010"></a>
+
+## DEF-010: After connecting, the message gave a different start date from the table on the same page
+
+**Found:** 11/12/2026 by Claude, reading the Chrome screenshots before the first push · **Case:** TC-MAIL-27 · **Browser:** Google Chrome (scripts/browser_evidence.py) · **Severity:** Low · **Status:** Fixed, Chrome retest waiting
+
+**Steps to reproduce**
+
+1. At 9:24 PM, connect a mailbox on the Mailboxes screen with Also read the last 2 days.
+
+**Expected:** The message and the table give the same date, the office date mail is read from: 11/09/2026.
+
+**Actual:** The message said Mail from 11/10/2026 on will be read; the table said 11/09/2026. The Terminal command connect-gmail printed the same kind of date.
+
+**Seen:** screenshots/DEF-010-before.png
+
+![DEF-010 as found](screenshots/DEF-010-before.png)
+
+**Cause:** The message printed the stored time, which is in UTC, as a date; the table turns it into the office date first (DEC-45). In the evening in the US the two are different days. The browser check looked for the word Connected, not the date.
+
+**Fix:** The message and the Terminal command use the same date display as the table. A test pins the time to 2 AM UTC with the Mac in New York, and the browser check now compares the message date with the table date. Not committed yet.
+
+**Retest:** 11/12/2026, Claude: pass in the tests (the new test fails on the old code). Chrome retest: waiting for the next browser evidence run.

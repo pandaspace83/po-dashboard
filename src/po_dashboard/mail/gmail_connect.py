@@ -34,11 +34,27 @@ def connect(
     db: Session, secrets: Secrets, *, days: int = 0, connected_by: int | None = None,
     sign_in: SignIn | None = None, http: httpx.Client | None = None,
 ) -> Mailbox:  # fmt: skip
-    """Sign in, then save the token and the mailbox. `days` is how many days of older mail to read as well (DEC-51)."""
-    if not 0 <= days <= 365:
-        raise GmailError("The number of days to read back must be between 0 and 365.")
+    """Sign in (in Terminal: the loopback listener), then save the token and the mailbox. `days` is how many days of
+    older mail to read as well (DEC-51)."""
+    check_days(days)
     client = gmail_auth.load_client(secrets)
     tokens, _ = (sign_in or (lambda c: gmail_auth.sign_in(c, http=http)))(client)
+    return finish_connect(db, secrets, tokens, days=days, connected_by=connected_by, http=http)
+
+
+def check_days(days: int) -> None:
+    if not 0 <= days <= 365:
+        raise GmailError("The number of days to read back must be between 0 and 365.")
+
+
+def finish_connect(
+    db: Session, secrets: Secrets, tokens: dict[str, Any], *, days: int = 0, connected_by: int | None = None,
+    http: httpx.Client | None = None, one_mailbox: bool = False,
+) -> Mailbox:  # fmt: skip
+    """Save a finished sign-in: the token in the Keychain (only after Google has said whose it is) and the mailbox in
+    the database. The Mailboxes screen calls this too (PD-3.7), with `one_mailbox` set: version 1 reads one mailbox
+    (DEC-33), so a different Gmail account is refused while another is connected."""
+    check_days(days)
     refresh, access = tokens.get("refresh_token"), str(tokens["access_token"])
     if not refresh:
         raise GmailError("Google sent no long-lived sign-in. Try again and allow access when asked.")
@@ -47,6 +63,11 @@ def connect(
         raise gmail_auth.NeedsReconnect("The sign-in was refused.")
 
     address = GmailSource(lambda: access, refused, http=http).account()
+    others = select(Mailbox.id).where(
+        Mailbox.provider == "gmail", Mailbox.state != "disconnected", Mailbox.address != address
+    )
+    if one_mailbox and db.scalar(others) is not None:
+        raise GmailError("A different mailbox is already connected. Disconnect it first.")
     secrets.put(gmail_auth.token_key(address), str(refresh))
     now = utcnow()
     mailbox = db.scalar(select(Mailbox).where(Mailbox.address == address))

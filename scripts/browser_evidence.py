@@ -29,7 +29,9 @@ import tomllib
 from collections.abc import Callable
 from datetime import date, datetime, timedelta
 from pathlib import Path
+from urllib.parse import parse_qs, urlparse
 
+import httpx
 import uvicorn
 from playwright.sync_api import Browser, BrowserContext, Page, sync_playwright
 from sqlalchemy.orm import Session
@@ -196,6 +198,10 @@ def sign_in_page_only(r: Run) -> None:
     r.go(r.a, "/")
     check(r.a.url.endswith("/sign-in"), f"the address is {r.a.url}, not /sign-in")
     check(r.a.locator("details.account").count() == 0, "account details are shown to a signed-out visitor")
+    try:  # autofocus is applied once the page has loaded: wait for it instead of reading it at a fixed moment (DEF-009)
+        r.a.wait_for_function("document.activeElement && document.activeElement.id === 'email'", timeout=5000)
+    except Exception:  # noqa: BLE001, S110 - the check below says it plainly
+        pass
     check(r.focus_id(r.a) == "email", "the cursor is not in Email")
     r.shot(r.a)
 
@@ -1111,6 +1117,42 @@ def keyboard(r: Run) -> None:
           "Enter on the skip link did not move into the page")  # fmt: skip
 
 
+@case("TC-MAIL-27")
+def mailbox_round_trip(r: Run) -> None:
+    r.go(r.a, "/mailboxes")
+    if "/sign-in" in r.a.url:
+        r.sign_in(r.a, ADMIN, PASSWORD)
+        r.go(r.a, "/mailboxes")
+    check(r.a.locator("nav a[href='/mailboxes']").count() == 1, "an admin has no Mailboxes link")
+    check("never sees your password" in r.main(r.a), "the page is not as written")
+    r.shot(r.a)
+    r.a.fill("#days", "2")
+    r.a.click("form[action='/mailboxes/connect'] button.primary")
+    r.a.wait_for_url(re.compile(r".*/mailboxes/continue$"))
+    link = r.a.locator("a[href^='https://accounts.google.com/']")
+    check(link.count() == 1 and link.get_attribute("hx-boost") == "false", "no plain link to Google")
+    state = parse_qs(urlparse(link.get_attribute("href") or "").query)["state"][0]
+    r.shot(r.a)
+    # Google sends the browser back from another site. localhost is a different site from 127.0.0.1, so a Strict
+    # cookie is not sent on that first hop, which is why the callback is public and hands over to /mailboxes/finish.
+    port = urlparse(r.base).port
+    r.a.goto(f"http://localhost:{port}/health")
+    r.a.evaluate("u => { window.location.href = u }", f"{r.base}/mailboxes/callback?state={state}&code=PRETEND-CODE")
+    r.a.wait_for_url(re.compile(r".*/mailboxes$"), timeout=15000)
+    r.settle(r.a, 300)
+    text = r.main(r.a)
+    check("Connected pretend.mailbox@example.test" in text and "connected" in text, f"not connected: {text[:200]}")
+    said = re.search(r"Mail from (\d\d/\d\d/\d{4}) on will be read", text)
+    listed = r.a.locator("table tbody tr td").nth(4).inner_text().strip()
+    shown = said.group(1) if said else None
+    check(shown == listed, f"the message says {shown}, the table {listed}")  # DEF-010
+    r.shot(r.a)
+    r.a.click("form[action$='/disconnect'] button")
+    r.a.wait_for_selector("text=Mail already stored stays")
+    check("Connect Gmail" in r.main(r.a), "no way to connect again after disconnecting")
+    r.shot(r.a)
+
+
 @case("TC-WEB-06")
 def readable_errors(r: Run) -> None:
     r.go(r.a, "/no-such-page")
@@ -1131,6 +1173,35 @@ def dark_mode(r: Run) -> None:
 
 
 # ---------------------------------------------------------------------------------------------------------------------
+
+
+class PretendKeychain:
+    """The Keychain, in memory, with the Google client already saved (the run never touches the real one)."""
+
+    def __init__(self) -> None:
+        self.items = {
+            "gmail-client-id": "1-pretend.apps.googleusercontent.com",
+            "gmail-client-secret": "pretend-secret-value",
+        }
+
+    def get(self, name: str) -> str | None:
+        return self.items.get(name)
+
+    def put(self, name: str, value: str) -> None:
+        self.items[name] = value
+
+    def forget(self, name: str) -> None:
+        self.items.pop(name, None)
+
+
+def pretend_google(request: httpx.Request) -> httpx.Response:
+    """Just enough of Google for the Mailboxes round trip: the token endpoint and the Gmail profile."""
+    if request.url.host == "oauth2.googleapis.com":
+        return httpx.Response(200, json={"access_token": "pretend-access", "refresh_token": "pretend-refresh",
+                                         "expires_in": 3600})  # fmt: skip
+    if request.url.path.endswith("/profile"):
+        return httpx.Response(200, json={"emailAddress": "pretend.mailbox@example.test", "historyId": "1"})
+    return httpx.Response(404)
 
 
 def free_port() -> int:
@@ -1168,9 +1239,10 @@ def main() -> int:
         service.create_user(db, ADMIN, "admin", password=PASSWORD)
         db.commit()
     port = free_port()
-    server = uvicorn.Server(
-        uvicorn.Config(create_app(settings, engine), host="127.0.0.1", port=port, log_level="warning")
-    )
+    app = create_app(settings, engine)
+    app.state.secrets = PretendKeychain()  # never the real Keychain, never the real Google
+    app.state.google_http = httpx.Client(transport=httpx.MockTransport(pretend_google))
+    server = uvicorn.Server(uvicorn.Config(app, host="127.0.0.1", port=port, log_level="warning"))
     threading.Thread(target=server.run, daemon=True).start()
     while not server.started:
         time.sleep(0.05)

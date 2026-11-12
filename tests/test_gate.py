@@ -64,7 +64,7 @@ def admin_client(env) -> TestClient:  # noqa: ANN001
 
 def test_every_route_refuses_a_request_with_no_session(env) -> None:  # noqa: ANN001
     app = env[0]
-    public = {"/sign-in", "/health"}
+    public = {"/sign-in", "/health", "/mailboxes/callback"}  # the callback has its own tests (test_mailboxes.py)
     checked = 0
     # The schema is generated from the app's own routes, so a route added later is swept in automatically.
     for template, methods in app.openapi()["paths"].items():

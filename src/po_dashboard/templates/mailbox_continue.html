@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block title %}Continue to Google · {{ app_name }}{% endblock %}
+{% block content %}
+<h1>Continue to Google</h1>
+<div class="card">
+  <p>Next you sign in on Google&rsquo;s own page (accounts.google.com). Choose the mailbox, then allow read-only access to its mail. Google then brings you back here and the mailbox is connected.</p>
+  <p>This link is good for 10 minutes and works once.</p>
+  <p><a class="button primary" href="{{ google }}" hx-boost="false" rel="noreferrer">{{ icon("mail") }}Continue to Google</a>
+     <a class="button" href="/mailboxes">Cancel</a></p>
+</div>
+{% endblock %}

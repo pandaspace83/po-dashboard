@@ -29,6 +29,7 @@
   <a class="navlink" href="/reports/open-items" {% if request.url.path.startswith('/reports') %}aria-current="page"{% endif %}>{{ icon("alert") }}Open items</a>
   <a class="navlink" href="/vendors" {% if request.url.path.startswith('/vendors') %}aria-current="page"{% endif %}>{{ icon("truck") }}Vendors</a>
   {% if me.role == 'admin' %}<a class="navlink" href="/admin/audit" {% if request.url.path.startswith('/admin/audit') %}aria-current="page"{% endif %}>{{ icon("clipboard") }}Audit</a>
+  <a class="navlink" href="/mailboxes" {% if request.url.path.startswith('/mailboxes') %}aria-current="page"{% endif %}>{{ icon("mail") }}Mailboxes</a>
   <a class="navlink" href="/admin/users" {% if request.url.path.startswith('/admin/users') %}aria-current="page"{% endif %}>{{ icon("users") }}People</a>{% endif %}
   <span class="spacer"></span>
   <details class="account">

@@ -33,9 +33,14 @@ SIGN_IN_COOKIE = "po_csrf"  # double-submit token for the sign-in form, where no
 HOST = re.compile(r"(?P<name>\[[0-9a-f:.]+\]|[a-z0-9]([a-z0-9.-]*[a-z0-9])?)(:[0-9]{1,5})?")
 HTMX_FILE = "/static/htmx-2.0.11.min.js"  # pinned; its checksum is checked by a test (DEC-45)
 CACHEABLE = frozenset({"/static/app.css", HTMX_FILE})
+# "/mailboxes/callback" is Google's return after a mailbox sign-in. The session cookie is SameSite=Strict, so it is not
+# sent on that return; the route only accepts a one-time `state` this app issued (pages/mailboxes.py, PD-3.7).
 PUBLIC = frozenset(
-    {"/sign-in", "/health", "/static/app.css", "/static/brand/logo.png", "/static/brand/favicon.png"}
-)
+    {
+        "/sign-in", "/health", "/mailboxes/callback",
+        "/static/app.css", "/static/brand/logo.png", "/static/brand/favicon.png",
+    }
+)  # fmt: skip
 PENDING_ALLOWED = frozenset(
     {"/change-password", "/sign-out", "/static/app.css", "/static/brand/logo.png", "/static/brand/favicon.png"}
 )

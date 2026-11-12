@@ -21,7 +21,19 @@ from po_dashboard.config import Settings
 from po_dashboard.db.migrate import upgrade
 from po_dashboard.display import day, moment
 from po_dashboard.intake.store import FileStore
-from po_dashboard.pages import account, admin, audit, entries, errors, orders, quickbooks, reports, vendors
+from po_dashboard.mail.gmail_auth import Keychain
+from po_dashboard.pages import (
+    account,
+    admin,
+    audit,
+    entries,
+    errors,
+    mailboxes,
+    orders,
+    quickbooks,
+    reports,
+    vendors,
+)
 from po_dashboard.pages.formats import money, quantity
 from po_dashboard.pages.tables import with_query
 from po_dashboard.scheduler.loop import run_forever
@@ -55,6 +67,8 @@ def create_app(
     )
     app.state.settings = settings
     app.state.engine = engine
+    app.state.secrets = Keychain()  # the macOS Keychain; tests put an in-memory one here
+    app.state.google_http = None  # the HTTP client for Google's calls; tests put a pretend Google here
     app.state.templates = Jinja2Templates(directory=HERE / "templates")
     app.state.templates.env.globals.update(
         app_name=APP_NAME, has_logo=(HERE / "static" / "brand" / "logo.png").is_file(), with_query=with_query
@@ -74,6 +88,8 @@ def create_app(
 
     app.include_router(account.router)
     app.include_router(admin.router)
+    app.include_router(mailboxes.router)
+    app.include_router(mailboxes.public)
     app.include_router(audit.router)
     app.include_router(vendors.router)
     app.include_router(quickbooks.router)  # before orders: /orders/quickbooks is not /orders/{id}

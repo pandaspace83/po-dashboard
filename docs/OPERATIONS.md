@@ -28,8 +28,7 @@ cover.
 To check a change: `uv run ruff check . && uv run mypy && uv run pytest`.
 
 **Still to come:** `uv run po-dashboard user create-admin` before first sign-in (PD-1.9b); `scripts/demo.sh` to load the
-synthetic sample mailbox (PD-7.1); Mailboxes → Connect, signing in on the provider's own page (PD-3.7); install the
-service, §3; let laptops in, §11.
+synthetic sample mailbox (PD-7.1); install the service, §3; let laptops in, §11.
 
 ## 3. Run as a service (PD-6.4)
 
@@ -52,7 +51,7 @@ for 30 minutes.
 
 | Symptom | Likely cause | Do this |
 |---|---|---|
-| A mailbox shows "needs reconnect" | its access lapsed or was revoked, for example after a password change | Mailboxes → Reconnect, by someone with access to that mailbox. Permission changes can take up to 2 hours to apply |
+| A mailbox shows "needs reconnect" | its access lapsed or was revoked, for example after a password change | Mailboxes → Reconnect Gmail (on the office Mac, §16), by someone with access to that mailbox. Permission changes can take up to 2 hours to apply |
 | A laptop cannot reach the app | the office Mac is off, asleep or logged out; or that laptop is off the office network | Check the office Mac first. From outside the office, use the company's VPN |
 | A browser warns about the certificate | this laptop has not trusted it yet, or it has expired | §11. Do not click through the warning: that is how a fake page would look |
 | Banner: "can't read mailbox" after a change | the app's permission was changed on the mail system's side | Ask the company's admin to check that the app's access covers that mailbox |
@@ -197,6 +196,13 @@ permission only, so Google itself refuses a send, move or delete. Nothing secret
    read-only access. Add `--days 7` to also read the last seven days of mail (the default 0 reads only mail that arrives
    after connecting, so an old inbox does not flood the Unmatched queue).
 3. The scanner (running inside `serve`) picks the mailbox up on its next 5-minute tick.
+
+**Or on the Mailboxes screen (PD-3.7, admins only).** With the client saved (step 1 above), open
+`http://127.0.0.1:8000/mailboxes` **in a browser on this Mac**, press *Connect Gmail* (or *Reconnect Gmail* if it says
+needs reconnect), then *Continue to Google* and sign in. Google sends the browser back to the Mac you are on, so this
+cannot be done from a laptop (the page says so), and while HTTPS is on it is done in Terminal instead. The page shows
+each mailbox's state, its last check and why a scan failed, and a *Disconnect* button. Version 1 connects one mailbox: to
+use a different account, disconnect the first.
 
 **Weekly, while the Google project is in Testing mode:** Google ends the sign-in after about 7 days. The scan then stops
 for that mailbox, Home's last-scan tile ages, and the mailbox is marked *needs reconnect*. Run `connect-gmail` again; no

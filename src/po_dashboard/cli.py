@@ -15,6 +15,7 @@ from po_dashboard.auth import passwords, service
 from po_dashboard.config import Settings
 from po_dashboard.db.migrate import upgrade
 from po_dashboard.db.models import AppUser
+from po_dashboard.display import day
 from po_dashboard.mail import gmail_auth
 from po_dashboard.mail.gmail_connect import connect as connect_gmail
 from po_dashboard.mail.gmail_connect import disconnect as disconnect_gmail
@@ -109,7 +110,7 @@ def run_mailbox_command(db: Session, args: argparse.Namespace) -> int:
         elif args.mailbox_command == "connect-gmail":
             print("Your browser will open Google's sign-in page. Sign in with the TEST Gmail account.")
             box = connect_gmail(db, keychain, days=args.days)
-            print(f"Connected {box.address}. Mail from {box.read_since:%m/%d/%Y} on will be read.")
+            print(f"Connected {box.address}. Mail from {day(box.read_since)} on will be read.")
         else:
             disconnect_gmail(db, keychain, args.address)
             print(f"Disconnected {args.address}. Mail already stored stays.")

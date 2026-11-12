@@ -269,7 +269,7 @@ exist. Once a provider is built, choosing it is a setting and the rest of the ap
 
 ### Connecting a mailbox
 
-The Mailboxes screen connects, reconnects and disconnects (REQ-IN-07). One person, usually an admin, connects the shared mailbox once. It never blocks sign-in, so a provider outage or a
+The Mailboxes screen connects, reconnects and disconnects (REQ-IN-07; built in PD-3.7 for Gmail). One person, usually an admin, connects the shared mailbox once. It never blocks sign-in, so a provider outage or a
 pending admin approval only leaves the mailbox "not connected". Disconnecting deletes the token from the Keychain and
 stops scanning that mailbox; documents already stored stay (REQ-IN-04).
 
@@ -278,6 +278,22 @@ The page says this, and every line must stay true:
 > **Connect your mailbox.** You'll sign in on Microsoft's own page, so PO Dashboard never sees your password. It gets
 > read-only access: it cannot send, move or delete your mail. The purchase orders and vendor emails it finds are stored
 > on the office Mac, and everyone signed in to PO Dashboard can see them. You can disconnect it at any time.
+
+**How the Gmail round trip works inside the app (PD-3.7).** The wording above says Microsoft; the page built for the
+Gmail test says Google's own sign-in page, and the Microsoft version is written when that provider is built.
+- *Connect* is a form post that makes a one-time `state` and a PKCE verifier and keeps them **in memory** (ten minutes, once,
+  one per person, at most 20), then redirects to a page with one plain link, *Continue to Google*. A form post or a boosted
+  link cannot be used to leave for Google: the page's `form-action 'self'` policy and HTMX's same-origin rule forbid it.
+- Google returns the browser to `http://127.0.0.1:<port>/mailboxes/callback`. The session cookie is `SameSite=Strict`, so
+  it is **not sent on that return**, and the callback is therefore one of the few public routes. It does nothing except
+  look up the `state` it issued, keep the code, and answer with a page that moves on to `/mailboxes/finish` from this site,
+  where the cookie is sent again. Any other `state`, a second use, a late return, or a return without a code is refused.
+- `/mailboxes/finish` needs the admin who started the sign-in. It exchanges the code (with the verifier), asks Google whose
+  mailbox it is, refuses a different mailbox while one is connected (DEC-33), saves the token in the Keychain, writes the
+  mailbox row and an audit row, and redirects. The code, verifier and state never reach the database, a log or a page; the
+  access log is off and the request log records the route without its query string.
+- Google only accepts an `http` loopback return for this kind of app, so *Connect* works from a browser on the office Mac,
+  not from a laptop, and not while HTTPS is on; the page says so and the Terminal commands (OPERATIONS §16) still work.
 
 The page must not claim that nothing can read a password typed into it. A password box only hides the characters on
 screen, and any page that receives a password can read it. If the Gmail test uses an IMAP app password (OPEN-04), the
