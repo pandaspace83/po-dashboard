@@ -23,6 +23,9 @@ Every failure is logged here the moment it is found, by whoever finds it: the ca
 | [DEF-015](#def-015) | 11/12/2026 | [TC-CO-08](TEST_CASES.md#tc-co-08) | Low | An order showed a different spelling of its number after a revision was approved | Fixed and retested |
 | [DEF-016](#def-016) | 11/12/2026 | [TC-CO-09](TEST_CASES.md#tc-co-09) | Low | The names page said '1 invoice carry this name' | Fixed and retested |
 | [DEF-017](#def-017) | 11/12/2026 | [TC-CO-16](TEST_CASES.md#tc-co-16) | Medium | The Customer orders CSV showed amounts as 25.000000 | Fixed and retested |
+| [DEF-018](#def-018) | 11/12/2026 | [TC-CO-08](TEST_CASES.md#tc-co-08) | Medium | The admin's top bar wrapped onto two rows once the Review link was added | Fixed and retested |
+| [DEF-019](#def-019) | 11/12/2026 | [TC-REV-01](TEST_CASES.md#tc-rev-01) | Low | The Review browser check clicked the wrong link and typed a PO number the app rightly refused | Fixed and retested |
+| [DEF-020](#def-020) | 11/12/2026 | [TC-ACC-01](TEST_CASES.md#tc-acc-01) | Medium | After Accept, the Review page showed the model's values, not the ones the person accepted | Fixed and retested |
 
 <a id="def-001"></a>
 
@@ -432,3 +435,85 @@ Every failure is logged here the moment it is found, by whoever finds it: the ca
 **Fix:** views.plain writes two decimals, or more only when a cent is not enough, with no thousands commas; the end-to-end test pins 25.00. Not committed yet.
 
 **Retest:** 11/12/2026: pass in the end-to-end test. Owner's retest: not needed.
+
+
+<a id="def-018"></a>
+
+## DEF-018: The admin's top bar wrapped onto two rows once the Review link was added
+
+**Found:** 11/12/2026 by Claude, browser evidence run in Chrome · **Case:** TC-CO-08 · **Browser:** Google Chrome (scripts/browser_evidence.py) · **Severity:** Medium · **Status:** Fixed and retested
+
+**Steps to reproduce**
+
+1. Sign in as an admin in a 1280-pixel window after PD-4.4 added the Review link.
+
+**Expected:** The top bar stays on one row.
+
+**Actual:** The check failed on three cases (TC-CO-08, TC-CO-09, TC-CO-17): the account icon fell onto a second row.
+
+**Seen:** screenshots/DEF-018-before.png
+
+![DEF-018 as found](screenshots/DEF-018-before.png)
+
+**Cause:** The admin's bar already had no spare room (DEF-014), and a ninth link pushed the account icon over the edge.
+
+**Fix:** The admin's links use less padding and gap, so nine links and the account icon fit on one row. Not committed yet.
+
+**Retest:** 11/12/2026, Claude in Chrome: pass (all 65 cases passed). Owner's retest: not needed for the script; the top bar change is visible in any window.
+
+![DEF-018 retested](screenshots/TC-CO-08.png)
+
+
+<a id="def-019"></a>
+
+## DEF-019: The Review browser check clicked the wrong link and typed a PO number the app rightly refused
+
+**Found:** 11/12/2026 by Claude, browser evidence run in Chrome · **Case:** TC-REV-01 · **Browser:** Google Chrome (scripts/browser_evidence.py) · **Severity:** Low · **Status:** Fixed and retested
+
+**Steps to reproduce**
+
+1. Run scripts/browser_evidence.py with the new TC-REV-01.
+
+**Expected:** The check opens the listed document and attaches it to the PO.
+
+**Actual:** The check timed out. The app was right both times: the script's Open link also matched the top bar's Open items link, and a PO number is matched exactly, hyphen included, so rv 4521 is not RV-4521.
+
+**Seen:** screenshots/DEF-019-before.png
+
+![DEF-019 as found](screenshots/DEF-019-before.png)
+
+**Cause:** Two flaws in the new script, not in the app.
+
+**Fix:** The script clicks only the table's Open button, and types the PO number as rv-4521. The script also gained --only, to try one case without touching the record. Not committed yet.
+
+**Retest:** 11/12/2026, Claude in Chrome: pass (all 65 cases passed). Owner's retest: not needed for the script; the top bar change is visible in any window.
+
+![DEF-019 retested](screenshots/TC-REV-01.png)
+
+
+<a id="def-020"></a>
+
+## DEF-020: After Accept, the Review page showed the model's values, not the ones the person accepted
+
+**Found:** 11/12/2026 by Claude, browser evidence run in Chrome · **Case:** TC-ACC-01 · **Browser:** Google Chrome (scripts/browser_evidence.py) · **Severity:** Medium · **Status:** Fixed and retested
+
+**Steps to reproduce**
+
+1. Open a waiting acknowledgement, change the unit price to 15.25 and press Accept.
+2. Look at the document on the Review page afterwards.
+
+**Expected:** The page shows 15.25, the value that was accepted and recorded.
+
+**Actual:** The page showed the model's 15.9. The entry on the PO was right, but the Review page contradicted it.
+
+**Seen:** screenshots/DEF-020-before.png
+
+![DEF-020 as found](screenshots/DEF-020-before.png)
+
+**Cause:** The message page always drew its fields from the model's answer; the accepted values were only kept in the extraction's final column.
+
+**Fix:** An accepted document now shows the values kept in final (the model's answer stays in the row). A test checks the page after Accept. Not committed yet.
+
+**Retest:** 11/12/2026, Claude in Chrome: pass (all 66 cases passed). Owner's retest: not needed.
+
+![DEF-020 retested](screenshots/TC-ACC-01-2.png)

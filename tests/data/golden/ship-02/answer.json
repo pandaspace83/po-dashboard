@@ -72,25 +72,33 @@
         "line_no": 1,
         "item": "VLV-V12",
         "qty": 12,
-        "unit_price": 46.25
+        "unit": "EA",
+        "unit_price": 46.25,
+        "promised_date": null
       },
       {
         "line_no": 2,
         "item": "WID-100",
         "qty": 100,
-        "unit_price": 5.0
+        "unit": "EA",
+        "unit_price": 5.0,
+        "promised_date": null
       },
       {
         "line_no": 3,
         "item": "SEAL-22",
         "qty": 150,
-        "unit_price": 1.1
+        "unit": "EA",
+        "unit_price": 1.1,
+        "promised_date": null
       },
       {
         "line_no": 4,
         "item": "FLT-OIL7",
         "qty": 5,
-        "unit_price": 11.8
+        "unit": "EA",
+        "unit_price": 11.8,
+        "promised_date": null
       }
     ]
   },

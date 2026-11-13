@@ -75,25 +75,33 @@
         "line_no": 1,
         "item": "WID-100",
         "qty": 40,
-        "unit_price": 5.0
+        "unit": "EA",
+        "unit_price": 5.0,
+        "promised_date": null
       },
       {
         "line_no": 2,
         "item": "HSE-12",
         "qty": 60,
-        "unit_price": 4.2
+        "unit": "FT",
+        "unit_price": 4.2,
+        "promised_date": null
       },
       {
         "line_no": 3,
         "item": "MTR-075",
         "qty": 500,
-        "unit_price": 212.0
+        "unit": "EA",
+        "unit_price": 212.0,
+        "promised_date": null
       },
       {
         "line_no": 4,
         "item": "VLV-V12",
         "qty": 150,
-        "unit_price": 46.25
+        "unit": "EA",
+        "unit_price": 46.25,
+        "promised_date": null
       }
     ]
   },

@@ -81,31 +81,41 @@
         "line_no": 1,
         "item": "FLT-OIL7",
         "qty": 10,
-        "unit_price": 11.8
+        "unit": "EA",
+        "unit_price": 11.8,
+        "promised_date": null
       },
       {
         "line_no": 2,
         "item": "MTR-075",
         "qty": 5,
-        "unit_price": 212.0
+        "unit": "EA",
+        "unit_price": 212.0,
+        "promised_date": null
       },
       {
         "line_no": 3,
         "item": "HSE-12",
         "qty": 500,
-        "unit_price": 4.2
+        "unit": "FT",
+        "unit_price": 4.2,
+        "promised_date": null
       },
       {
         "line_no": 4,
         "item": "GRS-400",
         "qty": 100,
-        "unit_price": 3.95
+        "unit": "EA",
+        "unit_price": 3.95,
+        "promised_date": null
       },
       {
         "line_no": 5,
         "item": "FLG-DN50",
         "qty": 100,
-        "unit_price": 18.4
+        "unit": "EA",
+        "unit_price": 18.4,
+        "promised_date": null
       }
     ]
   },

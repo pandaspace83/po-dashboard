@@ -55,7 +55,7 @@ would notice on their own. It is judged by whether it helps with that, not by wh
 | 1 | Sign-in, purchase orders, vendors, imports, line status, dashboard, audit trail | Done |
 | 2 | The golden set and the scoring code | Done (the full model score comes with Phase 4) |
 | 3 | Mail sources, storing and reading documents, the scanner, Gmail, the Mailboxes screen | Built; the Gmail check with the real account is the owner's last step |
-| 4 | Reading documents with the model, matching, validation, the review queue | In progress: design done, the queue and the extractor built |
+| 4 | Reading documents with the model, matching, validation, the review queue | In progress: design done; the queue, the extractor, the model gateway, the validator, matching, the Review screens and Accept built |
 | 5 | Alerts and follow-up | Not started |
 | 6 | The company's mail system, the office Mac, running for real | Not started |
 | 7 | A second machine, the final audit, release | Not started |

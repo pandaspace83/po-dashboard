@@ -292,7 +292,8 @@ def test_a_read_is_stored_exactly_with_the_numbers_the_model_gave(env, db: Sessi
     assert (row.state, row.doc_type, row.po_number, row.seconds, row.prompt_tokens) == (
         "done", "order_acknowledgement", "4521", 2.5, 700)
     assert "1234.5000" in (row.answer or "")  # the reply as it came: no float in between
-    assert row.attempts == 1 and row.last_error is None and row.finished_at == T0 and row.review_state is None
+    assert row.attempts == 1 and row.last_error is None and row.finished_at == T0
+    assert row.review_state == "unmatched" and row.po_id is None  # PO 4521 is not in this database (PD-4.3)
     assert stub.calls[0][1] == row.model
 
 

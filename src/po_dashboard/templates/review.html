@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% from "_table.html" import pager with context %}
+{% block title %}Review · {{ app_name }}{% endblock %}
+{% block content %}
+<h1>Review</h1>
+<p class="muted">What the model read from the mailbox. Nothing here changes a purchase order until a person accepts it (the Accept button arrives with PD-4.5).</p>
+<nav class="filters" aria-label="Where documents wait">
+  {% for key, title in titles.items() %}
+  <a class="button small{{ ' primary' if key == show }}" href="/review?show={{ key }}" {% if key == show %}aria-current="page"{% endif %}>{{ title }} ({{ counts[key] }})</a>
+  {% endfor %}
+</nav>
+<div id="results">
+{% if page.rows %}
+<div class="table-wrap table-scroll">
+<table>
+  <thead><tr><th scope="col">Received</th><th scope="col">From</th><th scope="col">Subject</th><th scope="col">Document</th><th scope="col">Kind</th><th scope="col">PO</th><th scope="col">Flags</th><th scope="col"><span class="visually-hidden">Open</span></th></tr></thead>
+  <tbody>
+  {% for row, document, message in page.rows %}
+  <tr>
+    <td class="nowrap">{{ message.received_at | moment }}</td>
+    <td>{{ message.sender or "" }}</td>
+    <td>{{ message.subject or "" }}</td>
+    <td>{{ document.filename }}</td>
+    <td>{{ (row.doc_type or "unknown").replace("_", " ") }}</td>
+    <td class="nowrap">{{ row.po_number or "" }}</td>
+    <td>{% set n = (row.flags | flag_count) %}{% if n %}<span class="pill bad">{{ icon("alert") }}{{ n }}</span>{% endif %}</td>
+    <td><a class="button small" href="/review/message/{{ message.id }}">Open</a></td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{{ pager(page, "document") }}
+{% else %}
+<p>Nothing {{ {"waiting": "is waiting for review", "unmatched": "is unmatched", "no_facts": "has been filed without order facts"}[show] }}.</p>
+{% endif %}
+</div>
+{% endblock %}

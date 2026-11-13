@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 import io
 import json
+import os
 import random
 import re
 import shutil
@@ -23,6 +24,10 @@ from email.message import EmailMessage
 from email.utils import format_datetime
 from pathlib import Path
 from typing import Any
+
+# The app pins openpyxl to its non-lxml writer (po_dashboard/__init__.py), and the tests rebuild the set with it; a run
+# on its own must write the same bytes, so the spreadsheets compare equal.
+os.environ.setdefault("OPENPYXL_LXML", "False")
 
 SEED = 20261110
 COMPANY = "Example Buyer Inc."
@@ -770,7 +775,9 @@ def build(spec: Spec, base_specs: dict[str, Spec]) -> dict[str, Any]:
     po_context = None
     if kind in ("ack", "ship", "inv"):
         po_context = {"po_number": facts.po, "vendor": vendor, "lines": [
-            {"line_no": l.po_line, "item": l.item, "qty": l.qty, "unit_price": num(l.price)} for l in facts.po_lines]}
+            {"line_no": l.po_line, "item": l.item, "qty": l.qty, "unit": l.unit, "unit_price": num(l.price),
+             # the line's last accepted promised date: only a revised acknowledgement replaces an earlier one
+             "promised_date": iso(facts.old_date)} for l in facts.po_lines]}
     flags = list(facts.flags)
     if spec.dup:
         flags.append("duplicate")

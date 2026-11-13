@@ -86,7 +86,7 @@
 {% for line in lines %}
 <details class="timeline">
   <summary>Line {{ line.line_no }}: {{ line.item }}</summary>
-  <ol>{% for step in timeline[line.id] %}<li><span class="muted">{{ step.at|moment }}</span> {{ step.text }}</li>{% endfor %}</ol>
+  <ol>{% for step in timeline[line.id] %}<li><span class="muted">{{ step.at|moment }}</span> {{ step.text }}{% if step.source_url %} <a href="{{ step.source_url }}">source document</a>{% endif %}</li>{% endfor %}</ol>
 </details>
 {% endfor %}
 <h2>History</h2>

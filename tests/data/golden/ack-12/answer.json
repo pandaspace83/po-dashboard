@@ -70,25 +70,33 @@
         "line_no": 1,
         "item": "VLV-V12",
         "qty": 10,
-        "unit_price": 46.25
+        "unit": "EA",
+        "unit_price": 46.25,
+        "promised_date": null
       },
       {
         "line_no": 2,
         "item": "WID-400",
         "qty": 100,
-        "unit_price": 12.5
+        "unit": "EA",
+        "unit_price": 12.5,
+        "promised_date": null
       },
       {
         "line_no": 3,
         "item": "GSK-G9",
         "qty": 500,
-        "unit_price": 0.85
+        "unit": "EA",
+        "unit_price": 0.85,
+        "promised_date": null
       },
       {
         "line_no": 4,
         "item": "HSE-12",
         "qty": 10,
-        "unit_price": 4.2
+        "unit": "FT",
+        "unit_price": 4.2,
+        "promised_date": null
       }
     ]
   },

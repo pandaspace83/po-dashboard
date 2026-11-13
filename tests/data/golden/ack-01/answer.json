@@ -50,13 +50,17 @@
         "line_no": 1,
         "item": "BLT-M8x40",
         "qty": 200,
-        "unit_price": 14.9
+        "unit": "BOX",
+        "unit_price": 14.9,
+        "promised_date": null
       },
       {
         "line_no": 2,
         "item": "SEAL-22",
         "qty": 150,
-        "unit_price": 1.1
+        "unit": "EA",
+        "unit_price": 1.1,
+        "promised_date": null
       }
     ]
   },

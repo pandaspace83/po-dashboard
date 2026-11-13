@@ -61,19 +61,25 @@
         "line_no": 1,
         "item": "PLT-AL3",
         "qty": 500,
-        "unit_price": 27.6
+        "unit": "EA",
+        "unit_price": 27.6,
+        "promised_date": null
       },
       {
         "line_no": 2,
         "item": "WID-100",
         "qty": 10,
-        "unit_price": 5.0
+        "unit": "EA",
+        "unit_price": 5.0,
+        "promised_date": null
       },
       {
         "line_no": 3,
         "item": "SEAL-22",
         "qty": 500,
-        "unit_price": 1.1
+        "unit": "EA",
+        "unit_price": 1.1,
+        "promised_date": null
       }
     ]
   },

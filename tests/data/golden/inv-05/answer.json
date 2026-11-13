@@ -64,25 +64,33 @@
         "line_no": 1,
         "item": "PIN-D6",
         "qty": 500,
-        "unit_price": 8.1
+        "unit": "BOX",
+        "unit_price": 8.1,
+        "promised_date": null
       },
       {
         "line_no": 2,
         "item": "GRS-400",
         "qty": 10,
-        "unit_price": 3.95
+        "unit": "EA",
+        "unit_price": 3.95,
+        "promised_date": null
       },
       {
         "line_no": 3,
         "item": "GSK-G9",
         "qty": 10,
-        "unit_price": 0.85
+        "unit": "EA",
+        "unit_price": 0.85,
+        "promised_date": null
       },
       {
         "line_no": 4,
         "item": "VLV-V12",
         "qty": 10,
-        "unit_price": 46.25
+        "unit": "EA",
+        "unit_price": 46.25,
+        "promised_date": null
       }
     ]
   },

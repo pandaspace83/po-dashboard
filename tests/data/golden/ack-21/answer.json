@@ -70,25 +70,33 @@
         "line_no": 1,
         "item": "SEAL-22",
         "qty": 40,
-        "unit_price": 1.1
+        "unit": "EA",
+        "unit_price": 1.1,
+        "promised_date": null
       },
       {
         "line_no": 2,
         "item": "WID-400",
         "qty": 60,
-        "unit_price": 12.5
+        "unit": "EA",
+        "unit_price": 12.5,
+        "promised_date": null
       },
       {
         "line_no": 3,
         "item": "CPL-3/4",
         "qty": 12,
-        "unit_price": 9.35
+        "unit": "EA",
+        "unit_price": 9.35,
+        "promised_date": null
       },
       {
         "line_no": 4,
         "item": "BRG-6204",
         "qty": 200,
-        "unit_price": 3.15
+        "unit": "EA",
+        "unit_price": 3.15,
+        "promised_date": null
       }
     ]
   },

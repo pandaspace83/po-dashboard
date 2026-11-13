@@ -1,10 +1,14 @@
 # PO Dashboard: Plan and To-Do
 
 > **Status, 2026-11-12:** Phases 0 to 3 are built. **Phase 4 is in progress:** its design is written (PD-4.0, DEC-54) and
-> the queue and the extractor are built (PD-4.0a); the model gateway, validator, matching, Review screen and Accept come
-> next, after **Phase 8 (customer orders and invoice reconciliation)**, which the owner asked for first and which is now built
+> the queue, the extractor, the model gateway, the validator, matching, the Review screens and Accept are built (PD-4.0a
+> to PD-4.5); PD-4.5a (the QuickBooks charge rows) comes next. **Phase 8 (customer orders and invoice reconciliation)**, which the owner asked for first, is built
 > (PD-8.0 to PD-8.7); only PD-8.8, customer POs from email, waits for Phase 4. Left from Phase 3: the owner's check of the Mailboxes screen with the real
-> Google account (TC-MAIL-28).
+> Google account (TC-MAIL-28). **Order (owner, 2026-11-12), focus: Gmail testing, PO matching, drafting, chat.**
+> (1) Phase 4 without PD-4.7. (2) Gmail end to end on synthetic mail. (3) Drafted follow-ups (PD-5.3 pulled forward,
+> from the flags that already exist). (4) Chat (Phase 9, proposed). (5) Then Outlook (Phase 6), the rest of Phase 5 and
+> PD-8.8. **Gate:** PD-4.7 (the accuracy baseline on the 14b model) must run before any real mail is read or Outlook is
+> connected (DEC-13). The deferred list below waits until the front end, backend and AI layer are finished.
 > **Sources:** [REQUIREMENTS.md](REQUIREMENTS.md), [ARCHITECTURE.md](ARCHITECTURE.md), [DECISIONS.md](DECISIONS.md).
 
 **How this file works.** Each task has an ID (`PD-3.2`) and a checkbox. Phases run in order and each ends with a demo
@@ -18,6 +22,19 @@ go-ahead (including the README's status table, which is the public front page). 
 
 **Models.** Design and scoring work (the Phase 1 sign-in design, Phase 2 scoring design, Phase 6 security check, the final audit) suits Opus.
 The rest is following this plan, which suits Sonnet. I will say before each switch.
+
+## Deferred until the front end, backend and AI layer are finished
+
+*The owner, 2026-11-12: finish the build first, then come back to these. Each stays unticked where it sits in the plan;
+this list gathers what the plan already marks as skipped or waiting for the owner.*
+
+- PD-4.7: the golden set through the whole pipeline on the 14b model, with PD-2.5's first score. Until it runs, the
+  model's accuracy is not measured; a person accepting every document (DEC-08) is the safeguard.
+- TC-MAIL-28 (PD-3.7): the owner's check of the Mailboxes screen with the real Google account.
+- PD-1.10a.4: the owner's check of the QuickBooks load ([BROWSER_CHECK_QUICKBOOKS.md](../test-evidence/BROWSER_CHECK_QUICKBOOKS.md)).
+- PD-1.13: the owner's first test cycle with the workbook.
+- PD-1.9d step 15: the 31-minute idle sign-out, by hand.
+- PD-0.5: CI's first run, on the first push (the owner's call).
 
 ## Phase 0: Skeleton
 
@@ -187,30 +204,66 @@ already downloaded).*
   AUDIT.md (not updated since Phase 0: 12 requirements met, 22 partly), the test record's swapped PO references,
   DEC-53's table row. DEC-54 confirmed by the owner, 2026-11-12.
 - [x] PD-4.0a The tables and the queue (§6.1). **Done 2026-11-12 (TC-QUE-01 to 07: 48 tests, and the Failed documents page checked in real Chrome).** Migration 0009: `extraction` (queue and review columns, `version`), `shipment_tracking`, `invoice_charge`, and a real foreign key from acknowledgements, shipments and invoices to `source_document` (the rebuild SQLite needs for that dropped migration 0006's case-insensitive invoice-number index, which the migration now puts back). `extraction/queue.py` (queue each read document once, claim by one guarded `UPDATE`, recover `running` rows at start, the Failed list with Retry and Dismiss), `extraction/runner.py` (the extractor: no transaction during a model call; model down costs nothing; retries after 1, 5 and 30 minutes then failed; a bad answer fails at once; fixed words only), `extraction/window.py` (about 15,000 characters, quoted earlier messages first, `read_in_part`), the extractor's own loop in the app beside the scanner's, the scanner queueing in the transaction that records the text, and `/documents/failed` with a Home tile. `models/llm.py` now tells `BadAnswer` (not tried again) from a server error, and keeps Ollama's prompt count. The extractor must be given its model call, so no test can reach a real model. Nothing reads a document with the real model yet: PD-4.1 to PD-4.5 build what is done with an answer.
-- [ ] PD-4.1 The model gateway finished: Ollama's prompt count kept, errors sorted into "try again" and "will fail the
+- [x] PD-4.1 The model gateway finished: Ollama's prompt count kept, errors sorted into "try again" and "will fail the
   same way", the health strip's "model not reachable", waiting and failed counts. A test that only `models/llm.py`
-  calls the model server (NFR-10).
-- [ ] PD-4.2 The validator (§6.3): every flag, each with a test, named as in the golden set; `value_not_in_source` with
+  calls the model server (NFR-10). **Done 2026-11-12 (TC-QUE-08).** Most of it was built with PD-4.0a (the prompt count,
+  `BadAnswer` against a server error, `ModelUnavailable`, the Home tiles); this task added the source-reading test that
+  no module but `models/llm.py` (and the address setting in `config.py`) names the model server, and a test of the
+  Home "not reachable" / "reachable" word.
+- [x] PD-4.2 The validator (§6.3): every flag, each with a test, named as in the golden set; `value_not_in_source` with
   numbers, US dates and codes (OCR look-alikes equal); `planted_instruction` caught on all 8 golden documents that
-  have one and on none of the other 92.
-- [ ] PD-4.3 Matching (§6.2): PO number exactly, the sender's domain, lines by stated number or one equal item; an
+  have one and on none of the other 92. **Done 2026-11-12 (TC-VAL-01 to 05: 62 tests).** `extraction/validate.py` (the
+  19 flags, pure: the answer, the text and a `Context` in, `Flag`s out, stored as `{flag, level, line, charge, field}`,
+  never document text), `extraction/in_source.py` (numbers, US dates and codes in the text; OCR look-alikes equal only
+  when the caller says the text came from OCR), `extraction/matching.py` (the §6.2 line rule only, which the flags
+  need; PD-4.3 adds the PO and the vendor). All 100 golden answers give exactly their `expected_flags`; altering the
+  golden values, 934 of 947 are caught (the rest are numbers or dates found elsewhere in the same text). The golden
+  `po_context` now carries each line's unit and last accepted promised date (needed for `unit_differs` and
+  `date_changed`); no document or answer changed. **For PD-4.3:** it decides `ocr` (the text step does not record
+  it yet) and each line's `open` for the kind of document, and passes `sender_is_vendor`, `po_exists`, the earlier
+  extractions and the recorded invoice and tracking numbers.
+- [x] PD-4.3 Matching (§6.2): PO number exactly, else the document's other facts (vendor order, tracking and invoice numbers, equal items and quantities: DEC-71), the sender only as supporting evidence, lines by stated number or one equal item; an
   emailed PO's vendor from its recipients; the Unmatched list with the sender's vendor's open POs; the No order facts
-  list (including Sent Items that are not POs).
-- [ ] PD-4.4 The Review screen (§6.4): a message's documents, text beside fields, every field editable, lines beside
+  list (including Sent Items that are not POs). **Done 2026-11-12 (TC-MATCH-01 to 06: 29 tests).** DEC-71 confirmed
+  by the owner. `extraction/matcher.py` (`decide`, the ledger's inputs to the validator, the two lists, the candidates for
+  Unmatched), called by the extractor when it stores an answer, so a read document now ends `waiting`, `unmatched` or
+  `no_facts` with its PO, vendor and flags. The vendor order number is read from accepted extractions' saved values (the
+  owner's choice over a new column). **Left for later:** scanned PDFs are not told apart from typed ones, so the OCR
+  look-alike rule applies to images only (the text step would have to record it); the `read_in_part` flag is still only
+  set from the window, not from Ollama's prompt count.
+- [x] PD-4.4 The Review screen (§6.4): a message's documents, text beside fields, every field editable, lines beside
   their PO lines with differences and flags, the three ticks, Accept, Reject with a reason, File, Attach to a PO; the
   original served as a download (a PDF or picture may open in the browser's own viewer under a sandbox policy). Home's
-  counts gain "waiting for review" and "unmatched" (REQ-DB-01).
-- [ ] PD-4.5 Accept and reject in one transaction through `ledger/events.py` (acknowledgement, shipment with every
+  counts gain "waiting for review" and "unmatched" (REQ-DB-01). **Done 2026-11-12 (TC-REV-01 to 06: 12 tests, and the screens checked in real Chrome, 65 of 65).**
+  `extraction/review.py` (the lists, the message view, Reject, File, Attach, the original), `pages/review.py` (`/review`,
+  `/review/message/{id}`, `/review/{id}/reject|file|attach`, `/review/original/{document_id}`), the templates
+  `review.html` and `review_message.html`, a Review link in the top bar, and Home tiles "Waiting for review" and
+  "Unmatched". **Accept is not here:** its button is disabled and its form only reloads the page (no token in the address),
+  because recording the entry is PD-4.5; the fields are named so PD-4.5 can read them. **Decision for PD-4.5:** the edited
+  fields are not saved by anything in PD-4.4; Accept will take them from the form.
+- [x] PD-4.5 Accept and reject in one transaction through `ledger/events.py` (acknowledgement, shipment with every
   tracking number, invoice with its charges, a new emailed PO), the document linked, the person named, the model's
   answer and the accepted values both kept; a second Accept refused by `version`; a revised emailed PO shows its
   differences only. The PO's timeline shows each line's source document (REQ-DB-02).
+  **Done 2026-11-12 (TC-ACC-01 to 06: 17 tests; the screen is checked in real Chrome by TC-ACC-01).** `extraction/accept.py`
+  (`accept`: the ticks the flags need, each line matched again from the form so a typed PO line number assigns it, a
+  "Leave out" box per line, then the entry through `ledger/events.py`, whose `record_ack`, `record_shipment` and
+  `record_invoice` gained `source_document_id`, every tracking number and the invoice's charges; the extraction keeps
+  `answer` as read and `final` as accepted, and the audit names the changed fields, never their values). `POST
+  /review/{id}/accept` takes the form as it stands; the page's Accept button is live. An emailed PO whose number is new
+  is created with `source = document`, USD unless changed; one that exists lists its differences (quantity, unit, price,
+  date, lines added or missing) and cannot be accepted. The PO's timeline links each accepted line to its message.
+  **Choices:** a discount charge is typed with a minus sign; an acknowledgement that lists no lines is accepted as
+  "acknowledged, no details"; Reject was already built in PD-4.4. **Also:** the `.tuples()` deprecation warnings in the
+  extraction code are gone.
 - [ ] PD-4.5a The QuickBooks load skips charge rows, Shipping and Freight by default and more in a setting, and the
   preview lists them (DEC-55).
 - [ ] PD-4.6 Pipeline tests with a stub model; security tests with a stub that obeys planted instructions, proving the
   validator, the ticks and the person contain it (Opus).
-- [ ] PD-4.7 The golden set through the whole pipeline: each PDF, scan and spreadsheet inside an email from its vendor's
+- [~] PD-4.7 The golden set through the whole pipeline: each PDF, scan and spreadsheet inside an email from its vendor's
   domain (a "please see attached" body, which must land in No order facts); a database built from each case's
-  `po_context`; T-1 to T-5 and seconds per document (NFR-11) on the 14b model (Opus).
+  `po_context`; T-1 to T-5 and seconds per document (NFR-11) on the 14b model (Opus). **Skipped by the owner,
+  2026-11-12,** until the front end, backend and AI layer are finished (the deferred list at the top).
 
 **Demo:** the golden mailbox flows to the review queue; accepting documents moves the lines through their statuses.
 
@@ -239,6 +292,7 @@ reopens it as a slip.
   write permission.
 - [ ] PD-6.3 Re-run the golden set shape on real mail only after the owner confirms each real document (DEC-13).
 - [ ] PD-6.3a Network access (DEC-28, NFR-14), **only once a second factor exists (DEC-34)**: HTTPS with a certificate for the office Mac's name, the app refuses to listen on the network without it, the firewall check, the one-time certificate step on a laptop, and a real sign-in from a second laptop on the real office network (RISK-12). **From the engineering review:** `ssl_certfile` and `ssl_keyfile` passed to Uvicorn from Settings, and Settings refuses a non-loopback host unless `https` and both files are set (the certificate key must be mode 600), so HTTPS cannot be "on" in name only; a per-IP limit on sign-in failures beside the per-account lockout (so one laptop cannot lock a colleague out, or guess across accounts); the `__Host-` prefix on the session cookie; Uvicorn's proxy headers stay off because there is no proxy, so a spoofed `X-Forwarded-For` is never trusted; a real-laptop check that the `.local` name resolves; a startup warning if FileVault is off (`fdesetup status`).
+- [ ] PD-6.0a (DEC-72, OPEN-32) The production laptop: a start-up host check (memory, disk, model, Tesseract) shown on the health strip; the macOS-only parts (document sandbox, Homebrew paths, launchd, FileVault check, `setup.sh`) behind small interfaces; a move onto a different machine rehearsed from a backup. Written for another operating system only if OPEN-32 says so. A laptop sleeps, so sleep and lid settings and catching up after waking are checked in PD-6.4.
 - [ ] PD-6.4 launchd service, restart on failure, start at login (DEC-12); stay-awake settings; what really happens after a power cut, and the Keychain prompt (RISK-10, RISK-11).
 - [~] PD-6.5 Backups with a tested restore, 35-day pruning; migrations preceded by a backup (§11). **Pulled forward 2026-11-11, because stored originals exist from PD-3.2:** `po-dashboard backup` and `restore`, a safety copy before an upgrade, a refusal of a newer database, 20 tests that restore a backup and compare it (TC-OPS-01). Still to do here: the nightly schedule, a second copy on another disk, 35-day pruning only with the owner's yes, the runbook tested by following it.
 - [ ] PD-6.6 24-hour soak test with a restart in the middle (T-6).
@@ -263,7 +317,7 @@ signs in over the office network. It survives a restart, and the health page say
 
 ## After v1 (not planned yet)
 
-More than one mailbox, with keyword rules for mailboxes that are not purchasing-only (DEC-33), automatic vendor email (DEC-10), Windows or Linux service (DEC-12),
+More than one mailbox, with keyword rules for mailboxes that are not purchasing-only (DEC-33), automatic vendor email written by the AI layer, a person confirming only when there is no concrete reason to send (DEC-70, replacing DEC-10's "later"), Windows or Linux service (DEC-12),
 a malware scan, auto-accept for very high-confidence documents.
 
 ## Phase 8: Customer orders and invoice reconciliation
@@ -310,3 +364,45 @@ PD-8.4 rules review. Synthetic data only until the owner shows a real export (OP
 
 **Demo:** upload a synthetic QuickBooks export; the order list shows matched, partial, over-invoiced, not found and needs
 review, each linked to its evidence; a person settles an ambiguous match and the audit trail shows it.
+
+## Phase 9: Assistant: questions about the records (proposed)
+
+*The owner's brief of 2026-11-12. Design: ARCHITECTURE §17; DEC-64 to DEC-69 (all Proposed); OPEN-26 to OPEN-31.
+**Nothing is built until the owner gives the go-ahead and places this phase in the order (OPEN-26).** Opus for PD-9.0 and
+the evaluation design in PD-9.6; Sonnet for PD-9.1 to PD-9.5. Stage 1 is standalone: no page, no route, no live
+database, and a stub model in every test.*
+
+- [~] PD-9.0 Documentation pass (DEC-25). **Started 2026-11-12:** the impact assessment and the design (ARCHITECTURE
+  §17), DEC-64 to DEC-69 proposed, OPEN-26 to OPEN-31 asked, RISK-18 to RISK-21. **Waiting for:** the owner's answers
+  and go-ahead; then the REQ-AS requirements, the README status table and the TC-AS cases in the test record.
+
+**Stage 1: the foundation, standalone.**
+
+- [ ] PD-9.1 Contracts and the read interface (§17.3): `assistant/contracts.py`, and `assistant/backend.py` with the
+  synthetic adapter and its made-up fixtures in `tests/data/assistant/` (DEC-13). Adds `langgraph` if OPEN-27 says so.
+- [ ] PD-9.2 The gateway, done with PD-4.1: `models/llm.chat_json` for any schema, the one-call-at-a-time lock with
+  questions first (DEC-68), seconds and token counts kept; the test that only `models/llm.py` reaches the model server
+  covers the assistant.
+- [ ] PD-9.3 Classification (DEC-66): the rules, the model step, the identifier check, and
+  `assistant/prompts/intent_classification.md` (versioned).
+- [ ] PD-9.4 Rewriting (DEC-67): the reference check, substitution, the model step and its checks, and
+  `assistant/prompts/query_rewriting.md`.
+- [ ] PD-9.5 The graph (DEC-64, DEC-65): reference check, rewrite, classify, route, read (synthetic adapter), evidence
+  check, then a template answer with sources or "insufficient information"; the tracing guard;
+  `po-dashboard assistant ask "<question>" --synthetic`.
+- [ ] PD-9.6 Tests and the evaluation set. With a stub model, each case in the brief: a direct question, a summary, a
+  draft, an ambiguous question, a compound question, unrelated history, identifiers kept exactly, no needless rewrite,
+  missing and conflicting evidence, instructions planted in a question and in a record, a buyer asking for admin-only
+  data, no write reaching the database, no mail code, no outside connection. About 80 synthetic questions with their
+  expected result in `evals/assistant/`, and a scoring script. One timed run on the 14b model, only with the owner's yes
+  (OPEN-28).
+
+**Stage 2: the workflows. Designed in §17.6 to §17.8; built only after the owner has reviewed Stage 1.**
+
+- [ ] PD-9.7 Design review with the owner: ASK, SUMMARIZE and DRAFT on the live read functions; OPEN-29 and OPEN-31;
+  the retrieval and model trial (§17.7), with each download's size stated first. The tasks after PD-9.7 are written
+  then.
+
+**Demo (Stage 1):** in Terminal, `po-dashboard assistant ask` classifies and routes the brief's examples against synthetic
+records, answers with sources or "insufficient information", refuses "delete all outstanding invoices", and asks "which
+PO?" when the question cannot tell.

@@ -241,17 +241,23 @@ or `failed`:
 - **Transactions.** A model call is never inside a transaction. Claiming, and storing an answer with its matches and
   flags, are each one short write transaction (`BEGIN IMMEDIATE`, as the scanner).
 
-### 6.2 Matching (DEC-54, PD-4.3)
+### 6.2 Matching (DEC-54, DEC-71, PD-4.3; built)
 
 Nothing is guessed (DEC-09). Matching either finds one answer or leaves the choice to a person.
 
 - **PO number.** Compared as letters and digits only, ignoring case, spaces, dashes and a leading `PO`. Equal or not;
   never "close".
-- **A vendor's document** (acknowledgement, shipment notice, invoice). The PO must exist. If the sender's domain is one
-  of that PO's vendor's domains, it is matched. If not (a colleague forwarding it, a carrier, a vendor writing from
-  Gmail), it goes to Review flagged `sender_not_vendor`, and Accept needs the tick "I checked the sender" (owner,
-  2026-11-12). No PO number, or one that does not exist, goes to **Unmatched**; there the sender's vendor's open POs are
-  offered as choices, and a person picks one or rejects the document.
+- **A vendor's document** (acknowledgement, shipment notice, invoice), by what it says, not by who sent it (DEC-71).
+  Each step stops at one clear candidate: (1) the PO number, exactly; (2) with no PO number, or one that is not ours, a
+  vendor order number, tracking number or invoice number already recorded against a PO (a vendor order number is read
+  from the saved values of accepted extractions); **one number that ties to exactly one PO is enough to propose the
+  match**, and numbers that point at more than one PO go to Unmatched; (3) only when the document carries no number at
+  all, the one open PO of the sender's vendor whose lines have the document's items and quantities (and prices, on an
+  invoice). Anything else goes to **Unmatched**, where the numbers' POs and the sender's vendor's open POs are offered
+  as choices and a person picks one or rejects the document ("confirmed, ships Friday" lands here).
+- **The sender** narrows and ranks suggestions and never ties a document by itself. Accept needs the tick "I checked
+  the sender" (`sender_not_vendor`) when the sender is a known domain of a different vendor than the matched PO's, or
+  is unknown to the app and only the PO number backs the match (owner, 2026-11-12).
 - **An emailed purchase order** (DEC-17, from the company's own mailbox or Sent Items). The vendor is found from a
   recipient's domain (To and Cc, leaving out the mailbox's own domain). No vendor, or two, goes to Unmatched. The PO
   number must be new; if it exists already (resent or revised), it is flagged `po_already_exists`, Review shows how it
@@ -279,7 +285,7 @@ out. A flag never changes anything by itself (DEC-38: flagged, not blocked).
 | `po_already_exists` | check | an emailed PO's number exists already; Accept changes nothing |
 | `duplicate` | check | the same PO, type and lines as an extraction already accepted or waiting; or an invoice number or tracking number already recorded for the PO. "Dismiss as a copy" is offered first |
 | `qty_below_order` | check on an acknowledgement (confirmed short, DEC-36), note otherwise (a partial) | a quantity below what is still open on the line |
-| `confirmed_over_order`, `shipped_over_order`, `billed_over_order` | check | more than the line's ordered quantity |
+| `confirmed_over_order`, `shipped_over_order`, `billed_over_order` | check | more than is still open on the line: for an acknowledgement the ordered quantity, for a shipment what is not yet shipped, for an invoice what is not yet billed (lines of the document for the same PO line add up) |
 | `price_differs` | check | a unit price not equal to the PO line's |
 | `unit_differs` | check | a unit not the PO line's; units are never converted (DEC-24) |
 | `no_promised_date` | check | an acknowledgement line with no promised date |
@@ -290,7 +296,34 @@ out. A flag never changes anything by itself (DEC-38: flagged, not blocked).
 | `lines_not_covered` | note | the document covers some, not all, of the PO's open lines |
 | `charge_present` | note | the document lists a charge; shown, never an alert (DEC-48, OPEN-21) |
 
-### 6.4 Review and accept (DEC-54, PD-4.4, PD-4.5)
+**Built (PD-4.3).** `extraction/matcher.py`: `decide` takes the answer, the text, the message and the document and returns
+the review state, the PO, the vendor and the flags; the extractor calls it when it stores an answer, in plain code with
+no model call, and a bug in it fails the document once with fixed words. It builds the validator's `Context` from the
+ledger: for each PO line what is open (a shipment notice: not yet shipped; an invoice: not yet billed; an
+acknowledgement: the whole line), the last accepted promised date, whether a person closed the line, the earlier
+accepted or waiting extractions for the PO, and the invoice and tracking numbers already recorded. `force_po_id`
+validates a document against a PO a person chose (PD-4.4's Attach to a PO). The Unmatched and No order facts lists, and
+the candidates for an unmatched document, are query functions in the same module; their screens are PD-4.4.
+
+**Built (PD-4.2).** `extraction/validate.py` is pure: the answer, the text and a `Context` (the matched PO's lines with
+what is open, the PO date, today, whether the sender is the vendor's, whether an emailed PO's number exists, earlier
+extractions and recorded invoice and tracking numbers, whether the text was cut or came from OCR) in, a list of flags
+out. A flag is stored as `{flag, level, line, charge, field}` and never holds document text. With no PO matched,
+nothing is compared with a PO. `extraction/in_source.py` answers "is this value in the text"; the golden set's 100
+correct answers raise none, and 934 of 947 altered values are caught (the others happen to be printed elsewhere in the
+same text: a quantity of 6 beside "6mm"). The line rule of §6.2 is in `extraction/matching.py`.
+
+### 6.4 Review and accept (DEC-54, PD-4.4, PD-4.5; built)
+
+**Built (PD-4.4).** `/review` lists the three places a read document waits (Waiting for review, Unmatched, No order
+facts) with their counts; `/review/message/{id}` shows one message's documents. The text is escaped and the quote note
+stays in it; the fields are inputs named `f_<field>`, `line_<n>_<field>` and `charge_<n>_<field>` for Accept; each line
+shows the PO line it matched (ordered, open, price, wanted date), a differing quantity, unit or price is shaded, and each
+flag is in plain words with a tick for the three that need one. Reject (a reason is required), File as no order facts and
+Attach to a PO (a PO number typed exactly, or one of the candidates) check the page's version, are audited, and keep the
+extraction. The original is served by `/review/original/{document_id}` as an attachment with `nosniff` and no caching; only
+a PDF, or a PNG, JPEG or GIF, may open in the browser (`?view=1`), under `Content-Security-Policy: sandbox`, and the type
+comes from the stored kind, never the file's claim.
 
 - **Review screen.** One message at a time: its documents, each with its text on the left (escaped, the quote note
   visible, a link to the original) and the fields on the right, every field editable. Each line shows the PO line it
@@ -304,6 +337,12 @@ out. A flag never changes anything by itself (DEC-38: flagged, not blocked).
   types an invoice number if none was read), a new emailed PO by the PO import's code with `source = document` (currency:
   the company default, USD, which the person can change, since schema v1 reads no currency). The extraction keeps the
   model's answer and the values accepted, so a corrected field is visible later and can join the golden set.
+- **Built (PD-4.5).** `extraction/accept.py`. The ledger functions take `source_document_id`; `record_shipment` takes every
+  tracking number and `record_invoice` its charges. Each document line is matched again from the form's values (a typed PO
+  line number assigns it; a "Leave out" box drops it); one that still matches nothing stops Accept. A discount charge
+  is typed `other` with a minus sign. `final` holds what was accepted, `answer` what the model read; the audit lists the
+  names of the changed fields. A PO number that exists is shown as differences only and cannot be accepted. The PO's
+  timeline shows a "source document" link on each accepted line.
 - **Twice.** The extraction's `version` (DEC-52) is in the form, so a second Accept of the same document, by anyone, is
   refused with "changed by someone else". Anyone signed in may accept (DEC-29, DEC-38).
 - **Originals.** The original file is downloaded, never shown inside the app's page: `Content-Disposition: attachment`,
@@ -714,6 +753,10 @@ po-dashboard/
 | RISK-15 | A burst of hostile documents, each held to the 10-minute limit, delays new mail by hours | At most 25 documents per scan; each refused document is not tried again. Lower `DOCUMENT_SECONDS` if real scans are always short |
 | RISK-16 | The uploaded QuickBooks sales export is partial or out of date, and an order looks unbilled when it is not | "Not found" is only a status; "possibly unbilled" needs 30 days and an uploaded period that covers them (DEC-59); every upload states its period |
 | RISK-17 | An invoice is edited in QuickBooks after it was imported, and the app keeps the old figures | Each upload compares every invoice with what was accepted; a change waits for a person, with old and new side by side (DEC-58) |
+| RISK-18 | The assistant (§17) states something the records do not support, and a person acts on it | Answers built from backend results by templates; model wording checked against the evidence; "insufficient information" preferred; sources on every answer (DEC-69) |
+| RISK-19 | Questions and document extraction compete for the one model, and both become slow | Rules and templates before the model; one model call at a time, questions first; a short waiting list (DEC-68) |
+| RISK-20 | LangChain's tracing client sends prompts, which hold business data, to a cloud service when an environment variable turns it on | The assistant refuses to start with tracing variables set and turns tracing off itself; a test runs the whole graph with every outside connection refused (DEC-65) |
+| RISK-21 | Text planted in an email or a question steers an answer or a draft | Fenced as data; the model has no tools; every figure and identifier is checked against the evidence; a person reviews every draft and nothing is sent (DEC-09, DEC-69) |
 
 ## 16. Customer orders and invoice reconciliation (Phase 8, DEC-56 to DEC-59)
 
@@ -821,3 +864,166 @@ Customer POs arrive in the purchasing mailbox (DEC-56), next to vendor mail and 
 a new document type, `customer_purchase_order`, a new prompt version and golden-set cases, with the sender's domain found
 in `customer_domain`. A person accepts it on the Review screen like any document (DEC-08), and Accept calls the intake
 service of §16.2. Until then customer POs come in by hand or by file.
+
+## 17. Assistant: questions about the records (Phase 9, proposed)
+
+*Proposed 2026-11-12 from the owner's brief. Nothing here is built or approved: DEC-64 to DEC-69 are Proposed, and
+OPEN-26 to OPEN-31 wait for the owner.*
+
+A chat in which a signed-in person asks about the app's records in their own words ("Why is PO-1005 flagged?",
+"Summarise the overdue supplier orders", "Draft a note asking the vendor for an update") and gets an answer that names
+its sources. **The assistant reads and explains; it never decides or changes anything.** Statuses, flags, matching and
+exceptions stay with the code that works them out today (§5, §16.4). The assistant calls that code and puts its results
+into words. Nothing is sent: a draft is text for a person to copy (DEC-07, DEC-40).
+
+### 17.1 What it reuses (the impact assessment)
+
+The assistant adds no table, no matching, no status rule and no document reading. Every fact comes from a read function
+that a page already uses.
+
+| The assistant needs | Existing code it calls | Today |
+|---|---|---|
+| A PO's status, its lines, expected dates, lateness | `ledger/status.py` (`line_states`, `po_states`), `ledger/expected.py`, `ledger/listing.list_orders` | Built (Phase 1) |
+| What is flagged and why (late, no acknowledgement, slipped, original PO needs updating), and the counts | `ledger/reports.py` (`open_items`, `counts`, `attention`) | Built |
+| A PO's history: acknowledgements, shipments, invoices, promised-date slips, warnings | `ledger/events.py` (`entries`, `line_timeline`, `promised_history`, `line_warnings`) | Built |
+| Vendors | `ledger/vendors.py` (`search_vendors`, `vendor_for_name`, `po_counts`) | Built |
+| Customers, customer POs, revisions and their differences | `customers/listing.py` (`order_rows`, `lines_of`, `revisions_of`, `differences`) | Built (Phase 8) |
+| Reconciliation status, figures, and exceptions with their level | `quickbooks/reconciliation/store.current` (reads only; never `run`, which writes), `views.order_rows`, `views.queue` | Built |
+| QuickBooks uploads, the periods they cover, the latest one | `sales_import`, `views.last_uploads`, the engine's `covers` and `first_gap` | Built |
+| Email and attachment text | `source_message` and `source_document`, as the text step stored it (DEC-51) | Built; nothing has been read by the model yet (Phase 4) |
+| What kind of document an email is | The extractor's `doc_type` (`extraction/schema.DOC_TYPES`, plus `customer_purchase_order` in PD-8.8) and the review state in `extraction` | Queue built; answers from PD-4.1 on. **The assistant never classifies mail itself** |
+| Alerts with Contacted, Snooze and Dismiss | `rules/` (§8, Phase 5) | Not built. Until then "alerts" means the open-items flags and the reconciliation exceptions |
+| A drafted follow-up | `rules/drafts.py` (PD-5.3, DEC-40) | Not built. DRAFT uses it once built (OPEN-29) |
+| Vendor performance | nothing | Not built; needs a definition and plain code (OPEN-31) |
+| Model calls | `models/llm.py` | `extract` only; gains one structured call (PD-9.2) |
+| Who is asking, and their role | `auth/` (`AppUser.role`: admin or buyer) | Built |
+
+**Gaps that are not the assistant's job:** Phase 4 (until it is built there are no extracted documents to ask about,
+only stored text), Phase 5 (alerts and drafts) and a vendor-performance measure. The assistant reports these as "not
+available yet" and never works them out itself.
+
+### 17.2 The flow
+
+The reference check comes before classification, so a question such as "what about its invoice?" is classified once,
+after "its" has been resolved, instead of twice.
+
+```mermaid
+flowchart LR
+  Q[Question] --> X{Refers to an<br/>earlier answer?}
+  X -->|yes| W[Rewrite<br/>code first, model if unsure]
+  X -->|no| C
+  W --> C{Classify<br/>rules first, model if unsure}
+  C -->|ASK| A[Read records<br/>fixed functions]
+  C -->|SUMMARIZE| S[Read results<br/>fixed functions]
+  C -->|DRAFT| D[Read records,<br/>check what a draft needs]
+  C -->|CLARIFY| K[Ask one question]
+  C -->|UNSUPPORTED| U[Say what it cannot do]
+  A & S & D --> E{Evidence check}
+  E -->|enough| G[Answer: a template,<br/>or model words checked]
+  E -->|not enough| N[Insufficient information,<br/>naming what is missing]
+  G & N & K & U --> F[Answer with sources]
+```
+
+### 17.3 Stage 1: the foundation, built standalone
+
+Code in `src/po_dashboard/assistant/`, with no route, no page and no live database:
+
+- `contracts.py`: Pydantic models for the turn (the question, and the records earlier answers cited), the classification
+  (DEC-66), each workflow's request and result, the answer (text, sources, limits, the level of each finding) and the trace
+  (the steps that ran, each model call with its seconds and tokens).
+- `backend.py`: the read-only interface the workflows call, one method per kind of question (a PO's status, open items
+  by filter, a customer order, exceptions by filter, the uploads and their periods), and a synthetic adapter that answers
+  from made-up fixtures in `tests/data/assistant/`. The live adapter (Stage 2) wraps the functions in §17.1 over a
+  connection with `PRAGMA query_only = ON`.
+- `classify.py`, `rewrite.py`, `graph.py` (LangGraph, DEC-65), and the prompts `prompts/intent_classification.md` and
+  `prompts/query_rewriting.md`, versioned like the extraction prompt.
+- `po-dashboard assistant ask "<question>" --synthetic`, to try it in Terminal.
+- Tests with a stub model, and an evaluation set of synthetic questions in `evals/assistant/`.
+
+Stage 1's workflows answer from the synthetic adapter with fixed templates. So routing, the evidence check and
+"insufficient information" are tested end to end before any real data or model wording is involved.
+
+### 17.4 Guards
+
+- **Read-only by construction.** The assistant's tools are fixed read functions. There is no function that writes and
+  no SQL made from text. The live adapter's connection is `query_only`, so a write fails in SQLite itself, and a test
+  proves it. `store.run`, `ledger/events.record_*`, intake and every importer are out of reach: a test reads the
+  package's imports.
+- **No mail.** The DEC-07 test already covers every module. A draft's only address is the contact on the vendor or
+  customer record (DEC-40 (3)).
+- **Documents and questions are data.** Email text, notes and the person's own question are fenced in every prompt
+  (DEC-09). The model has no tools: it returns JSON that plain code checks. An instruction planted in a document or a
+  question can at most change words, and the words are checked against the evidence (DEC-69).
+- **Roles.** Everyone signed in may ask (DEC-29). The audit trail, the people list and mailbox details are admin-only on
+  the screens and stay admin-only here: a buyer who asks about them is told that only an admin can see them (OPEN-30).
+- **Local only.** The model is the configured one, called through `models/llm.py`. LangChain's tracing is refused at
+  start, and a test runs the whole graph with every network connection refused except to this Mac (DEC-65).
+- **Nothing kept** in Stage 1: a conversation lives in memory for one session. Keeping conversations is OPEN-30.
+
+### 17.5 Load and speed
+
+The office Mac runs one model, shared with the extractor (Phase 4). These are estimates, not measurements: on the 14b
+model a short classification call may take 10 to 30 seconds, a worded answer longer, and a minute or more while a
+document is being read or the Mac is short of memory (PD-2.5 saw 3 tokens a second while it swapped). So:
+
+- **Rules before the model.** Most questions name an identifier and use plain words ("why", "status", "summarise",
+  "draft", "delete") that rules can classify. The model classifies only what the rules cannot decide.
+- **Templates before the model.** An ASK or SUMMARIZE answer about structured records is the backend's result put into
+  a template, with no model call. Model wording is for evidence that is text (Stage 2) and for drafts (OPEN-29).
+- **One model call at a time** across the app, through a lock in `models/llm.py`. A question takes the next turn ahead of
+  waiting documents; a document being read is not interrupted. At most 3 questions wait; a fourth is told the assistant
+  is busy.
+- **Measured.** Every call keeps its seconds and Ollama's token counts in the turn's trace.
+
+### 17.6 Stage 2: the workflows (design for review, not built)
+
+**ASK.** (1) Structured first: an identifier or a filter goes to the fixed read function for it, and the answer is that
+result in words, with a link to the record. (2) Text only when the question needs it ("what did the vendor say about
+the delay?"): retrieval over stored email and attachment text (§17.7), limited where possible to documents linked to
+the records found in (1). (3) The answer names each source (PO, line, document, or upload with its period), keeps
+confirmed discrepancies apart from preliminary alerts (DEC-59), names the latest QuickBooks upload and the period the
+uploads cover, and says plainly what is missing, stale or in conflict. A record a person accepted outranks document text;
+a document that disagrees with an accepted record is reported as a disagreement, never as the answer.
+
+**SUMMARIZE.** Over results the backend already works out: open items and their flags, reconciliation exceptions, a
+customer's orders, a PO's history, upload coverage (`first_gap`), and later the Phase 5 alerts and vendor performance.
+Counts and sums come from the backend, or from plain code over its rows, never from the model. A summary says whether it
+covers everything or only what the uploads cover ("the QuickBooks uploads cover 08/01/2026 to 10/31/2026; orders after
+that are not checked").
+
+**DRAFT.** Finds the records, then checks what the draft needs (a contact email on the vendor or customer record, the PO
+number, the lines, the promised dates) and asks for whatever is missing before writing. How it is written is OPEN-29:
+(a) the fixed templates of PD-5.3 filled with checked values, no model; or (b) model wording, checked so that every
+number, date and identifier in it is in the evidence, else refused. Either way it is marked DRAFT, can be edited, is
+never sent, and is addressed only to a contact on record. Kinds: a delivery follow-up, a missing acknowledgement, a
+vendor invoice difference, a customer PO question, a sales invoice difference.
+
+### 17.7 Retrieval for text (Stage 2 proposal)
+
+**How much text there is.** One purchasing mailbox: perhaps a few thousand messages and attachments a year, so tens of
+thousands of chunks after a few years. That is small.
+
+**No new server.** Keyword search with SQLite's own full-text index (FTS5, which ranks by BM25); vectors kept in a
+SQLite table and compared by brute force, which takes milliseconds at this size (`sqlite-vec` if it grows); the two lists
+joined by reciprocal-rank fusion; about 20 to 25 candidates; a reranker down to 5 to 10; then the evidence check.
+Chunks are made once, when a document is read, never by reading a document again, and carry their document, message
+and PO links. **Qdrant is not proposed:** it is a second server to run, back up and secure, for a data set SQLite
+handles. The trial can reopen that.
+
+**Embedding models to try** (open weights, run by Ollama, which is already installed, so no new runtime):
+`nomic-embed-text` (about 0.3 GB), `qwen3-embedding:0.6b` (about 0.6 GB) and `bge-m3` (about 1.2 GB). Sizes and
+licences to be confirmed before any download.
+
+**Rerankers to try:** `bge-reranker-v2-m3` and `Qwen3-Reranker-0.6B`. Ollama had no rerank call to rely on when this was
+written (check at PD-9.7), so a reranker needs another runtime: ONNX Runtime (tens of MB) rather than PyTorch (well over
+1 GB). The trial first checks whether reranking beats the fused list alone; if it does not, there is no reranker.
+
+**The trial**, on synthetic data only: questions written against the golden set's 100 documents, each with the chunks
+that answer it. Measured: recall at 20 (does the candidate list hold the answer), nDCG at 10 and MRR after reranking,
+seconds per question, and memory beside the 14b model. The 20 to 25 and 5 to 10 are starting points the trial may change.
+
+### 17.8 Joining the app (after Stage 2)
+
+A page `/assistant` behind the sign-in gate: a form post with the security token, answered in place by HTMX (DEC-45),
+each source a link to its existing page, and one audit row per question (who, when, the intents, which records were
+read). Nothing is joined until Stage 1 has been reviewed and Stage 2 approved.

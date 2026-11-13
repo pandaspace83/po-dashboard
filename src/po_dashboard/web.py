@@ -20,6 +20,7 @@ from po_dashboard.auth.gate import Gate
 from po_dashboard.config import Settings
 from po_dashboard.db.migrate import upgrade
 from po_dashboard.display import day, moment
+from po_dashboard.extraction import review as review_rules
 from po_dashboard.extraction.runner import Extractor
 from po_dashboard.intake.store import FileStore
 from po_dashboard.mail.gmail_auth import Keychain
@@ -37,6 +38,7 @@ from po_dashboard.pages import (
     orders,
     quickbooks,
     reports,
+    review,
     sales_invoices,
     vendors,
 )
@@ -81,7 +83,9 @@ def create_app(
         app_name=APP_NAME, has_logo=(HERE / "static" / "brand" / "logo.png").is_file(), with_query=with_query
     )
 
-    app.state.templates.env.filters.update(quantity=quantity, money=money, day=day, moment=moment)
+    app.state.templates.env.filters.update(
+        quantity=quantity, money=money, day=day, moment=moment, flag_count=review_rules.flag_count
+    )
 
     @app.get("/health")
     def health() -> JSONResponse:
@@ -96,6 +100,7 @@ def create_app(
     app.include_router(account.router)
     app.include_router(admin.router)
     app.include_router(documents.router)
+    app.include_router(review.router)
     app.include_router(customers.router)
     app.include_router(customer_orders.router)
     app.include_router(sales_invoices.router)

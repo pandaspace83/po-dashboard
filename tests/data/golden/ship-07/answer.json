@@ -67,25 +67,33 @@
         "line_no": 1,
         "item": "BLT-M8x40",
         "qty": 40,
-        "unit_price": 14.9
+        "unit": "BOX",
+        "unit_price": 14.9,
+        "promised_date": null
       },
       {
         "line_no": 2,
         "item": "GSK-G9",
         "qty": 25,
-        "unit_price": 0.85
+        "unit": "EA",
+        "unit_price": 0.85,
+        "promised_date": null
       },
       {
         "line_no": 3,
         "item": "NUT-M8",
         "qty": 25,
-        "unit_price": 6.75
+        "unit": "BOX",
+        "unit_price": 6.75,
+        "promised_date": null
       },
       {
         "line_no": 4,
         "item": "WID-100",
         "qty": 200,
-        "unit_price": 5.0
+        "unit": "EA",
+        "unit_price": 5.0,
+        "promised_date": null
       }
     ]
   },

@@ -116,7 +116,7 @@ def failed_list(db: Session) -> list[tuple[Extraction, SourceDocument, SourceMes
             .join(SourceMessage, SourceMessage.id == SourceDocument.message_id)
             .where(Extraction.state == "failed", Extraction.review_state.is_(None))
             .order_by(Extraction.id.desc())
-        ).tuples()
+        )
     ]
 
 

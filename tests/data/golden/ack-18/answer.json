@@ -50,13 +50,17 @@
         "line_no": 1,
         "item": "GRS-400",
         "qty": 5,
-        "unit_price": 3.95
+        "unit": "EA",
+        "unit_price": 3.95,
+        "promised_date": "2026-12-10"
       },
       {
         "line_no": 2,
         "item": "PIN-D6",
         "qty": 500,
-        "unit_price": 8.1
+        "unit": "BOX",
+        "unit_price": 8.1,
+        "promised_date": "2026-12-10"
       }
     ]
   },

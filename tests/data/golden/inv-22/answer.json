@@ -80,31 +80,41 @@
         "line_no": 1,
         "item": "CPL-3/4",
         "qty": 12,
-        "unit_price": 9.35
+        "unit": "EA",
+        "unit_price": 9.35,
+        "promised_date": null
       },
       {
         "line_no": 2,
         "item": "VLV-V12",
         "qty": 80,
-        "unit_price": 46.25
+        "unit": "EA",
+        "unit_price": 46.25,
+        "promised_date": null
       },
       {
         "line_no": 3,
         "item": "HSE-12",
         "qty": 10,
-        "unit_price": 4.2
+        "unit": "FT",
+        "unit_price": 4.2,
+        "promised_date": null
       },
       {
         "line_no": 4,
         "item": "WID-100",
         "qty": 60,
-        "unit_price": 5.0
+        "unit": "EA",
+        "unit_price": 5.0,
+        "promised_date": null
       },
       {
         "line_no": 5,
         "item": "GRS-400",
         "qty": 10,
-        "unit_price": 3.95
+        "unit": "EA",
+        "unit_price": 3.95,
+        "promised_date": null
       }
     ]
   },

@@ -62,19 +62,25 @@
         "line_no": 1,
         "item": "SEAL-22",
         "qty": 150,
-        "unit_price": 1.1
+        "unit": "EA",
+        "unit_price": 1.1,
+        "promised_date": null
       },
       {
         "line_no": 2,
         "item": "PLT-AL3",
         "qty": 12,
-        "unit_price": 27.6
+        "unit": "EA",
+        "unit_price": 27.6,
+        "promised_date": null
       },
       {
         "line_no": 3,
         "item": "VLV-V12",
         "qty": 25,
-        "unit_price": 46.25
+        "unit": "EA",
+        "unit_price": 46.25,
+        "promised_date": null
       }
     ]
   },

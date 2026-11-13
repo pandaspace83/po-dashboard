@@ -180,6 +180,15 @@ def test_home_counts_the_waiting_and_the_failed(db: Session, store: FileStore, c
     assert set(only) == {"A", "B", "C"}
 
 
+def test_home_says_when_the_model_is_not_reachable(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:  # noqa: F811
+    from po_dashboard.models import llm
+
+    page = client.get("/").text
+    assert 'class="value bad">not reachable' in page  # the test setup makes the server unreachable
+    monkeypatch.setattr(llm, "is_reachable", lambda settings, timeout=1.0: True)
+    assert 'class="value ok">reachable' in client.get("/").text
+
+
 def test_the_sweep_of_every_route_still_finds_nothing_open(env, client: TestClient) -> None:  # noqa: ANN001, F811
     paths = env[0].openapi()["paths"]
     assert "/documents/failed" in paths and "/documents/failed/{extraction_id}/retry" in paths

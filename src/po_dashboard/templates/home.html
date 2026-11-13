@@ -9,6 +9,8 @@
   <div class="tile">{{ icon("chip") }}<div><span class="label">Model {{ health.model_name }}</span>
     <span class="value {{ 'ok' if health.model == 'reachable' else 'bad' }}">{{ health.model }}</span></div></div>
   <div class="tile">{{ icon("clipboard") }}<div><span class="label">Waiting to be read</span><span class="value">{{ health.waiting }}</span></div></div>
+  <a class="tile" href="/review">{{ icon("mail") }}<div><span class="label">Waiting for review</span><span class="value">{{ health.to_review }}</span></div></a>
+  <a class="tile {{ 'alert-tile' if health.unmatched }}" href="/review?show=unmatched">{{ icon("search") }}<div><span class="label">Unmatched</span><span class="value {{ 'bad' if health.unmatched }}">{{ health.unmatched }}</span></div></a>
   <a class="tile {{ 'alert-tile' if health.failed }}" href="/documents/failed">{{ icon("alert") }}<div><span class="label">Failed documents</span><span class="value {{ 'bad' if health.failed }}">{{ health.failed }}</span></div></a>
 </div>
 {#- Counts and the to-do list update themselves every minute; those updates are not activity (DEC-45 item 9). -#}

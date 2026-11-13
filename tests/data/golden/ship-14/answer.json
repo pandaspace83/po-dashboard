@@ -53,13 +53,17 @@
         "line_no": 1,
         "item": "GRS-400",
         "qty": 25,
-        "unit_price": 3.95
+        "unit": "EA",
+        "unit_price": 3.95,
+        "promised_date": null
       },
       {
         "line_no": 2,
         "item": "PLT-AL3",
         "qty": 10,
-        "unit_price": 27.6
+        "unit": "EA",
+        "unit_price": 27.6,
+        "promised_date": null
       }
     ]
   },

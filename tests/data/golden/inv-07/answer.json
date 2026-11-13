@@ -50,13 +50,17 @@
         "line_no": 1,
         "item": "WID-400",
         "qty": 500,
-        "unit_price": 12.5
+        "unit": "EA",
+        "unit_price": 12.5,
+        "promised_date": null
       },
       {
         "line_no": 2,
         "item": "FLG-DN50",
         "qty": 10,
-        "unit_price": 18.4
+        "unit": "EA",
+        "unit_price": 18.4,
+        "promised_date": null
       }
     ]
   },

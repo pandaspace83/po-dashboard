@@ -70,25 +70,33 @@
         "line_no": 1,
         "item": "BLT-M8x40",
         "qty": 10,
-        "unit_price": 14.9
+        "unit": "BOX",
+        "unit_price": 14.9,
+        "promised_date": null
       },
       {
         "line_no": 2,
         "item": "PLT-AL3",
         "qty": 25,
-        "unit_price": 27.6
+        "unit": "EA",
+        "unit_price": 27.6,
+        "promised_date": null
       },
       {
         "line_no": 3,
         "item": "MTR-075",
         "qty": 100,
-        "unit_price": 212.0
+        "unit": "EA",
+        "unit_price": 212.0,
+        "promised_date": null
       },
       {
         "line_no": 4,
         "item": "CPL-3/4",
         "qty": 100,
-        "unit_price": 9.35
+        "unit": "EA",
+        "unit_price": 9.35,
+        "promised_date": null
       }
     ]
   },

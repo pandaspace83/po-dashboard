@@ -4,9 +4,9 @@
 
 PO Dashboard (RaceSpec Internal Dashboard). Scope: Phase 0 and Phase 1: sign-in, people, vendors, purchase orders, imports, the QuickBooks starting load, entries by hand, Home, Open items, Audit, page behaviour, security and speed.
 
-**146 cases:** 46 Critical, 84 High, 16 Medium; 2 terminal, 77 automated, 64 browser, 3 owner only.
+**170 cases:** 46 Critical, 107 High, 17 Medium; 2 terminal, 99 automated, 66 browser, 3 owner only.
 
-Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.18, by Claude, scripts/browser_evidence.py, on commit 13d6048 with uncommitted changes: **64 of 64** browser cases pass. Automated tests: `uv run pytest`. Defects: [DEFECTS.md](DEFECTS.md). Sign-off: [SIGN_OFF.md](SIGN_OFF.md).
+Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/browser_evidence.py, on commit a3a206e with uncommitted changes: **66 of 66** browser cases pass. Automated tests: `uv run pytest`. Defects: [DEFECTS.md](DEFECTS.md). Sign-off: [SIGN_OFF.md](SIGN_OFF.md).
 
 **To run them by hand:**
 
@@ -143,6 +143,30 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.18, by Claude, scripts/b
 | [TC-QUE-05](#tc-que-05) | A long document is cut to the reading window, the quoted earlier messages first, and it says so | High | Automated | Automated tests | — |
 | [TC-QUE-06](#tc-que-06) | The gateway tells an answer that will fail again from an error worth trying again | High | Automated | Automated tests | — |
 | [TC-QUE-07](#tc-que-07) | Failed documents are listed on their own page, and a person can Retry or Dismiss them | High | Browser | Pass 11/12/2026 | Not yet run |
+| [TC-QUE-08](#tc-que-08) | Only the model gateway reaches the model server, and Home says when it cannot be reached | High | Automated | Automated tests | — |
+| [TC-VAL-01](#tc-val-01) | Every flag is named as in the golden set and raised by its own case, at its level | High | Automated | Automated tests | — |
+| [TC-VAL-02](#tc-val-02) | A value the model gave that is not in the document's text is flagged, by field and line | High | Automated | Automated tests | — |
+| [TC-VAL-03](#tc-val-03) | Planted instructions are caught on all 8 golden documents that have one and on none of the other 92 | High | Automated | Automated tests | — |
+| [TC-VAL-04](#tc-val-04) | A document's lines match the PO line by stated number, else by one equal item, else not at all | High | Automated | Automated tests | — |
+| [TC-VAL-05](#tc-val-05) | Each golden answer gets exactly the flags its answer file expects | High | Automated | Automated tests | — |
+| [TC-MATCH-01](#tc-match-01) | A document is tied to a PO by its PO number exactly, never by a close one | High | Automated | Automated tests | — |
+| [TC-MATCH-02](#tc-match-02) | The sender narrows and raises the tick but never ties a document to a PO | High | Automated | Automated tests | — |
+| [TC-MATCH-03](#tc-match-03) | A recorded tracking, invoice or vendor order number ties a document to one PO; more than one PO is left to a person | High | Automated | Automated tests | — |
+| [TC-MATCH-04](#tc-match-04) | With no number at all, equal items and quantities on one open PO of the sender's vendor propose it | High | Automated | Automated tests | — |
+| [TC-MATCH-05](#tc-match-05) | Emailed POs find their vendor; documents with no order facts and the company's own mail are filed | High | Automated | Automated tests | — |
+| [TC-MATCH-06](#tc-match-06) | The extractor stores the match, the state and the flags (no text), and the lists and candidates work | High | Automated | Automated tests | — |
+| [TC-REV-01](#tc-rev-01) | A person reviews a read document: the lists, the text beside the fields and the PO line, Reject, Attach and File | High | Browser | Pass 11/12/2026 | Not yet run |
+| [TC-REV-02](#tc-rev-02) | The lists and Home count what waits, and an unknown place shows the first list | High | Automated | Automated tests | — |
+| [TC-REV-03](#tc-rev-03) | The message page shows the escaped text, editable fields, the PO line beside each line and the ticks | High | Automated | Automated tests | — |
+| [TC-REV-04](#tc-rev-04) | Reject needs a reason, File moves a document, and a stale page is refused; each is audited | High | Automated | Automated tests | — |
+| [TC-REV-05](#tc-rev-05) | An unmatched document is attached to a PO a person chooses and validated against it again | High | Automated | Automated tests | — |
+| [TC-REV-06](#tc-rev-06) | The original is a download; only a PDF or a plain picture may open in the browser, under a sandbox policy | High | Automated | Automated tests | — |
+| [TC-ACC-01](#tc-acc-01) | A person accepts a read document: the entry is recorded from the values in the form, linked to the document, under their name | High | Browser | Pass 11/12/2026 | Not yet run |
+| [TC-ACC-02](#tc-acc-02) | Accept records an acknowledgement, a shipment (every tracking number) and an invoice (with charges) in one transaction | High | Automated | Automated tests | — |
+| [TC-ACC-03](#tc-acc-03) | Accept is refused, and keeps nothing, when a tick is missing, a line or field is wrong, the page is old or the document was already accepted | High | Automated | Automated tests | — |
+| [TC-ACC-04](#tc-acc-04) | A line that matches no PO line is assigned or left out; nothing is guessed | High | Automated | Automated tests | — |
+| [TC-ACC-05](#tc-acc-05) | An emailed PO is created for its vendor; a revised one shows its differences only and changes nothing | High | Automated | Automated tests | — |
+| [TC-ACC-06](#tc-acc-06) | The PO's timeline shows each accepted line's source document | Medium | Automated | Automated tests | — |
 | [TC-CO-01](#tc-co-01) | The customer-side tables are new, leave every purchasing record unchanged, and the two workflows stay apart | High | Automated | Automated tests | — |
 | [TC-CO-02](#tc-co-02) | The database itself enforces the customer-side rules | High | Automated | Automated tests | — |
 | [TC-CO-03](#tc-co-03) | The settings have owner-approved defaults, and a missing or damaged value falls back to its default | High | Automated | Automated tests | — |
@@ -2723,6 +2747,466 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.18, by Claude, scripts/b
 ![TC-QUE-07 in Chrome](screenshots/TC-QUE-07-2.png)
 
 </details>
+
+
+<a id="tc-que-08"></a>
+
+### TC-QUE-08: Only the model gateway reaches the model server, and Home says when it cannot be reached
+
+**Priority:** High · **How:** Automated · **Refs:** PD-4.1, NFR-10, DEC-01
+
+**Steps**
+
+1. Covered by the tests named.
+
+**Expected:** No module but models/llm.py (and the address setting in config.py) names the model server's address or routes. Home shows the model as not reachable when the server is down or lacks the model, and reachable when it is there.
+
+**Automated tests:** `test_llm.py::test_only_the_gateway_talks_to_the_model_server`, `test_failed_documents.py::test_home_says_when_the_model_is_not_reachable`
+
+**Latest:** Owner: not recorded.
+
+
+## Validator
+
+<a id="tc-val-01"></a>
+
+### TC-VAL-01: Every flag is named as in the golden set and raised by its own case, at its level
+
+**Priority:** High · **How:** Automated · **Refs:** PD-4.2, DEC-54, DEC-38, DEC-36, DEC-48
+
+**Steps**
+
+1. Covered by the tests named.
+
+**Expected:** Each of the 19 flags in ARCHITECTURE section 6.3 has a case that raises it, as a check or a note as the table says; a clean acknowledgement, invoice and shipment raise nothing but what they should. Quantities are compared with what is still open, split lines add up, a promised date equal to the last accepted one is no change, units are never converted, totals agree to the cent, and with no PO nothing is compared with one.
+
+**Automated tests:** `test_validate.py::test_every_flag_has_a_case_and_the_golden_set_uses_only_known_names`, `test_validate.py::test_each_flag_is_raised_by_its_case`, `test_validate.py::test_a_clean_acknowledgement_has_no_flags`, `test_validate.py::test_the_invoice_and_shipment_cases_are_otherwise_clean`, `test_validate.py::test_qty_below_order_is_a_check_on_an_acknowledgement_and_a_note_on_a_partial`, `test_validate.py::test_quantities_are_compared_with_what_is_still_open_and_split_lines_add_up`, `test_validate.py::test_no_po_means_no_comparison_with_a_po`, `test_validate.py::test_duplicate_also_by_a_recorded_invoice_or_tracking_number`, `test_validate.py::test_date_implausible_over_a_year_ahead_or_before_the_po_date`, `test_validate.py::test_totals_agree_to_the_cent_and_are_not_worked_out_without_every_price`, `test_validate.py::test_a_promised_date_equal_to_the_last_accepted_one_is_not_a_change`, `test_validate.py::test_units_compare_ignoring_case_and_spaces_and_are_never_converted`
+
+**Latest:** Owner: not recorded.
+
+
+<a id="tc-val-02"></a>
+
+### TC-VAL-02: A value the model gave that is not in the document's text is flagged, by field and line
+
+**Priority:** High · **How:** Automated · **Refs:** PD-4.2, DEC-54, DEC-49, DEC-13
+
+**Steps**
+
+1. Covered by the tests named.
+
+**Expected:** Numbers compare as decimals (commas, currency signs, minus signs and trailing zeros ignored; numbers inside a date or glued to a code do not count); dates in the usual US ways, numeric dates month first; codes as letters and digits; in scanned text O and 0, l and 1, S and 5, B and 8 are equal, and only there. The flag names the field and line and holds no document text.
+
+**Automated tests:** `test_validate.py::test_value_not_in_source_names_the_field_and_line_and_never_holds_text`, `test_validate.py::test_numbers_are_found_as_decimals`, `test_validate.py::test_numbers_inside_a_date_do_not_count`, `test_validate.py::test_dates_in_the_usual_us_ways`, `test_validate.py::test_a_numeric_date_is_month_first`, `test_validate.py::test_codes_compare_as_letters_and_digits`, `test_validate.py::test_ocr_look_alikes_count_as_equal_only_in_scanned_text`
+
+**Latest:** Owner: not recorded.
+
+
+<a id="tc-val-03"></a>
+
+### TC-VAL-03: Planted instructions are caught on all 8 golden documents that have one and on none of the other 92
+
+**Priority:** High · **How:** Automated · **Refs:** PD-4.2, DEC-09, T-4
+
+**Steps**
+
+1. Covered by the tests named.
+
+**Expected:** The fixed list catches the golden set's eight planted documents and none of its 92 clean ones; it also catches the same wording broken across lines, in a quoted message or read by OCR, and does not catch everyday vendor wording such as 'This is an automated message' or 'please disregard our earlier invoice'.
+
+**Automated tests:** `test_validate.py::test_planted_instruction_on_all_eight_golden_documents_and_none_of_the_other_92`, `test_validate.py::test_planted_wording_is_caught`, `test_validate.py::test_everyday_vendor_wording_is_not_a_planted_instruction`
+
+**Latest:** Owner: not recorded.
+
+
+<a id="tc-val-04"></a>
+
+### TC-VAL-04: A document's lines match the PO line by stated number, else by one equal item, else not at all
+
+**Priority:** High · **How:** Automated · **Refs:** PD-4.2, PD-4.3, DEC-54, DEC-09
+
+**Steps**
+
+1. Covered by the tests named.
+
+**Expected:** A stated company line number that is on the PO wins; otherwise the one PO line whose item is equal ignoring case and spaces; two equal items, or none, leave the line for a person (line_unassigned).
+
+**Automated tests:** `test_validate.py::test_lines_match_by_stated_number_then_by_one_equal_item`
+
+**Latest:** Owner: not recorded.
+
+
+<a id="tc-val-05"></a>
+
+### TC-VAL-05: Each golden answer gets exactly the flags its answer file expects
+
+**Priority:** High · **How:** Automated · **Refs:** PD-4.2, DEC-54, T-5
+
+**Steps**
+
+1. Covered by the tests named.
+
+**Expected:** For all 100 golden documents, the correct answer with its PO as ordered and the documents before it gives exactly expected_flags: no correct value is reported missing from its text, and no flag is raised that a person should not see.
+
+**Automated tests:** `test_validate.py::test_the_golden_set_gets_exactly_the_flags_its_answers_expect`
+
+**Latest:** Owner: not recorded.
+
+
+## Matching
+
+<a id="tc-match-01"></a>
+
+### TC-MATCH-01: A document is tied to a PO by its PO number exactly, never by a close one
+
+**Priority:** High · **How:** Automated · **Refs:** PD-4.3, DEC-54, DEC-71, DEC-09
+
+**Steps**
+
+1. Covered by the tests named.
+
+**Expected:** Letters and digits only, case, spaces and a leading PO ignored; a number one digit off, shorter or longer is not matched and goes to Unmatched.
+
+**Automated tests:** `test_matching.py::test_a_po_number_matches_exactly_ignoring_case_spaces_and_a_leading_po`, `test_matching.py::test_the_po_number_wins_over_other_numbers`
+
+**Latest:** Owner: not recorded.
+
+
+<a id="tc-match-02"></a>
+
+### TC-MATCH-02: The sender narrows and raises the tick but never ties a document to a PO
+
+**Priority:** High · **How:** Automated · **Refs:** PD-4.3, DEC-71
+
+**Steps**
+
+1. Covered by the tests named.
+
+**Expected:** The PO's own vendor needs no tick; another vendor's known domain, or an unknown sender with only the PO number behind the match, raises sender_not_vendor; an unknown sender backed by a recorded number does not; a vendor alone with no numbers does not tie.
+
+**Automated tests:** `test_matching.py::test_the_sender_of_the_pos_vendor_needs_no_tick`, `test_matching.py::test_the_sender_of_another_vendor_needs_the_tick_and_the_match_still_stands`, `test_matching.py::test_an_unknown_sender_needs_the_tick_when_only_the_po_number_backs_the_match`, `test_matching.py::test_an_unknown_sender_needs_no_tick_when_a_recorded_number_backs_the_match_too`, `test_matching.py::test_the_sender_alone_never_ties_a_document_to_a_po`
+
+**Latest:** Owner: not recorded.
+
+
+<a id="tc-match-03"></a>
+
+### TC-MATCH-03: A recorded tracking, invoice or vendor order number ties a document to one PO; more than one PO is left to a person
+
+**Priority:** High · **How:** Automated · **Refs:** PD-4.3, DEC-71
+
+**Steps**
+
+1. Covered by the tests named.
+
+**Expected:** One number that ties to exactly one PO proposes the match (numbers compared as letters and digits, hyphens kept); a number on two POs, or one that ties to none, goes to Unmatched and items are not used to guess.
+
+**Automated tests:** `test_matching.py::test_a_tracking_number_recorded_on_one_po_ties_the_document_to_it`, `test_matching.py::test_a_number_that_points_at_more_than_one_po_is_left_to_a_person`, `test_matching.py::test_an_invoice_number_recorded_against_a_po_ties_a_later_document`, `test_matching.py::test_a_vendor_order_number_from_an_accepted_ack_ties_a_later_document`
+
+**Latest:** Owner: not recorded.
+
+
+<a id="tc-match-04"></a>
+
+### TC-MATCH-04: With no number at all, equal items and quantities on one open PO of the sender's vendor propose it
+
+**Priority:** High · **How:** Automated · **Refs:** PD-4.3, DEC-71
+
+**Steps**
+
+1. Covered by the tests named.
+
+**Expected:** Every line must have one equal item and the open quantity (and the price, on an invoice); what was shipped is not open for a shipment notice; two fitting POs or an unknown sender go to Unmatched.
+
+**Automated tests:** `test_matching.py::test_no_number_and_equal_items_and_quantities_on_one_open_po_proposes_it`, `test_matching.py::test_the_items_must_agree_on_every_line_and_on_the_quantity`, `test_matching.py::test_an_invoice_with_a_different_price_is_not_matched_by_items`, `test_matching.py::test_items_that_fit_two_pos_or_an_unknown_sender_are_left_to_a_person`, `test_matching.py::test_what_was_already_shipped_is_not_open_for_a_shipment_notice`
+
+**Latest:** Owner: not recorded.
+
+
+<a id="tc-match-05"></a>
+
+### TC-MATCH-05: Emailed POs find their vendor; documents with no order facts and the company's own mail are filed
+
+**Priority:** High · **How:** Automated · **Refs:** PD-4.3, DEC-17, DEC-54
+
+**Steps**
+
+1. Covered by the tests named.
+
+**Expected:** A PO sent to one vendor's domain is waiting with that vendor (the company's own domain left out); no vendor, two vendors or no number is Unmatched; an existing number is flagged po_already_exists; no order facts, and Sent Items that are not POs, are filed as No order facts.
+
+**Automated tests:** `test_matching.py::test_an_emailed_po_finds_its_vendor_from_the_recipients_not_counting_ours`, `test_matching.py::test_an_emailed_po_with_no_vendor_or_two_vendors_goes_to_unmatched`, `test_matching.py::test_an_emailed_po_whose_number_exists_is_flagged_and_changes_nothing`, `test_matching.py::test_a_document_with_no_order_facts_is_filed_not_queued`, `test_matching.py::test_the_companys_own_mail_that_is_not_a_po_never_changes_a_po`
+
+**Latest:** Owner: not recorded.
+
+
+<a id="tc-match-06"></a>
+
+### TC-MATCH-06: The extractor stores the match, the state and the flags (no text), and the lists and candidates work
+
+**Priority:** High · **How:** Automated · **Refs:** PD-4.3, DEC-54, DEC-13, DEC-09, T-5
+
+**Steps**
+
+1. Covered by the tests named.
+
+**Expected:** A read document ends waiting, unmatched or no_facts with its PO and vendor; flags hold names, lines and fields only; a bug in matching fails the document once in fixed words; the PO lines carry what is open, the last promised date and closed lines; duplicates, a person's choice and a planted instruction naming another vendor's PO are handled; the Unmatched and No order facts lists are newest first and the candidates put the numbers' POs first.
+
+**Automated tests:** `test_matching.py::test_the_extractor_stores_the_match_the_state_and_flags_without_document_text`, `test_matching.py::test_a_bug_in_matching_fails_the_document_once_with_fixed_words`, `test_matching.py::test_the_pos_lines_carry_what_is_open_for_each_kind_and_the_last_promised_date`, `test_matching.py::test_a_second_copy_of_a_waiting_document_is_a_duplicate`, `test_matching.py::test_a_persons_choice_is_validated_against_the_chosen_po`, `test_matching.py::test_a_planted_instruction_naming_another_vendors_po_is_flagged_for_a_person`, `test_matching.py::test_the_unmatched_candidates_put_the_numbers_first_then_the_senders_open_pos`, `test_matching.py::test_the_two_lists_hold_their_documents_newest_first`
+
+**Latest:** Owner: not recorded.
+
+
+## Review screens
+
+<a id="tc-rev-01"></a>
+
+### TC-REV-01: A person reviews a read document: the lists, the text beside the fields and the PO line, Reject, Attach and File
+
+**Priority:** High · **How:** Browser · **Refs:** PD-4.4, DEC-54, DEC-71, DEC-09, REQ-DB-01
+
+**Steps**
+
+1. Home shows one document waiting for review and one unmatched; open the first from its tile.
+2. Open the document: its text is shown as text (a script in it does not run), the fields are filled in and editable, the PO line sits beside the document's line, the differing price is marked, the flags are in plain words, there is a tick for the planted instruction, and Accept is enabled.
+3. Reject it with a reason: the list is empty.
+4. Open the unmatched document from Home, type the PO number and press Attach to a PO: it shows as matched to that PO and waiting.
+5. Press File as no order facts: it is listed under No order facts.
+
+**Expected:** Each step works as described, in Chrome, with no script error.
+
+**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Not yet run.
+
+<details><summary>Screenshot</summary>
+
+![TC-REV-01 in Chrome](screenshots/TC-REV-01.png)
+
+</details>
+
+<details><summary>Screenshot 2</summary>
+
+![TC-REV-01 in Chrome](screenshots/TC-REV-01-2.png)
+
+</details>
+
+<details><summary>Screenshot 3</summary>
+
+![TC-REV-01 in Chrome](screenshots/TC-REV-01-3.png)
+
+</details>
+
+<details><summary>Screenshot 4</summary>
+
+![TC-REV-01 in Chrome](screenshots/TC-REV-01-4.png)
+
+</details>
+
+
+<a id="tc-rev-02"></a>
+
+### TC-REV-02: The lists and Home count what waits, and an unknown place shows the first list
+
+**Priority:** High · **How:** Automated · **Refs:** PD-4.4, REQ-DB-01
+
+**Steps**
+
+1. Covered by the tests named.
+
+**Expected:** Waiting, Unmatched and No order facts are listed newest first with their counts; Home links to the first two; the top bar has a Review link.
+
+**Automated tests:** `test_review.py::test_the_list_shows_a_waiting_document_and_home_counts_it`
+
+**Latest:** Owner: not recorded.
+
+
+<a id="tc-rev-03"></a>
+
+### TC-REV-03: The message page shows the escaped text, editable fields, the PO line beside each line and the ticks
+
+**Priority:** High · **How:** Automated · **Refs:** PD-4.4, DEC-09, DEC-54
+
+**Steps**
+
+1. Covered by the tests named.
+
+**Expected:** The text is escaped, never HTML; fields are inputs named for Accept; the PO line shows ordered and open; a differing value is marked; the sender tick is offered; Accept is a real form with its token and the document's version; a message that is not there is not found.
+
+**Automated tests:** `test_review.py::test_the_message_page_shows_text_fields_and_the_po_line_beside_each_line`, `test_review.py::test_differences_with_the_po_are_marked_on_the_line`, `test_review.py::test_a_message_that_is_not_there_is_not_found`
+
+**Latest:** Owner: not recorded.
+
+
+<a id="tc-rev-04"></a>
+
+### TC-REV-04: Reject needs a reason, File moves a document, and a stale page is refused; each is audited
+
+**Priority:** High · **How:** Automated · **Refs:** PD-4.4, DEC-52, DEC-54
+
+**Steps**
+
+1. Covered by the tests named.
+
+**Expected:** Reject without a reason is refused; with one the extraction is kept, marked rejected, with who and when; File moves the document to No order facts; a second action on the same page, or on a stale version, is refused; no action works without the page's token.
+
+**Automated tests:** `test_review.py::test_reject_needs_a_reason_keeps_the_extraction_and_audits_it`, `test_review.py::test_a_stale_page_is_refused`, `test_review.py::test_file_moves_a_document_to_no_order_facts`
+
+**Latest:** Owner: not recorded.
+
+
+<a id="tc-rev-05"></a>
+
+### TC-REV-05: An unmatched document is attached to a PO a person chooses and validated against it again
+
+**Priority:** High · **How:** Automated · **Refs:** PD-4.4, PD-4.3, DEC-71
+
+**Steps**
+
+1. Covered by the tests named.
+
+**Expected:** The page offers the sender's open POs and a PO number box; a number no PO has, or no choice, is refused in words; a choice matches the document to that PO and raises the flags for it, audited.
+
+**Automated tests:** `test_review.py::test_an_unmatched_document_offers_the_senders_open_pos_and_attach_validates_again`, `test_review.py::test_attach_by_choice_from_the_list`
+
+**Latest:** Owner: not recorded.
+
+
+<a id="tc-rev-06"></a>
+
+### TC-REV-06: The original is a download; only a PDF or a plain picture may open in the browser, under a sandbox policy
+
+**Priority:** High · **How:** Automated · **Refs:** PD-4.4, DEC-54, DEC-09
+
+**Steps**
+
+1. Covered by the tests named.
+
+**Expected:** A body downloads as .eml; a PDF downloads, or with view=1 opens inline under Content-Security-Policy: sandbox; anything else is only ever a download; a file name cannot break out of the header; the routes need sign-in.
+
+**Automated tests:** `test_review.py::test_a_body_downloads_as_an_eml_and_a_pdf_may_open_under_a_sandbox`, `test_review.py::test_a_file_that_is_not_a_pdf_or_picture_is_never_opened_in_the_browser`, `test_review.py::test_the_review_routes_need_a_signed_in_person`
+
+**Latest:** Owner: not recorded.
+
+
+## Accept
+
+<a id="tc-acc-01"></a>
+
+### TC-ACC-01: A person accepts a read document: the entry is recorded from the values in the form, linked to the document, under their name
+
+**Priority:** High · **How:** Browser · **Refs:** PD-4.5, DEC-08, DEC-38, DEC-54, REQ-DB-02
+
+**Steps**
+
+1. Open a waiting acknowledgement from Review; tick the sender and the planted-instruction boxes; change the unit price.
+2. Press Accept: the page shows the document as Accepted, with no Accept button.
+3. Open the PO: the line's timeline shows the vendor's acknowledgement and a link to the source document.
+
+**Expected:** The entry holds the price typed, not the model's; the document shows Accepted; the PO timeline links back to the message.
+
+**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Not yet run.
+
+<details><summary>Screenshot</summary>
+
+![TC-ACC-01 in Chrome](screenshots/TC-ACC-01.png)
+
+</details>
+
+<details><summary>Screenshot 2</summary>
+
+![TC-ACC-01 in Chrome](screenshots/TC-ACC-01-2.png)
+
+</details>
+
+<details><summary>Screenshot 3</summary>
+
+![TC-ACC-01 in Chrome](screenshots/TC-ACC-01-3.png)
+
+</details>
+
+
+<a id="tc-acc-02"></a>
+
+### TC-ACC-02: Accept records an acknowledgement, a shipment (every tracking number) and an invoice (with charges) in one transaction
+
+**Priority:** High · **How:** Automated · **Refs:** PD-4.5, DEC-54, DEC-48, DEC-38
+
+**Steps**
+
+1. Covered by the tests named.
+
+**Expected:** Each entry is made by the ledger code with source_document_id and the person; the extraction keeps the model's answer and the accepted values; a shipment keeps all its tracking numbers; an invoice keeps freight, tariff, tax and a negative discount; an acknowledgement with no lines is acknowledged with no details for every line; what the person typed is recorded, and the audit names the changed fields, never their values.
+
+**Automated tests:** `test_accept.py::test_accepting_records_the_entry_linked_to_the_document_under_the_persons_name`, `test_accept.py::test_what_the_person_typed_is_recorded_not_what_the_model_read`, `test_accept.py::test_an_acknowledgement_with_no_lines_is_acknowledged_with_no_details_for_every_line`, `test_accept.py::test_a_shipment_notice_keeps_every_tracking_number`, `test_accept.py::test_an_invoice_is_recorded_with_its_charges_including_a_discount`
+
+**Latest:** Owner: not recorded.
+
+
+<a id="tc-acc-03"></a>
+
+### TC-ACC-03: Accept is refused, and keeps nothing, when a tick is missing, a line or field is wrong, the page is old or the document was already accepted
+
+**Priority:** High · **How:** Automated · **Refs:** PD-4.5, DEC-52, DEC-71, DEC-09
+
+**Steps**
+
+1. Covered by the tests named.
+
+**Expected:** A flag that needs a tick blocks Accept until ticked; a bad value on the second line leaves no entry and no new state; a second Accept, or one from an old page, is refused in words; an invoice number already recorded, a missing invoice number and a bad charge are refused.
+
+**Automated tests:** `test_accept.py::test_a_second_accept_of_the_same_document_is_refused`, `test_accept.py::test_an_old_page_is_refused_by_its_version`, `test_accept.py::test_the_tick_for_an_odd_sender_is_needed_and_a_refusal_keeps_nothing`, `test_accept.py::test_a_refusal_midway_leaves_neither_the_entry_nor_the_new_state`, `test_accept.py::test_an_invoice_with_no_number_needs_one_typed_and_a_bad_charge_records_nothing`, `test_accept.py::test_an_invoice_number_already_recorded_is_refused_and_the_document_stays_waiting`
+
+**Latest:** Owner: not recorded.
+
+
+<a id="tc-acc-04"></a>
+
+### TC-ACC-04: A line that matches no PO line is assigned or left out; nothing is guessed
+
+**Priority:** High · **How:** Automated · **Refs:** PD-4.5, DEC-54
+
+**Steps**
+
+1. Covered by the tests named.
+
+**Expected:** A line matching nothing blocks Accept and names the line; typing the PO line number assigns it; a line can be left out; leaving out every line records nothing.
+
+**Automated tests:** `test_accept.py::test_a_line_matching_nothing_blocks_accept_until_it_is_assigned_or_left_out`, `test_accept.py::test_a_line_can_be_left_out`, `test_accept.py::test_every_line_left_out_records_nothing`
+
+**Latest:** Owner: not recorded.
+
+
+<a id="tc-acc-05"></a>
+
+### TC-ACC-05: An emailed PO is created for its vendor; a revised one shows its differences only and changes nothing
+
+**Priority:** High · **How:** Automated · **Refs:** PD-4.5, DEC-17, DEC-54
+
+**Steps**
+
+1. Covered by the tests named.
+
+**Expected:** A new PO number becomes a PO with source document, the company currency (changeable) and its lines; a PO number that exists lists only the differences (quantity, unit, price, date, lines added or missing), Accept is refused, and the PO is unchanged.
+
+**Automated tests:** `test_accept.py::test_a_new_emailed_po_is_created_for_the_recipients_vendor`, `test_accept.py::test_a_revised_emailed_po_shows_its_differences_only_and_changes_nothing`
+
+**Latest:** Owner: not recorded.
+
+
+<a id="tc-acc-06"></a>
+
+### TC-ACC-06: The PO's timeline shows each accepted line's source document
+
+**Priority:** Medium · **How:** Automated · **Refs:** PD-4.5, REQ-DB-02
+
+**Steps**
+
+1. Covered by the tests named.
+
+**Expected:** An acknowledgement, shipment or invoice line accepted from a document carries a link to that document's Review page; entries typed by hand carry none.
+
+**Automated tests:** `test_accept.py::test_the_pos_timeline_links_each_accepted_line_to_its_source_document`
+
+**Latest:** Owner: not recorded.
 
 
 ## Customer orders

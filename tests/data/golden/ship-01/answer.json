@@ -52,13 +52,17 @@
         "line_no": 1,
         "item": "CPL-3/4",
         "qty": 10,
-        "unit_price": 9.35
+        "unit": "EA",
+        "unit_price": 9.35,
+        "promised_date": null
       },
       {
         "line_no": 2,
         "item": "BLT-M8x40",
         "qty": 12,
-        "unit_price": 14.9
+        "unit": "BOX",
+        "unit_price": 14.9,
+        "promised_date": null
       }
     ]
   },

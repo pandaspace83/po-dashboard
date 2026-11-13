@@ -64,19 +64,25 @@
         "line_no": 1,
         "item": "GSK-G9",
         "qty": 60,
-        "unit_price": 0.85
+        "unit": "EA",
+        "unit_price": 0.85,
+        "promised_date": null
       },
       {
         "line_no": 2,
         "item": "MTR-075",
         "qty": 40,
-        "unit_price": 212.0
+        "unit": "EA",
+        "unit_price": 212.0,
+        "promised_date": null
       },
       {
         "line_no": 3,
         "item": "BLT-M8x40",
         "qty": 10,
-        "unit_price": 14.9
+        "unit": "BOX",
+        "unit_price": 14.9,
+        "promised_date": null
       }
     ]
   },

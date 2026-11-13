@@ -102,7 +102,7 @@ appear in the open-items report.
 | REQ-FU-01 | Rules (see ARCHITECTURE §8) raise in-app alerts on lines that need a follow-up. An alert clears itself when its condition clears. | Must |
 | REQ-FU-02 | Alert actions: mark contacted (with a note), snooze until a date, dismiss. A snoozed or dismissed alert returns if the line's state changes. | Must |
 | REQ-FU-03 | A drafted follow-up message per alert, for the buyer to copy. The app does not send it. | Should |
-| REQ-FU-04 | Automatic email to vendors. | Later (DEC-10) |
+| REQ-FU-04 | Automatic email to vendors. | After go-live (DEC-10, DEC-70) |
 
 ### Customer orders and sales invoices (CO, Phase 8, DEC-56 to DEC-59)
 

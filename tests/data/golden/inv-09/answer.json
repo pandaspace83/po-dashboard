@@ -70,25 +70,33 @@
         "line_no": 1,
         "item": "CPL-3/4",
         "qty": 25,
-        "unit_price": 9.35
+        "unit": "EA",
+        "unit_price": 9.35,
+        "promised_date": null
       },
       {
         "line_no": 2,
         "item": "SEAL-22",
         "qty": 40,
-        "unit_price": 1.1
+        "unit": "EA",
+        "unit_price": 1.1,
+        "promised_date": null
       },
       {
         "line_no": 3,
         "item": "WID-100",
         "qty": 500,
-        "unit_price": 5.0
+        "unit": "EA",
+        "unit_price": 5.0,
+        "promised_date": null
       },
       {
         "line_no": 4,
         "item": "NUT-M8",
         "qty": 10,
-        "unit_price": 6.75
+        "unit": "BOX",
+        "unit_price": 6.75,
+        "promised_date": null
       }
     ]
   },

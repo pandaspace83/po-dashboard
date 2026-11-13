@@ -50,13 +50,17 @@
         "line_no": 1,
         "item": "WID-400",
         "qty": 40,
-        "unit_price": 12.5
+        "unit": "EA",
+        "unit_price": 12.5,
+        "promised_date": null
       },
       {
         "line_no": 2,
         "item": "GSK-G9",
         "qty": 100,
-        "unit_price": 0.85
+        "unit": "EA",
+        "unit_price": 0.85,
+        "promised_date": null
       }
     ]
   },

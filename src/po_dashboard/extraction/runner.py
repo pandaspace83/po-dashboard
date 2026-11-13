@@ -11,7 +11,6 @@ held, and the answer is stored in one short write. What happens to a failure:
 
 from __future__ import annotations
 
-import json
 import logging
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -23,8 +22,8 @@ from sqlalchemy.orm import Session
 
 from po_dashboard.config import Settings
 from po_dashboard.db.base import utcnow
-from po_dashboard.db.mail import Extraction, SourceDocument
-from po_dashboard.extraction import queue, schema, window
+from po_dashboard.db.mail import Extraction, SourceDocument, SourceMessage
+from po_dashboard.extraction import matcher, queue, schema, window
 from po_dashboard.intake.store import FileStore
 from po_dashboard.models import llm
 
@@ -95,14 +94,32 @@ class Extractor:
     def _store(self, found: int, result: llm.Extraction, fitted: window.Windowed) -> Outcome:
         answer = result.answer
         doc_type, po_number = answer.get("doc_type"), answer.get("po_number")
-        flags = [{"flag": "read_in_part", "level": "check"}] if fitted.read_in_part else []
+        try:
+            decision = self._match(found, answer, fitted)  # plain code, no model: a read, then one short write
+        except Exception as problem:  # a bug in matching, not in the document: fail it once and say what kind
+            log.warning("matching %s: %s", found, type(problem).__name__)
+            return self._settle(found, "failed", f"could not be matched ({type(problem).__name__})"[:200])
         values: dict[str, Any] = dict(
             state="done", answer=result.raw, doc_type=doc_type if doc_type in schema.DOC_TYPES else None,
             po_number=str(po_number)[:100] if isinstance(po_number, str) and po_number.strip() else None,
             seconds=result.seconds, prompt_tokens=result.prompt_tokens, finished_at=self.now(), next_attempt_at=None,
-            last_error=None, flags=json.dumps(flags) if flags else None, review_state=None,
+            last_error=None, flags=decision.flags_json(), review_state=decision.review_state,
+            po_id=decision.po_id, vendor_id=decision.vendor_id,
         )  # fmt: skip
         return self._write(found, values, Outcome("done", found))
+
+    def _match(self, found: int, answer: dict[str, Any], fitted: window.Windowed) -> matcher.Decision:
+        """Find the PO, the vendor and the lines and compute the flags (DEC-71), on the text the model was given."""
+        with Session(self.engine) as db:
+            row = db.get(Extraction, found)
+            document = db.get(SourceDocument, row.document_id) if row else None
+            message = db.get(SourceMessage, document.message_id) if document else None
+            if row is None or document is None or message is None:
+                raise LookupError("the document is gone")
+            return matcher.decide(
+                db, answer, fitted.text, message, document, own_domain=matcher.own_domain_of(db, message),
+                today=self.now().date(), read_in_part=fitted.read_in_part, own_id=found,
+            )
 
     def _settle(
         self, found: int, state: str, error: str | None, *, count_try: bool = True,

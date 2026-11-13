@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block title %}Review · {{ message.subject or "message" }} · {{ app_name }}{% endblock %}
+{% block content %}
+<p class="muted"><a href="/review">Review</a> /</p>
+<h1>{{ message.subject or "(no subject)" }}</h1>
+<p class="muted">From {{ message.sender or "unknown" }} · to {{ message.recipients or "unknown" }} · {{ message.received_at | moment }} · {{ message.folder }}</p>
+{% if error %}<p class="error" role="alert">{{ icon("alert") }}<span>{{ error }}</span></p>{% endif %}
+{% if not documents %}<p>None of this message's documents has been read yet.</p>{% endif %}
+
+{% for d in documents %}
+<section class="review-doc" aria-labelledby="doc-{{ d.row.id }}">
+  <h2 id="doc-{{ d.row.id }}">{{ d.document.filename }}
+    <span class="pill">{{ (d.row.doc_type or "unknown").replace("_", " ") }}</span>
+    <span class="pill {{ 'bad' if d.row.review_state == 'unmatched' else '' }}">{{ {"waiting": "Waiting for review", "unmatched": "Unmatched", "no_facts": "No order facts", "accepted": "Accepted", "rejected": "Rejected", "dismissed": "Dismissed", "superseded": "Replaced"}.get(d.row.review_state, d.row.review_state or "") }}</span>
+  </h2>
+  <p class="muted">
+    <a href="/review/original/{{ d.document.id }}">Download the original</a>
+    {% if d.document.kind == "pdf" or (d.document.kind == "image" and d.document.content_type in ("image/png", "image/jpeg", "image/gif")) %}
+    · <a href="/review/original/{{ d.document.id }}?view=1" target="_blank" rel="noopener">Open in the browser's viewer</a>{% endif %}
+    {% if d.po %}· Matched to <a href="/orders/{{ d.po.id }}">PO {{ d.po.po_number }}</a>{% endif %}
+  </p>
+
+  <div class="review-grid">
+    <div class="review-text">
+      <h3>Text read from the document</h3>
+      <pre tabindex="0" aria-label="The document's text">{{ d.text }}</pre>
+    </div>
+
+    <div class="review-fields">
+      <h3>What the model read</h3>
+      {% if not d.answer %}
+      <p>The model's answer cannot be shown.</p>
+      {% else %}
+
+      {% if d.flags %}
+      <ul class="flags-list" aria-label="Flags">
+        {% for f in d.flags %}
+        <li><span class="pill {{ 'bad' if f.level == 'check' else '' }}">{{ icon("alert") if f.level == 'check' else icon("check-circle") }}{{ "Check" if f.level == "check" else "Note" }}</span>
+          {{ f.words }}{% if f.field %} <span class="muted">({{ f.field.replace("_", " ") }})</span>{% endif %}
+          {% if f.blocks %}<strong> Accept is blocked until it is assigned or left out.</strong>{% endif %}</li>
+        {% endfor %}
+      </ul>
+      {% else %}<p class="muted">No flags.</p>{% endif %}
+
+      {% if d.differences %}
+      <h4>The PO is already recorded: what this document says differently</h4>
+      <ul class="flags-list">{% for note in d.differences %}<li>{{ note }}</li>{% endfor %}</ul>
+      {% elif d.po and d.row.doc_type == "purchase_order" %}<p class="muted">The document says nothing different from the PO already recorded.</p>{% endif %}
+
+      <form method="post" action="/review/{{ d.row.id }}/accept" class="accept-form" id="accept-{{ d.row.id }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <input type="hidden" name="version" value="{{ d.row.version }}">
+        <div class="form-row">
+          {% for field, label, value in d.top %}
+          <div><label for="f-{{ d.row.id }}-{{ field }}">{{ label }}</label>
+            <input id="f-{{ d.row.id }}-{{ field }}" name="f_{{ field }}" value="{{ value }}" {{ "" if d.actionable else "readonly" }}></div>
+          {% endfor %}
+        </div>
+
+        {% if d.lines %}
+        <div class="table-wrap table-scroll">
+        <table class="review-lines">
+          <thead><tr><th scope="col">#</th><th scope="col">Item</th><th scope="col">Qty</th><th scope="col">Unit</th><th scope="col">Price</th>
+            {% if d.date_field %}<th scope="col">{{ d.date_field.replace("_", " ").capitalize() }}</th>{% endif %}
+            <th scope="col">On the PO</th><th scope="col">Flags</th>{% if d.actionable %}<th scope="col">Leave out</th>{% endif %}</tr></thead>
+          <tbody>
+          {% for line in d.lines %}
+          <tr>
+            <td><input name="line_{{ line.index }}_line_no" value="{{ line.values.line_no }}" size="3" aria-label="Line number, line {{ line.index + 1 }}" {{ "" if d.actionable else "readonly" }}></td>
+            <td><input name="line_{{ line.index }}_item" value="{{ line.values.item }}" aria-label="Item, line {{ line.index + 1 }}" {{ "" if d.actionable else "readonly" }}></td>
+            <td class="{{ 'differs' if 'qty' in line.differs }}"><input name="line_{{ line.index }}_qty" value="{{ line.values.qty }}" size="6" aria-label="Quantity, line {{ line.index + 1 }}" {{ "" if d.actionable else "readonly" }}></td>
+            <td class="{{ 'differs' if 'unit' in line.differs }}"><input name="line_{{ line.index }}_unit" value="{{ line.values.unit }}" size="5" aria-label="Unit, line {{ line.index + 1 }}" {{ "" if d.actionable else "readonly" }}></td>
+            <td class="{{ 'differs' if 'unit_price' in line.differs }}"><input name="line_{{ line.index }}_unit_price" value="{{ line.values.unit_price }}" size="8" aria-label="Unit price, line {{ line.index + 1 }}" {{ "" if d.actionable else "readonly" }}></td>
+            {% if d.date_field %}<td><input name="line_{{ line.index }}_{{ d.date_field }}" value="{{ line.values[d.date_field] }}" size="10" aria-label="{{ d.date_field.replace('_', ' ').capitalize() }}, line {{ line.index + 1 }}" {{ "" if d.actionable else "readonly" }}></td>{% endif %}
+            <td>
+              {% if line.po_line %}
+              Line {{ line.po_line.line_no }}: {{ line.po_line.item }}<br>
+              <span class="muted">ordered {{ line.po_line.ordered|quantity }}, open {{ line.po_line.still_open|quantity }} {{ line.po_line.unit }}{% if line.po_line.unit_price is not none %}, {{ line.po_line.unit_price|quantity }} each{% endif %}{% if line.requested %}, wanted {{ line.requested|day }}{% endif %}</span>
+              {% elif d.po %}<span class="pill bad">{{ icon("alert") }}No PO line matched</span>
+              {% else %}<span class="muted">No PO yet</span>{% endif %}
+            </td>
+            <td>{% for f in line.flags %}<span class="pill {{ 'bad' if f.level == 'check' else '' }}" title="{{ f.words }}">{{ f.flag.replace("_", " ") }}</span> {% endfor %}</td>
+            {% if d.actionable %}<td><input type="checkbox" name="line_{{ line.index }}_skip" value="1" aria-label="Leave out line {{ line.index + 1 }}"></td>{% endif %}
+          </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+        </div>
+        {% endif %}
+
+        {% if d.charges %}
+        <h4>Charges (shown only; never an alert)</h4>
+        <div class="table-wrap"><table>
+          <thead><tr><th scope="col">Kind</th><th scope="col">As printed</th><th scope="col">Amount</th></tr></thead>
+          <tbody>{% for c in d.charges %}<tr>
+            <td><input name="charge_{{ loop.index0 }}_kind" value="{{ c.kind }}" size="8" aria-label="Charge kind {{ loop.index }}" {{ "" if d.actionable else "readonly" }}></td>
+            <td><input name="charge_{{ loop.index0 }}_label" value="{{ c.label }}" aria-label="Charge label {{ loop.index }}" {{ "" if d.actionable else "readonly" }}></td>
+            <td><input name="charge_{{ loop.index0 }}_amount" value="{{ c.amount }}" size="8" aria-label="Charge amount {{ loop.index }}" {{ "" if d.actionable else "readonly" }}></td>
+          </tr>{% endfor %}</tbody>
+        </table></div>
+        {% endif %}
+
+        {% if d.actionable %}
+        {% for t in d.ticks %}
+        <p><label class="check"><input type="checkbox" name="tick_{{ t.flag }}" value="1"> I checked: {{ t.words }}</label></p>
+        {% endfor %}
+        <div class="form-actions">
+          <button type="submit" class="primary" {{ "disabled" if d.differences or (d.po and d.row.doc_type == "purchase_order") else "" }}>{{ icon("check-circle") }}Accept</button>
+          <span class="muted">{% if d.po and d.row.doc_type == "purchase_order" %}This PO number is already recorded, so there is nothing to accept.{% else %}Accepting records the values above, as you have them, against {% if d.po %}PO {{ d.po.po_number }}{% else %}a new PO{% endif %}, under your name.{% endif %}</span>
+        </div>
+        {% endif %}
+      </form>
+      {% endif %}
+
+      {% if d.actionable %}
+      <div class="actions review-actions">
+        <form method="post" action="/review/{{ d.row.id }}/reject" class="inline">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <input type="hidden" name="version" value="{{ d.row.version }}">
+          <input name="reason" type="text" maxlength="500" required placeholder="Why reject?" aria-label="Reason for rejecting {{ d.document.filename }}">
+          <button type="submit" class="small">{{ icon("ban") }}Reject</button>
+        </form>
+        <form method="post" action="/review/{{ d.row.id }}/file" class="inline">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <input type="hidden" name="version" value="{{ d.row.version }}">
+          <button type="submit" class="small">File as no order facts</button>
+        </form>
+        {% if d.answer and d.answer.doc_type in ("order_acknowledgement", "shipment_notice", "invoice") %}
+        <form method="post" action="/review/{{ d.row.id }}/attach" class="inline">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <input type="hidden" name="version" value="{{ d.row.version }}">
+          {% if d.candidates %}
+          <select name="po_id" aria-label="Choose a PO for {{ d.document.filename }}">
+            <option value="">Choose a PO…</option>
+            {% for p in d.candidates %}<option value="{{ p.id }}">{{ p.po_number }}</option>{% endfor %}
+          </select>
+          {% endif %}
+          <input name="po_number" type="text" maxlength="64" placeholder="or type a PO number" aria-label="PO number to attach {{ d.document.filename }} to">
+          <button type="submit" class="small">{{ icon("search") }}Attach to a PO</button>
+        </form>
+        {% endif %}
+      </div>
+      {% elif d.row.review_note %}
+      <p class="muted">{{ d.row.review_state.capitalize() }}: {{ d.row.review_note }}</p>
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endfor %}
+{% endblock %}

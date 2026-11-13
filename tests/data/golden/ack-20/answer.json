@@ -80,31 +80,41 @@
         "line_no": 1,
         "item": "NUT-M8",
         "qty": 60,
-        "unit_price": 6.75
+        "unit": "BOX",
+        "unit_price": 6.75,
+        "promised_date": null
       },
       {
         "line_no": 2,
         "item": "HSE-12",
         "qty": 80,
-        "unit_price": 4.2
+        "unit": "FT",
+        "unit_price": 4.2,
+        "promised_date": null
       },
       {
         "line_no": 3,
         "item": "SEAL-22",
         "qty": 12,
-        "unit_price": 1.1
+        "unit": "EA",
+        "unit_price": 1.1,
+        "promised_date": null
       },
       {
         "line_no": 4,
         "item": "CPL-3/4",
         "qty": 500,
-        "unit_price": 9.35
+        "unit": "EA",
+        "unit_price": 9.35,
+        "promised_date": null
       },
       {
         "line_no": 5,
         "item": "BLT-M8x40",
         "qty": 40,
-        "unit_price": 14.9
+        "unit": "BOX",
+        "unit_price": 14.9,
+        "promised_date": null
       }
     ]
   },

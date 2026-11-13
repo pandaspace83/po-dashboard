@@ -74,25 +74,33 @@
         "line_no": 1,
         "item": "BLT-M8x40",
         "qty": 25,
-        "unit_price": 14.9
+        "unit": "BOX",
+        "unit_price": 14.9,
+        "promised_date": null
       },
       {
         "line_no": 2,
         "item": "PIN-D6",
         "qty": 150,
-        "unit_price": 8.1
+        "unit": "BOX",
+        "unit_price": 8.1,
+        "promised_date": null
       },
       {
         "line_no": 3,
         "item": "PLT-AL3",
         "qty": 150,
-        "unit_price": 27.6
+        "unit": "EA",
+        "unit_price": 27.6,
+        "promised_date": null
       },
       {
         "line_no": 4,
         "item": "WID-400",
         "qty": 500,
-        "unit_price": 12.5
+        "unit": "EA",
+        "unit_price": 12.5,
+        "promised_date": null
       }
     ]
   },

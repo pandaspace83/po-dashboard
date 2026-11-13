@@ -53,13 +53,17 @@
         "line_no": 1,
         "item": "WID-100",
         "qty": 25,
-        "unit_price": 5.0
+        "unit": "EA",
+        "unit_price": 5.0,
+        "promised_date": null
       },
       {
         "line_no": 2,
         "item": "PIN-D6",
         "qty": 5,
-        "unit_price": 8.1
+        "unit": "BOX",
+        "unit_price": 8.1,
+        "promised_date": null
       }
     ]
   },

@@ -39,3 +39,19 @@ def test_false_on_an_error_status_or_a_bad_body(monkeypatch: pytest.MonkeyPatch)
     assert not check(monkeypatch, httpx.Response(500))
     assert not check(monkeypatch, httpx.Response(200, text="not json"))
     assert not check(monkeypatch, httpx.Response(200, json=["a list"]))
+
+
+def test_only_the_gateway_talks_to_the_model_server() -> None:
+    """NFR-10, DEC-01: no other module names the model server's address or its routes."""
+    from pathlib import Path
+
+    src = Path(__file__).resolve().parent.parent / "src" / "po_dashboard"
+    allowed = {src / "models" / "llm.py", src / "config.py"}  # config holds the address and refuses a non-local one
+    markers = ("ollama_url", "/api/chat", "/api/tags", "/api/generate", "11434")
+    offenders = [
+        str(p.relative_to(src))
+        for p in sorted(src.rglob("*.py"))
+        if p not in allowed and any(m in p.read_text(encoding="utf-8") for m in markers)
+    ]
+    assert offenders == [], f"model server reached outside models/llm.py: {offenders}"
+    assert "ollama_url" in (src / "models" / "llm.py").read_text(encoding="utf-8")

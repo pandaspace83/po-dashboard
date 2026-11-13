@@ -81,31 +81,41 @@
         "line_no": 1,
         "item": "FLT-OIL7",
         "qty": 10,
-        "unit_price": 11.8
+        "unit": "EA",
+        "unit_price": 11.8,
+        "promised_date": null
       },
       {
         "line_no": 2,
         "item": "NUT-M8",
         "qty": 80,
-        "unit_price": 6.75
+        "unit": "BOX",
+        "unit_price": 6.75,
+        "promised_date": null
       },
       {
         "line_no": 3,
         "item": "BLT-M8x40",
         "qty": 40,
-        "unit_price": 14.9
+        "unit": "BOX",
+        "unit_price": 14.9,
+        "promised_date": null
       },
       {
         "line_no": 4,
         "item": "GSK-G9",
         "qty": 40,
-        "unit_price": 0.85
+        "unit": "EA",
+        "unit_price": 0.85,
+        "promised_date": null
       },
       {
         "line_no": 5,
         "item": "PLT-AL3",
         "qty": 500,
-        "unit_price": 27.6
+        "unit": "EA",
+        "unit_price": 27.6,
+        "promised_date": null
       }
     ]
   },

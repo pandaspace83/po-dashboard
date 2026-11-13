@@ -25,19 +25,23 @@ from po_dashboard.db.ledger import (
     AckLine,
     Acknowledgement,
     Invoice,
+    InvoiceCharge,
     InvoiceLine,
     POLine,
     PromisedDateHistory,
     PurchaseOrder,
     Shipment,
     ShipmentLine,
+    ShipmentTracking,
 )
+from po_dashboard.db.mail import SourceDocument
 from po_dashboard.db.models import AppUser, AuditLog
 from po_dashboard.db.types import Money, Quantity
 from po_dashboard.display import day
 from po_dashboard.ledger.errors import LedgerError, number, text, when
 from po_dashboard.ledger.tracking import tracking_url
 
+CHARGE_KINDS = ("freight", "tariff", "tax", "other")
 Kind = Literal["ack", "shipment", "invoice"]
 KINDS: tuple[Kind, ...] = ("ack", "shipment", "invoice")
 
@@ -62,6 +66,13 @@ class InvoiceLineInput:
     po_line_id: int
     qty: Decimal
     price: Decimal
+
+
+@dataclass(frozen=True)
+class ChargeInput:
+    kind: str
+    label: str
+    amount: Decimal  # a discount is `other` with a negative amount
 
 
 def _blank(*values: str | None) -> bool:
@@ -111,6 +122,10 @@ def parse_invoice_line(label: str, po_line_id: int, qty: str, price: str) -> Inv
     )
 
 
+def _from_document(source_document_id: int | None) -> dict[str, int]:
+    return {"document": source_document_id} if source_document_id else {}
+
+
 def _check_lines(db: Session, order: PurchaseOrder, line_ids: Sequence[int]) -> None:
     if not line_ids:
         raise LedgerError("Fill in at least one line.")
@@ -124,6 +139,7 @@ def _check_lines(db: Session, order: PurchaseOrder, line_ids: Sequence[int]) -> 
 def record_ack(
     db: Session, order: PurchaseOrder, lines: Sequence[AckInput], *, without_details: bool = False,
     source_ref: str | None = None, actor: AppUser | None = None, client_address: str | None = None,
+    source_document_id: int | None = None,
 ) -> Acknowledgement:  # fmt: skip
     """The vendor acknowledged the order. `without_details` records every unlisted line as acknowledged, no figures."""
     entries = list(lines)
@@ -134,7 +150,7 @@ def record_ack(
     _check_lines(db, order, [entry.po_line_id for entry in entries])
     ack = Acknowledgement(
         po_id=order.id, source_ref=text(source_ref, "Reference", longest=64), accepted_by=actor.id if actor else None,
-        accepted_at=utcnow(),
+        accepted_at=utcnow(), source_document_id=source_document_id,
     )  # fmt: skip
     db.add(ack)
     db.flush()
@@ -151,7 +167,8 @@ def record_ack(
         if entry.promised_date is not None:
             db.add(PromisedDateHistory(po_line_id=entry.po_line_id, promised_date=entry.promised_date, ack_id=ack.id))
     db.flush()
-    audit(db, "ack.record", actor, f"po:{order.id}", client_address, after={"entry": ack.id, "lines": len(entries)})
+    audit(db, "ack.record", actor, f"po:{order.id}", client_address,
+          after={"entry": ack.id, "lines": len(entries), **_from_document(source_document_id)})
     return ack
 
 
@@ -159,20 +176,29 @@ def record_shipment(
     db: Session, order: PurchaseOrder, lines: Sequence[ShipLineInput], *, carrier: str | None = None,
     tracking_number: str | None = None, shipped_at: str | None = None, eta: str | None = None,
     actor: AppUser | None = None, client_address: str | None = None, source_ref: str | None = None,
+    source_document_id: int | None = None, tracking_numbers: Sequence[str] = (),
 ) -> Shipment:  # fmt: skip
-    """A shipping notice. Its arrival date applies to every line unless a line has its own (REQ-SHP-02)."""
+    """A shipping notice. Its arrival date applies to every line unless a line has its own (REQ-SHP-02). A notice from
+    a document may list several boxes: `tracking_numbers` keeps them all, and the first is the one shown."""
     header = {
         "carrier": text(carrier, "Carrier", longest=100),
         "tracking_number": text(tracking_number, "Tracking number", longest=100),
         "shipped_at": when(shipped_at, "Shipped on"),
         "eta": when(eta, "Expected arrival"),
     }
+    boxes = list(dict.fromkeys(text(number_, "Tracking number", longest=100) or "" for number_ in tracking_numbers))
+    boxes = [box for box in boxes if box]
+    if boxes and not header["tracking_number"]:
+        header["tracking_number"] = boxes[0]
     _check_lines(db, order, [entry.po_line_id for entry in lines])
     shipment = Shipment(
-        po_id=order.id, accepted_by=actor.id if actor else None, accepted_at=utcnow(), source_ref=source_ref, **header
+        po_id=order.id, accepted_by=actor.id if actor else None, accepted_at=utcnow(), source_ref=source_ref,
+        source_document_id=source_document_id, **header,
     )
     db.add(shipment)
     db.flush()
+    for box in boxes:
+        db.add(ShipmentTracking(shipment_id=shipment.id, tracking_number=box, carrier=header["carrier"]))
     for entry in lines:
         db.add(ShipmentLine(shipment_id=shipment.id, po_line_id=entry.po_line_id, qty=entry.qty, eta=entry.eta))
     db.flush()
@@ -182,7 +208,10 @@ def record_shipment(
         actor,
         f"po:{order.id}",
         client_address,
-        after={"entry": shipment.id, "lines": len(lines), **({"source": source_ref} if source_ref else {})},
+        after={
+            "entry": shipment.id, "lines": len(lines), **({"source": source_ref} if source_ref else {}),
+            **_from_document(source_document_id),
+        },
     )
     return shipment
 
@@ -205,19 +234,22 @@ def _shipment_title(ship: Shipment, verb: str = "Shipment") -> str:
 def record_invoice(
     db: Session, order: PurchaseOrder, lines: Sequence[InvoiceLineInput], *, invoice_number: str | None,
     invoice_date: str | None = None, total: str | None = None, actor: AppUser | None = None,
-    client_address: str | None = None,
+    client_address: str | None = None, source_document_id: int | None = None, charges: Sequence[ChargeInput] = (),
 ) -> Invoice:  # fmt: skip
     """An invoice. The total is kept as written; there is no tax field until OPEN-11 is answered."""
     number_ = text(invoice_number, "Invoice number", longest=64, required=True) or ""
     dated = when(invoice_date, "Invoice date")
     written_total = number(total, "Total", Money, positive=False) if (total or "").strip() else None
     _check_lines(db, order, [entry.po_line_id for entry in lines])
+    for charge in charges:
+        if charge.kind not in CHARGE_KINDS:
+            raise LedgerError(f"Charge kind must be one of {', '.join(CHARGE_KINDS)}.")
     taken = db.scalars(select(Invoice.invoice_number).where(Invoice.po_id == order.id))
     if number_.lower() in {existing.lower() for existing in taken}:
         raise LedgerError(f"Invoice {number_} is already recorded for this purchase order.")
     invoice = Invoice(
         po_id=order.id, invoice_number=number_, invoice_date=dated, total=written_total,
-        accepted_by=actor.id if actor else None, accepted_at=utcnow(),
+        accepted_by=actor.id if actor else None, accepted_at=utcnow(), source_document_id=source_document_id,
     )  # fmt: skip
     try:
         with db.begin_nested():  # two people sending the same invoice at once: the database refuses the second
@@ -227,9 +259,12 @@ def record_invoice(
         raise LedgerError(f"Invoice {number_} is already recorded for this purchase order.") from clash
     for entry in lines:
         db.add(InvoiceLine(invoice_id=invoice.id, po_line_id=entry.po_line_id, qty=entry.qty, price=entry.price))
+    for charge in charges:
+        db.add(InvoiceCharge(invoice_id=invoice.id, kind=charge.kind, label=charge.label, amount=charge.amount))
     db.flush()
     audit(db, "invoice.record", actor, f"po:{order.id}", client_address,
-          after={"entry": invoice.id, "invoice_number": number_, "lines": len(lines)})  # fmt: skip
+          after={"entry": invoice.id, "invoice_number": number_, "lines": len(lines),
+                 **_from_document(source_document_id)})  # fmt: skip
     return invoice
 
 
@@ -397,6 +432,12 @@ def remove_entry(
 class TimelineStep:
     at: datetime
     text: str
+    source_url: str | None = None  # the Review page of the message an accepted entry came from (REQ-DB-02)
+
+
+def _source_url(db: Session, document_id: int | None) -> str | None:
+    document = db.get(SourceDocument, document_id) if document_id else None
+    return f"/review/message/{document.message_id}" if document else None
 
 
 def line_timeline(db: Session, order: PurchaseOrder) -> dict[int, list[TimelineStep]]:
@@ -405,8 +446,9 @@ def line_timeline(db: Session, order: PurchaseOrder) -> dict[int, list[TimelineS
     steps: dict[int, list[TimelineStep]] = {line.id: [] for line in lines}
     for line in lines:
         steps[line.id].append(TimelineStep(line.created_at, f"Ordered {_shown(line.ordered_qty)} {line.unit}"))
-    for ack_at, ack_row in db.execute(
-        select(Acknowledgement.accepted_at, AckLine).join(Acknowledgement).where(Acknowledgement.po_id == order.id)
+    for ack_at, ack_row, ack_doc in db.execute(
+        select(Acknowledgement.accepted_at, AckLine, Acknowledgement.source_document_id)
+        .join(Acknowledgement).where(Acknowledgement.po_id == order.id)
     ):
         parts = []
         if ack_row.confirmed_qty is not None:
@@ -416,7 +458,7 @@ def line_timeline(db: Session, order: PurchaseOrder) -> dict[int, list[TimelineS
         if ack_row.promised_date is not None:
             parts.append(f"promised {day(ack_row.promised_date)}")
         steps[ack_row.po_line_id].append(
-            TimelineStep(ack_at, "Vendor acknowledged: " + (", ".join(parts) or "no figures"))
+            TimelineStep(ack_at, "Vendor acknowledged: " + (", ".join(parts) or "no figures"), _source_url(db, ack_doc))
         )
     for ship, ship_row in db.execute(
         select(Shipment, ShipmentLine)
@@ -429,7 +471,10 @@ def line_timeline(db: Session, order: PurchaseOrder) -> dict[int, list[TimelineS
         if ship.source_ref and ship.source_ref.startswith(QUICKBOOKS_REF):
             text_ = f"{_shipment_title(ship)}: {_shown(ship_row.qty)}"
         steps[ship_row.po_line_id].append(
-            TimelineStep(ship.accepted_at, text_ + (f", expected {day(arrival)}" if arrival else ""))
+            TimelineStep(
+                ship.accepted_at, text_ + (f", expected {day(arrival)}" if arrival else ""),
+                _source_url(db, ship.source_document_id),
+            )
         )
     for bill, bill_row in db.execute(
         select(Invoice, InvoiceLine)
@@ -437,7 +482,10 @@ def line_timeline(db: Session, order: PurchaseOrder) -> dict[int, list[TimelineS
         .where(Invoice.po_id == order.id)
     ):
         steps[bill_row.po_line_id].append(
-            TimelineStep(bill.accepted_at, f"Invoiced {_shown(bill_row.qty)} on {bill.invoice_number}")
+            TimelineStep(
+                bill.accepted_at, f"Invoiced {_shown(bill_row.qty)} on {bill.invoice_number}",
+                _source_url(db, bill.source_document_id),
+            )
         )
     _add_history_from_audit(db, order, lines, steps)
     return {line_id: sorted(found, key=lambda step: step.at) for line_id, found in steps.items()}

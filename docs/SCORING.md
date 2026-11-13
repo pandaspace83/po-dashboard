@@ -108,7 +108,8 @@ numbers; the vendor's own line numbering; a duplicate; and **8 documents with pl
 small print in a PDF, in a spreadsheet cell, inside a quoted message).
 
 Files: `tests/data/golden/<id>/`, holding the document in its real form, `text.txt` (what the text step should give),
-and `answer.json` (the answer, its format, tags for the hard cases, tell-tale values, and `expected_flags`).
+and `answer.json` (the answer, its format, tags for the hard cases, tell-tale values, the PO as ordered in
+`po_context`, each line with its unit and its last accepted promised date, and `expected_flags`).
 `tests/data/golden/GOLDEN_SET.md` lists them.
 
 ## 6. The run

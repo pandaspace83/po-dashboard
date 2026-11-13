@@ -17,7 +17,7 @@ from po_dashboard.auth import passwords, service
 from po_dashboard.auth.gate import SESSION_COOKIE, SIGN_IN_COOKIE, cookie_value
 from po_dashboard.db.base import utcnow
 from po_dashboard.db.models import AppUser, SignInSession
-from po_dashboard.extraction import queue
+from po_dashboard.extraction import queue, review
 from po_dashboard.ledger import reports
 from po_dashboard.models import llm
 from po_dashboard.pages.common import (
@@ -120,7 +120,11 @@ def scan_text(db: Session) -> str:
 
 def _queue_health(db: Session) -> dict[str, int]:
     counts = queue.waiting_counts(db)
-    return {"waiting": counts["queued"] + counts["running"], "failed": counts["failed"]}
+    shelves = review.counts(db)
+    return {
+        "waiting": counts["queued"] + counts["running"], "failed": counts["failed"],
+        "to_review": shelves["waiting"], "unmatched": shelves["unmatched"],
+    }
 
 
 @router.get("/", response_class=HTMLResponse)

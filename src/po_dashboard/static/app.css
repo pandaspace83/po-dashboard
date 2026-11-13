@@ -289,3 +289,17 @@ table.todo td:first-child a:hover { text-decoration: underline; }
 /* QuickBooks load preview (DEC-46) */
 ul.plan { padding-left: 20px; margin: 0 0 16px; }
 ul.plan li { margin: 6px 0; }
+
+/* Review screens (PD-4.4) */
+.review-doc { border-top: 1px solid var(--line, #ccc); margin-top: 1.5rem; padding-top: 0.5rem; }
+.review-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 1rem; align-items: start; }
+.review-text pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 36rem; overflow: auto; padding: 0.75rem;
+  background: var(--hover); border-radius: 6px; font-size: 0.85rem; }
+.review-lines input { width: 100%; min-width: 3rem; }
+.review-lines td.differs { background: var(--bad-tint); }
+.flags-list { list-style: none; padding: 0; margin: 0 0 1rem; }
+.flags-list li { margin: 0.35rem 0; }
+.review-actions { margin-top: 1rem; }
+@media (max-width: 900px) { .review-grid { grid-template-columns: minmax(0, 1fr); } }
+/* Nine links for an admin (Review added in PD-4.4): tighter links keep the bar on one row. */
+.topbar nav.crowded .navlink { padding-left: 5px; padding-right: 5px; gap: 4px; }

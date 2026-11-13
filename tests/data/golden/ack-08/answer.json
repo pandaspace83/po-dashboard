@@ -56,13 +56,17 @@
         "line_no": 1,
         "item": "NUT-M8",
         "qty": 60,
-        "unit_price": 6.75
+        "unit": "BOX",
+        "unit_price": 6.75,
+        "promised_date": null
       },
       {
         "line_no": 2,
         "item": "SEAL-22",
         "qty": 500,
-        "unit_price": 1.1
+        "unit": "EA",
+        "unit_price": 1.1,
+        "promised_date": null
       }
     ]
   },
