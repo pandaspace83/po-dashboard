@@ -4,7 +4,7 @@
 
 PO Dashboard (RaceSpec Internal Dashboard). Scope: Phase 0 and Phase 1: sign-in, people, vendors, purchase orders, imports, the QuickBooks starting load, entries by hand, Home, Open items, Audit, page behaviour, security and speed.
 
-**185 cases:** 51 Critical, 116 High, 18 Medium; 3 terminal, 110 automated, 68 browser, 4 owner only.
+**188 cases:** 52 Critical, 118 High, 18 Medium; 3 terminal, 113 automated, 68 browser, 4 owner only.
 
 Latest Chrome run: 11/13/2026, Google Chrome 158.0.8127.37, by Claude, scripts/browser_evidence.py, on commit f8a7615 with uncommitted changes: **68 of 68** browser cases pass. Automated tests: `uv run pytest`. Defects: [DEFECTS.md](DEFECTS.md). Sign-off: [SIGN_OFF.md](SIGN_OFF.md).
 
@@ -207,6 +207,9 @@ Latest Chrome run: 11/13/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 | [TC-DRAFT-01](#tc-draft-01) | A flagged line gets a fixed-template draft for each reason, filled from the records | High | Automated | Automated tests | — |
 | [TC-DRAFT-02](#tc-draft-02) | The draft goes only to the contact on record, and the page needs a sign-in | High | Automated | Automated tests | — |
 | [TC-DRAFT-03](#tc-draft-03) | Draft message button on a late Open items row, and Copy | Medium | Browser | Pass 11/13/2026 | — |
+| [TC-AS-01](#tc-as-01) | Every hand-over between the assistant's steps is checked, and the model's reply cannot set what code works out | High | Automated | Automated tests | — |
+| [TC-AS-02](#tc-as-02) | The read interface finds a record only by an equal key and filters as the pages do | High | Automated | Automated tests | — |
+| [TC-AS-03](#tc-as-03) | The assistant can only read: no method that writes, made-up records, nothing imported that writes or mails | Critical | Automated | Automated tests | — |
 
 ## Set-up and running
 
@@ -4051,3 +4054,56 @@ Latest Chrome run: 11/13/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 ![TC-DRAFT-03 in Chrome](screenshots/TC-DRAFT-03.png)
 
 </details>
+
+
+## Assistant
+
+<a id="tc-as-01"></a>
+
+### TC-AS-01: Every hand-over between the assistant's steps is checked, and the model's reply cannot set what code works out
+
+**Priority:** High · **How:** Automated · **Refs:** PD-9.1, DEC-66, DEC-67, DEC-69, ARCHITECTURE §17.3
+
+**Steps**
+
+1. Covered by the tests named.
+
+**Expected:** A model reply's confidence, reasons, sources and unknown keys are dropped; an unknown intent is refused. A hand-over with an unknown field is refused and cannot be changed. Up to 3 parts, or 'too many' with none; a CLARIFY part says what is missing. A rewrite keeps the question as written unless a record was put in, and asks only when two or more records fit. An answer part has findings with sources or starts 'Insufficient information in the current data'. A draft is marked DRAFT, has no send field and belongs only to a DRAFT part. A trace keeps seconds and token counts, never the prompt or the reply.
+
+**Automated tests:** `test_assistant_contracts.py::test_the_model_cannot_set_confidence_reasons_or_sources`, `test_assistant_contracts.py::test_a_model_reply_with_an_unknown_intent_or_no_parts_is_refused`, `test_assistant_contracts.py::test_a_hand_over_between_steps_refuses_an_unknown_field_and_cannot_be_changed`, `test_assistant_contracts.py::test_up_to_three_parts_or_too_many`, `test_assistant_contracts.py::test_a_clarify_part_says_what_is_missing_and_stops_the_others`, `test_assistant_contracts.py::test_a_rewrite_keeps_the_question_as_written_unless_a_record_was_put_in`, `test_assistant_contracts.py::test_a_question_is_words_and_not_a_pasted_document`, `test_assistant_contracts.py::test_a_source_fits_its_kind_and_names_itself`, `test_assistant_contracts.py::test_an_answer_is_findings_with_sources_or_says_insufficient`, `test_assistant_contracts.py::test_an_answer_lists_each_cited_record_once_in_order`, `test_assistant_contracts.py::test_a_draft_is_marked_draft_has_no_way_to_send_and_belongs_to_a_draft`, `test_assistant_contracts.py::test_a_workflow_request_matches_its_part`, `test_assistant_contracts.py::test_a_trace_adds_up_seconds_and_keeps_token_counts`
+
+**Latest:** Owner: not recorded.
+
+
+<a id="tc-as-02"></a>
+
+### TC-AS-02: The read interface finds a record only by an equal key and filters as the pages do
+
+**Priority:** High · **How:** Automated · **Refs:** PD-9.1, DEC-57, DEC-59, DEC-09, ARCHITECTURE §17.3
+
+**Steps**
+
+1. Covered by the tests named, against the made-up records in tests/data/assistant/records.json.
+
+**Expected:** po-1005 finds PO-1005, but 1005, PO-10055 and PO 1005 find nothing. Open items give the same lines, flags and next steps as the Open items report for each choice; a vendor name matches ignoring case and spaces, never in part. A customer PO number held by two customers gives both. A confirmed discrepancy is kept apart from preliminary alerts. Uploads come newest first with the days they cover and the first gap. A fixture that says what the app never would (wrong days late, a closed line still owing, a repeated PO number, an unknown status or code) is refused.
+
+**Automated tests:** `test_assistant_backend.py::test_the_synthetic_adapter_is_a_records_backend`, `test_assistant_backend.py::test_a_po_is_found_only_by_its_number_never_a_near_one`, `test_assistant_backend.py::test_open_items_filter_as_the_report_does`, `test_assistant_backend.py::test_open_items_by_vendor_compare_names_as_the_app_does`, `test_assistant_backend.py::test_the_show_choices_are_the_open_items_pages`, `test_assistant_backend.py::test_line_flags_and_next_step_are_the_reports_own_words`, `test_assistant_backend.py::test_a_customer_po_number_can_belong_to_two_customers`, `test_assistant_backend.py::test_exceptions_keep_a_confirmed_discrepancy_apart_from_preliminary_alerts`, `test_assistant_backend.py::test_uploads_come_newest_first_with_the_days_they_cover`, `test_assistant_backend.py::test_fixtures_that_say_what_the_app_never_would_are_refused`
+
+**Latest:** Owner: not recorded.
+
+
+<a id="tc-as-03"></a>
+
+### TC-AS-03: The assistant can only read: no method that writes, made-up records, nothing imported that writes or mails
+
+**Priority:** Critical · **How:** Automated · **Refs:** PD-9.1, DEC-64, DEC-07, DEC-13, ARCHITECTURE §17.4
+
+**Steps**
+
+1. Covered by the tests named.
+
+**Expected:** The interface has six read methods and nothing else; a row it returns cannot be changed, and changing a returned list leaves the records alone. Every address in the fixtures is at example.com. No module in the assistant imports mail, intake, Accept, the importers, the reconciliation store or decisions, the ledger's writers, sign-in or sqlite3.
+
+**Automated tests:** `test_assistant_backend.py::test_the_backend_only_reads`, `test_assistant_backend.py::test_the_fixtures_are_in_tests_data_and_made_up`, `test_assistant_backend.py::test_the_assistant_imports_nothing_that_writes_mails_or_files_documents`
+
+**Latest:** Owner: not recorded.

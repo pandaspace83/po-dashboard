@@ -418,14 +418,20 @@ every test.*
 - [x] PD-9.0 Documentation pass (DEC-25). **Done 2026-11-13:** OPEN-26, 27, 28 and 30 answered (LangGraph with the
   guards; as-proposed access; tens of seconds acceptable, ask before any timed 14b run). DEC-65 Decided; DEC-64, 66 to 69
   Assumed until the owner's review at PD-9.7. REQ-AS-01 to 10 written; README status table updated. The TC-AS cases are
-  added to the test record with their tests (the record refuses an automated case with no test): TC-AS-01 to 11 are
-  planned from the PD-9.6 list. Still open: OPEN-29 (assistant drafts beyond fixed templates) and OPEN-31 (vendor
+  added to the test record with their tests (the record refuses an automated case with no test): about 11 are
+  planned from the PD-9.6 list (numbered from TC-AS-04, since PD-9.1 took 01 to 03). Still open: OPEN-29 (assistant drafts beyond fixed templates) and OPEN-31 (vendor
   performance) wait for Stage 2; the office Mac's memory (OPEN-28, OPEN-32) for any second model.
 
 **Stage 1: the foundation, standalone.**
 
-- [ ] PD-9.1 Contracts and the read interface (§17.3): `assistant/contracts.py`, and `assistant/backend.py` with the
+- [x] PD-9.1 Contracts and the read interface (§17.3): `assistant/contracts.py`, and `assistant/backend.py` with the
   synthetic adapter and its made-up fixtures in `tests/data/assistant/` (DEC-13). Adds `langgraph` if OPEN-27 says so.
+  **Done 2026-11-13:** the contracts for the turn, rewriting, classification, the workflows, the answer and the trace,
+  with the model's two reply shapes kept apart (they cannot carry a confidence, reasons or sources). The read interface
+  has six methods (as of, a PO's status, open items, customer orders, exceptions, uploads) and the synthetic adapter
+  answers them from `tests/data/assistant/records.json`, comparing keys the way the app does and refusing a fixture the
+  live code could never produce. `langgraph` 1.2.21 and `pydantic` added (about 18 MB with what they bring; not imported
+  yet). TC-AS-01 to 03, 31 tests; PD-9.6's cases are numbered from TC-AS-04.
 - [ ] PD-9.2 The gateway, done with PD-4.1: `models/llm.chat_json` for any schema, the one-call-at-a-time lock with
   questions first (DEC-68), seconds and token counts kept; the test that only `models/llm.py` reaches the model server
   covers the assistant.

@@ -2301,6 +2301,42 @@ steps = ["Open Open items, show Late.", "Click Draft message on the first row.",
 expected = "The draft page says DRAFT and that the app sends nothing, shows the message, and Copy puts it on the clipboard and says Copied."
 tests = []
 
+# ---------------------------------------------------------------------------------------------------------------------
+# The assistant (Phase 9). PD-9.1's cases come first; PD-9.6's list follows from TC-AS-04.
+
+[[case]]
+id = "TC-AS-01"
+area = "Assistant"
+title = "Every hand-over between the assistant's steps is checked, and the model's reply cannot set what code works out"
+priority = "High"
+kind = "automated"
+refs = ["PD-9.1", "DEC-66", "DEC-67", "DEC-69", "ARCHITECTURE §17.3"]
+steps = ["Covered by the tests named."]
+expected = "A model reply's confidence, reasons, sources and unknown keys are dropped; an unknown intent is refused. A hand-over with an unknown field is refused and cannot be changed. Up to 3 parts, or 'too many' with none; a CLARIFY part says what is missing. A rewrite keeps the question as written unless a record was put in, and asks only when two or more records fit. An answer part has findings with sources or starts 'Insufficient information in the current data'. A draft is marked DRAFT, has no send field and belongs only to a DRAFT part. A trace keeps seconds and token counts, never the prompt or the reply."
+tests = ["test_assistant_contracts.py::test_the_model_cannot_set_confidence_reasons_or_sources", "test_assistant_contracts.py::test_a_model_reply_with_an_unknown_intent_or_no_parts_is_refused", "test_assistant_contracts.py::test_a_hand_over_between_steps_refuses_an_unknown_field_and_cannot_be_changed", "test_assistant_contracts.py::test_up_to_three_parts_or_too_many", "test_assistant_contracts.py::test_a_clarify_part_says_what_is_missing_and_stops_the_others", "test_assistant_contracts.py::test_a_rewrite_keeps_the_question_as_written_unless_a_record_was_put_in", "test_assistant_contracts.py::test_a_question_is_words_and_not_a_pasted_document", "test_assistant_contracts.py::test_a_source_fits_its_kind_and_names_itself", "test_assistant_contracts.py::test_an_answer_is_findings_with_sources_or_says_insufficient", "test_assistant_contracts.py::test_an_answer_lists_each_cited_record_once_in_order", "test_assistant_contracts.py::test_a_draft_is_marked_draft_has_no_way_to_send_and_belongs_to_a_draft", "test_assistant_contracts.py::test_a_workflow_request_matches_its_part", "test_assistant_contracts.py::test_a_trace_adds_up_seconds_and_keeps_token_counts"]
+
+[[case]]
+id = "TC-AS-02"
+area = "Assistant"
+title = "The read interface finds a record only by an equal key and filters as the pages do"
+priority = "High"
+kind = "automated"
+refs = ["PD-9.1", "DEC-57", "DEC-59", "DEC-09", "ARCHITECTURE §17.3"]
+steps = ["Covered by the tests named, against the made-up records in tests/data/assistant/records.json."]
+expected = "po-1005 finds PO-1005, but 1005, PO-10055 and PO 1005 find nothing. Open items give the same lines, flags and next steps as the Open items report for each choice; a vendor name matches ignoring case and spaces, never in part. A customer PO number held by two customers gives both. A confirmed discrepancy is kept apart from preliminary alerts. Uploads come newest first with the days they cover and the first gap. A fixture that says what the app never would (wrong days late, a closed line still owing, a repeated PO number, an unknown status or code) is refused."
+tests = ["test_assistant_backend.py::test_the_synthetic_adapter_is_a_records_backend", "test_assistant_backend.py::test_a_po_is_found_only_by_its_number_never_a_near_one", "test_assistant_backend.py::test_open_items_filter_as_the_report_does", "test_assistant_backend.py::test_open_items_by_vendor_compare_names_as_the_app_does", "test_assistant_backend.py::test_the_show_choices_are_the_open_items_pages", "test_assistant_backend.py::test_line_flags_and_next_step_are_the_reports_own_words", "test_assistant_backend.py::test_a_customer_po_number_can_belong_to_two_customers", "test_assistant_backend.py::test_exceptions_keep_a_confirmed_discrepancy_apart_from_preliminary_alerts", "test_assistant_backend.py::test_uploads_come_newest_first_with_the_days_they_cover", "test_assistant_backend.py::test_fixtures_that_say_what_the_app_never_would_are_refused"]
+
+[[case]]
+id = "TC-AS-03"
+area = "Assistant"
+title = "The assistant can only read: no method that writes, made-up records, nothing imported that writes or mails"
+priority = "Critical"
+kind = "automated"
+refs = ["PD-9.1", "DEC-64", "DEC-07", "DEC-13", "ARCHITECTURE §17.4"]
+steps = ["Covered by the tests named."]
+expected = "The interface has six read methods and nothing else; a row it returns cannot be changed, and changing a returned list leaves the records alone. Every address in the fixtures is at example.com. No module in the assistant imports mail, intake, Accept, the importers, the reconciliation store or decisions, the ledger's writers, sign-in or sqlite3."
+tests = ["test_assistant_backend.py::test_the_backend_only_reads", "test_assistant_backend.py::test_the_fixtures_are_in_tests_data_and_made_up", "test_assistant_backend.py::test_the_assistant_imports_nothing_that_writes_mails_or_files_documents"]
+
 # =====================================================================================================================
 # Defects. Logged the moment they are found (owner, 2026-11-07).
 

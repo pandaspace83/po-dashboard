@@ -877,10 +877,11 @@ a new document type, `customer_purchase_order`, a new prompt version and golden-
 in `customer_domain`. A person accepts it on the Review screen like any document (DEC-08), and Accept calls the intake
 service of §16.2. Until then customer POs come in by hand or by file.
 
-## 17. Assistant: questions about the records (Phase 9, proposed)
+## 17. Assistant: questions about the records (Phase 9, approved)
 
-*Proposed 2026-11-12 from the owner's brief. Nothing here is built or approved: DEC-64 to DEC-69 are Proposed, and
-OPEN-26 to OPEN-31 wait for the owner.*
+*Proposed 2026-11-12 from the owner's brief; approved by the owner on 2026-11-13. DEC-65 is Decided; DEC-64 and DEC-66
+to DEC-69 are Assumed until the owner's review at PD-9.7. OPEN-29 and OPEN-31 wait for Stage 2. Stage 1 is being built:
+the contracts and the read interface (PD-9.1) are done.*
 
 A chat in which a signed-in person asks about the app's records in their own words ("Why is PO-1005 flagged?",
 "Summarise the overdue supplier orders", "Draft a note asking the vendor for an update") and gets an answer that names
@@ -905,7 +906,7 @@ that a page already uses.
 | Email and attachment text | `source_message` and `source_document`, as the text step stored it (DEC-51) | Built; nothing has been read by the model yet (Phase 4) |
 | What kind of document an email is | The extractor's `doc_type` (`extraction/schema.DOC_TYPES`, plus `customer_purchase_order` in PD-8.8) and the review state in `extraction` | Queue built; answers from PD-4.1 on. **The assistant never classifies mail itself** |
 | Alerts with Contacted, Snooze and Dismiss | `rules/` (§8, Phase 5) | Not built. Until then "alerts" means the open-items flags and the reconciliation exceptions |
-| A drafted follow-up | `rules/drafts.py` (PD-5.3, DEC-40) | Not built. DRAFT uses it once built (OPEN-29) |
+| A drafted follow-up | `ledger/drafts.py` (PD-5.3, DEC-40) | Built (fixed templates, OPEN-29 (a)). DRAFT uses it |
 | Vendor performance | nothing | Not built; needs a definition and plain code (OPEN-31) |
 | Model calls | `models/llm.py` | `extract` only; gains one structured call (PD-9.2) |
 | Who is asking, and their role | `auth/` (`AppUser.role`: admin or buyer) | Built |
@@ -940,13 +941,19 @@ flowchart LR
 
 Code in `src/po_dashboard/assistant/`, with no route, no page and no live database:
 
-- `contracts.py`: Pydantic models for the turn (the question, and the records earlier answers cited), the classification
-  (DEC-66), each workflow's request and result, the answer (text, sources, limits, the level of each finding) and the trace
-  (the steps that ran, each model call with its seconds and tokens).
-- `backend.py`: the read-only interface the workflows call, one method per kind of question (a PO's status, open items
-  by filter, a customer order, exceptions by filter, the uploads and their periods), and a synthetic adapter that answers
-  from made-up fixtures in `tests/data/assistant/`. The live adapter (Stage 2) wraps the functions in §17.1 over a
-  connection with `PRAGMA query_only = ON`.
+- `contracts.py` (built, PD-9.1): Pydantic models for the turn (the question, and the records earlier answers cited), the
+  rewrite (DEC-67), the classification (DEC-66), each workflow's request and result, the answer (text, sources, limits,
+  the level of each finding) and the trace (the steps that ran, each model call with its seconds and tokens, never the
+  prompt or the reply). The model's two replies have shapes of their own (`ModelClassification`, `ModelRewrite`) that
+  hold no confidence, reasons or sources and drop any key they do not know; every other shape refuses an unknown field
+  and cannot be changed once made.
+- `backend.py` (built, PD-9.1): the read-only interface the workflows call, one method per kind of question (`as_of`,
+  `po_status`, `open_items` by the Open items page's choices and a vendor, `customer_orders` by number or customer,
+  `exceptions` by level, customer or customer PO, and `uploads` with the days they cover and the first gap). A record is
+  found only by an equal key, compared as the app compares it (DEC-57). The rows hold the report's facts, and their
+  words (flags, next step, status, exception label) come from the same rules as the pages. The synthetic adapter answers
+  from `tests/data/assistant/records.json` and refuses a fixture the live code could never produce. The live adapter
+  (Stage 2) wraps the functions in §17.1 over a connection with `PRAGMA query_only = ON`.
 - `classify.py`, `rewrite.py`, `graph.py` (LangGraph, DEC-65), and the prompts `prompts/intent_classification.md` and
   `prompts/query_rewriting.md`, versioned like the extraction prompt.
 - `po-dashboard assistant ask "<question>" --synthetic`, to try it in Terminal.
