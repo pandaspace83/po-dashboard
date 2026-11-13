@@ -284,6 +284,21 @@ already downloaded).*
   `po_context`; T-1 to T-5 and seconds per document (NFR-11) on the 14b model (Opus). **Skipped by the owner,
   2026-11-12,** until the front end, backend and AI layer are finished (the deferred list at the top).
 
+- [~] PD-4.8 Gmail end to end on synthetic mail (owner's order, 2026-11-12). **Built and run on the real 14b model through a folder mailbox 2026-11-12 (TC-GMAIL-01: 23 of 25 documents as expected; the two that differ are DEF-025, open). The Gmail leg, TC-GMAIL-02, waits for the owner to send the 18 files (`scripts/gmail_e2e.py`), so this is not ticked.**
+  Real Gmail test account (synthetic mail only, DEC-13, DEC-31), real scanner, real `qwen2.5:14b-instruct`, Review and
+  Accept. This is not PD-4.7: no scores, no baseline; it shows the path works with real Gmail and the real model.
+  Steps: (a) PD-4.8.0 docs: OPERATIONS runbook for the run, cases below added to the test record. (b) Build
+  `scripts/make_gmail_set.py`: about 10 golden emails written as `.eml` files in the scratchpad (never in the repo) plus
+  a one-page send list with the expected result for each: a full ack, a short ack (`qty_below_order`), a price
+  difference, a PDF ack, a shipment notice, an invoice, a planted instruction, an unmatched PO number, and a "please see
+  attached" with no order facts. The database for them is built from each case's `po_context`. (c) Owner sends or
+  imports the files into the test account (the app is read-only and has no send scope, DEC-07). (d) Owner connects the
+  account (Mailboxes screen, which also runs TC-MAIL-28), the scanner reads it, the extractor runs the 14b model, and
+  every document lands where its answer file says. (e) Check that Gmail is unchanged. (f) Record cases, a `DEF-nnn`
+  for any failure, and a browser case in `scripts/browser_evidence.py`. Needs from the owner: the 9 GB model loaded
+  (already downloaded), the Google sign-in, and sending the files. Suits Sonnet; any model-behaviour surprise goes to
+  Opus. Gate: tests stay with a stub model; only this run uses the 14b model.
+
 **Demo:** the golden mailbox flows to the review queue; accepting documents moves the lines through their statuses.
 
 ## Phase 5: Alerts and follow-up

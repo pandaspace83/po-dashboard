@@ -30,6 +30,7 @@ Every failure is logged here the moment it is found, by whoever finds it: the ca
 | [DEF-022](#def-022) | 11/12/2026 | [TC-INJ-04](TEST_CASES.md#tc-inj-04) | Medium | Disguised planted words were not caught | Fixed, not committed yet |
 | [DEF-023](#def-023) | 11/12/2026 | [TC-INJ-02](TEST_CASES.md#tc-inj-02) | High | Planted words saying "this is no order" filed a document out of sight, with no flag | Fixed, not committed yet |
 | [DEF-024](#def-024) | 11/12/2026 | [TC-INJ-03](TEST_CASES.md#tc-inj-03) | High | An email from outside the company that the model read as a PO was offered as a new PO | Fixed, not committed yet |
+| [DEF-025](#def-025) | 11/12/2026 | [TC-GMAIL-01](TEST_CASES.md#tc-gmail-01) | Low | A reference code in a covering note's subject was read as a PO number, so the note sat in Unmatched | Open |
 
 <a id="def-001"></a>
 
@@ -613,3 +614,25 @@ Every failure is logged here the moment it is found, by whoever finds it: the ca
 **Fix:** The owner's decision (DEC-73): a PO counts only from Sent Items or from a sender at the mailbox's own domain. Any other goes to Unmatched with no vendor; its page says why, and Accept refuses it, checking again whatever the row says. Not committed yet.
 
 **Retest:** 11/12/2026, Claude: pass (TC-INJ-03).
+
+
+<a id="def-025"></a>
+
+## DEF-025: A reference code in a covering note's subject was read as a PO number, so the note sat in Unmatched
+
+**Found:** 11/12/2026 by Claude, PD-4.8 run on the real 14b model · **Case:** TC-GMAIL-01 · **Browser:** Not a browser case (made-up mail run through the real code and model) · **Severity:** Low · **Status:** Open
+
+**Steps to reproduce**
+
+1. Deliver a body 'See attached.' with subject 'Shipping notice (ref E07)' and a PDF shipment notice.
+2. Let the real qwen2.5:14b-instruct read the body.
+
+**Expected:** The body has no order facts and is filed under No order facts.
+
+**Actual:** The model answered po_number 'E07'; the validator found it in the subject, so nothing was flagged, and the body waited in Unmatched. The PDF was read correctly. Same for 'Acknowledgement sheet (ref E13)'.
+
+**Cause:** Open. Model behaviour: a reference code in the subject is taken as the PO number. The words are in the source, so value_not_in_source cannot catch it.
+
+**Fix:** Not decided. Options: a prompt rule that a PO number must look like the company's numbers, or leave it to the person to dismiss from Unmatched. A scoring-design question, so Opus. Not committed yet.
+
+**Retest:**

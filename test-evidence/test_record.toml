@@ -2243,6 +2243,30 @@ steps = ["Covered by the tests named."]
 expected = "A vendor save, a settle and a reopen made from a page drawn before someone else changed the record are refused with 'changed by someone else', change nothing, and the pages carry the version they were drawn from."
 tests = ["test_closing.py::test_a_settle_from_a_stale_page_is_refused_and_changes_nothing", "test_closing.py::test_a_reopen_from_a_stale_page_is_refused", "test_closing.py::test_the_pages_carry_the_version_they_were_drawn_from", "test_orders_web.py::test_a_vendor_save_from_a_stale_page_is_refused"]
 
+[[case]]
+id = "TC-GMAIL-01"
+area = "Gmail end to end"
+title = "18 made-up emails (25 documents) read by the real scanner and the real 14b model land where they should"
+priority = "High"
+kind = "terminal"
+refs = ["PD-4.8", "DEC-54", "DEC-73"]
+steps = ["uv run python scripts/gmail_e2e.py build <folder outside the repo>", "uv run python scripts/gmail_e2e.py folder <that folder>  (about 23 minutes on the 14b model)", "Read the PASS and DIFF lines."]
+expected = "Every document gets the expected type, PO, review state and flags (acks, shipments, invoices as body, PDF and spreadsheet; short, price-difference, no-date, planted-instruction, unmatched, no-facts, outside-sender, quoted-thread and combined emails)."
+tests = []
+result = "11/12/2026, Claude: 23 of 25 documents as expected. The two that differ are DEF-025: a covering note whose subject ends '(ref E07)' was read with PO number E07 and sat in Unmatched instead of No order facts. Subjects that really carry a PO or invoice number correctly make the covering note a document too (E02, E03, E09)."
+
+[[case]]
+id = "TC-GMAIL-02"
+area = "Gmail end to end"
+title = "The same 18 emails through the real Gmail test account (owner's check)"
+priority = "High"
+kind = "owner"
+refs = ["PD-4.8", "TC-MAIL-28", "DEC-07"]
+steps = ["Build the set (TC-GMAIL-01) and read SEND_LIST.md.", "Send or import the 18 files into the test account; Gmail rewrites From, so give the vendors the sender's domain or expect sender_not_vendor.", "uv run python scripts/gmail_e2e.py seed, connect on the Mailboxes screen, serve, wait for the scan and the extractor.", "uv run python scripts/gmail_e2e.py report <folder>; then look in Gmail itself."]
+expected = "The report matches TC-GMAIL-01 (allowing for sender flags) and Gmail shows every email unread, unmoved and undeleted."
+tests = []
+owner = "Not yet run"
+
 # =====================================================================================================================
 # Defects. Logged the moment they are found (owner, 2026-11-07).
 
@@ -2837,3 +2861,21 @@ cause = "Matching found an emailed PO's vendor from the recipients without check
 fix = "The owner's decision (DEC-73): a PO counts only from Sent Items or from a sender at the mailbox's own domain. Any other goes to Unmatched with no vendor; its page says why, and Accept refuses it, checking again whatever the row says."
 retest = "11/12/2026, Claude: pass (TC-INJ-03)."
 status = "Fixed, not committed yet"
+
+
+[[defect]]
+id = "DEF-025"
+found = "11/12/2026"
+found_by = "Claude, PD-4.8 run on the real 14b model"
+case = "TC-GMAIL-01"
+browser = "Not a browser case (made-up mail run through the real code and model)"
+severity = "Low"
+title = "A reference code in a covering note's subject was read as a PO number, so the note sat in Unmatched"
+steps = ["Deliver a body 'See attached.' with subject 'Shipping notice (ref E07)' and a PDF shipment notice.", "Let the real qwen2.5:14b-instruct read the body."]
+expected = "The body has no order facts and is filed under No order facts."
+actual = "The model answered po_number 'E07'; the validator found it in the subject, so nothing was flagged, and the body waited in Unmatched. The PDF was read correctly. Same for 'Acknowledgement sheet (ref E13)'."
+cause = "Open. Model behaviour: a reference code in the subject is taken as the PO number. The words are in the source, so value_not_in_source cannot catch it."
+fix = "Not decided. Options: a prompt rule that a PO number must look like the company's numbers, or leave it to the person to dismiss from Unmatched. A scoring-design question, so Opus."
+retest = ""
+status = "Open"
+

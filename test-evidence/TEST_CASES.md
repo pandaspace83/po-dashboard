@@ -4,7 +4,7 @@
 
 PO Dashboard (RaceSpec Internal Dashboard). Scope: Phase 0 and Phase 1: sign-in, people, vendors, purchase orders, imports, the QuickBooks starting load, entries by hand, Home, Open items, Audit, page behaviour, security and speed.
 
-**180 cases:** 51 Critical, 112 High, 17 Medium; 2 terminal, 108 automated, 67 browser, 3 owner only.
+**182 cases:** 51 Critical, 114 High, 17 Medium; 3 terminal, 108 automated, 67 browser, 4 owner only.
 
 Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/browser_evidence.py, on commit 54eb6fe with uncommitted changes: **67 of 67** browser cases pass. Automated tests: `uv run pytest`. Defects: [DEFECTS.md](DEFECTS.md). Sign-off: [SIGN_OFF.md](SIGN_OFF.md).
 
@@ -202,6 +202,8 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 | [TC-OPS-04](#tc-ops-04) | The log is useful and holds no secret, no message text, no query and no id; its files are private | Critical | Automated | Automated tests | — |
 | [TC-OPS-05](#tc-ops-05) | Extra security headers are sent, and HSTS only when HTTPS is really on | Medium | Automated | Automated tests | — |
 | [TC-OPS-06](#tc-ops-06) | A save from a page that is out of date is refused | High | Automated | Automated tests | — |
+| [TC-GMAIL-01](#tc-gmail-01) | 18 made-up emails (25 documents) read by the real scanner and the real 14b model land where they should | High | Terminal | — | — |
+| [TC-GMAIL-02](#tc-gmail-02) | The same 18 emails through the real Gmail test account (owner's check) | High | Owner only | — | Not yet run |
 
 ## Set-up and running
 
@@ -3950,3 +3952,40 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 **Automated tests:** `test_closing.py::test_a_settle_from_a_stale_page_is_refused_and_changes_nothing`, `test_closing.py::test_a_reopen_from_a_stale_page_is_refused`, `test_closing.py::test_the_pages_carry_the_version_they_were_drawn_from`, `test_orders_web.py::test_a_vendor_save_from_a_stale_page_is_refused`
 
 **Latest:** Owner: not recorded.
+
+
+## Gmail end to end
+
+<a id="tc-gmail-01"></a>
+
+### TC-GMAIL-01: 18 made-up emails (25 documents) read by the real scanner and the real 14b model land where they should
+
+**Priority:** High · **How:** Terminal · **Refs:** PD-4.8, DEC-54, DEC-73
+
+**Steps**
+
+1. uv run python scripts/gmail_e2e.py build <folder outside the repo>
+2. uv run python scripts/gmail_e2e.py folder <that folder>  (about 23 minutes on the 14b model)
+3. Read the PASS and DIFF lines.
+
+**Expected:** Every document gets the expected type, PO, review state and flags (acks, shipments, invoices as body, PDF and spreadsheet; short, price-difference, no-date, planted-instruction, unmatched, no-facts, outside-sender, quoted-thread and combined emails).
+
+**Latest:** Owner: not recorded.
+
+
+<a id="tc-gmail-02"></a>
+
+### TC-GMAIL-02: The same 18 emails through the real Gmail test account (owner's check)
+
+**Priority:** High · **How:** Owner only · **Refs:** PD-4.8, TC-MAIL-28, DEC-07
+
+**Steps**
+
+1. Build the set (TC-GMAIL-01) and read SEND_LIST.md.
+2. Send or import the 18 files into the test account; Gmail rewrites From, so give the vendors the sender's domain or expect sender_not_vendor.
+3. uv run python scripts/gmail_e2e.py seed, connect on the Mailboxes screen, serve, wait for the scan and the extractor.
+4. uv run python scripts/gmail_e2e.py report <folder>; then look in Gmail itself.
+
+**Expected:** The report matches TC-GMAIL-01 (allowing for sender flags) and Gmail shows every email unread, unmoved and undeleted.
+
+**Latest:** Owner: Not yet run.
