@@ -9,7 +9,7 @@ from typing import Any
 from fastapi import APIRouter, Query, Request
 from fastapi.responses import HTMLResponse, Response
 
-from po_dashboard.ledger import reports, vendors
+from po_dashboard.ledger import drafts, reports, vendors
 from po_dashboard.pages import tables
 from po_dashboard.pages.common import CurrentUser, Db, render
 
@@ -58,3 +58,12 @@ def open_items_csv(request: Request, db: Db, user: CurrentUser, show: str = Quer
     name = f"open-items-{today.isoformat()}.csv"
     return Response(body, media_type="text/csv; charset=utf-8",
                     headers={"Content-Disposition": f'attachment; filename="{name}"'})  # fmt: skip
+
+
+@router.get("/draft/{po_id}/{line_no}", response_class=HTMLResponse)
+def draft_page(request: Request, db: Db, user: CurrentUser, po_id: int, line_no: int) -> HTMLResponse:
+    """The drafted messages for one flagged line, to copy and send from the buyer's own mail (REQ-FU-03, DEC-40)."""
+    found = drafts.drafts_for_line(db, po_id, line_no, date.today())
+    if found is None:
+        return render(request, "draft.html", user, status=404, item=None, drafts=[])
+    return render(request, "draft.html", user, item=found[0], drafts=found[1])

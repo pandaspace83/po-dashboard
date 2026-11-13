@@ -308,7 +308,16 @@ already downloaded).*
 - [ ] PD-5.0 Documentation pass (DEC-25).
 - [ ] PD-5.1 The rules engine (§8), one test per rule and per clear condition.
 - [ ] PD-5.2 Follow-ups screen: Contacted with a note, Snooze, Dismiss, reopen on change (REQ-FU-02).
-- [ ] PD-5.3 Drafted follow-up message (REQ-FU-03), reviewed for tone and accuracy with the owner.
+- [x] PD-5.3 Drafted follow-up message (REQ-FU-03), reviewed for tone and accuracy with the owner. **Done 2026-11-13 (TC-DRAFT-01 to 03; tone approved by the owner).** **Pulled forward
+  (owner, 2026-11-13); answers:** (1) it lives on the Open items row, a "Draft message" button on a flagged line that opens
+  a draft page with Copy; no alert queue, Contacted or Snooze (those stay PD-5.1/5.2). (2) Fixed templates, no model
+  (OPEN-29 (a)), filled by plain code from the ledger, editable before Copy, marked DRAFT, never sent (DEC-07, DEC-40).
+  (3) Four kinds from the flags that exist: late, no acknowledgement, promised date slipped, and quantity differs
+  (the "update the original PO" flag also gets a vendor query asking them to confirm the quantity). (4) The To line is
+  the vendor's contact email on record; with none it says "no contact on file: add one on the Vendors page" and the body
+  is still shown; an address is never taken from document text. (5) A draft lists PO number, lines, quantities and
+  dates only from accepted records. Steps: PD-5.3.0 docs and test cases in the test record; PD-5.3.1 `ledger/drafts.py`
+  (templates and the checks, tests); PD-5.3.2 the button and draft page, Chrome evidence (`@case`).
 - [ ] PD-5.4 Dashboard strip of today's alerts; `scan_stale` and the health banner (NFR-05).
 - [ ] PD-5.5 Browser tests with an accessibility check on the main screens (NFR-12).
 

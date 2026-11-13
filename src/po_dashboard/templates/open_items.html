@@ -25,7 +25,7 @@
 <input type="hidden" name="sort" value="{{ sorting.value }}" form="filters">
 {% if items %}
 <div class="table-wrap table-scroll"><table>
-  <thead><tr>{{ sort_th("PO", "po", sorting) }}{{ sort_th("Vendor", "vendor", sorting) }}<th scope="col">#</th>{{ sort_th("Item", "item", sorting) }}{{ sort_th("Open", "open", sorting, "num") }}{{ sort_th("Status", "status", sorting) }}{{ sort_th("Expected", "expected", sorting) }}{{ sort_th("Last vendor activity", "activity", sorting) }}{{ sort_th("Flags", "late", sorting) }}</tr></thead>
+  <thead><tr>{{ sort_th("PO", "po", sorting) }}{{ sort_th("Vendor", "vendor", sorting) }}<th scope="col">#</th>{{ sort_th("Item", "item", sorting) }}{{ sort_th("Open", "open", sorting, "num") }}{{ sort_th("Status", "status", sorting) }}{{ sort_th("Expected", "expected", sorting) }}{{ sort_th("Last vendor activity", "activity", sorting) }}{{ sort_th("Flags", "late", sorting) }}<th scope="col">Message</th></tr></thead>
   <tbody>
   {% for i in items %}
   <tr>
@@ -38,6 +38,7 @@
     <td>{{ i.expectation.expected|day }}{% if i.expectation.expected %}<br><span class="muted">{{ "from the shipment" if i.expectation.source == "shipment" else "as promised" }}</span>{% endif %}</td>
     <td>{{ i.last_activity|day if i.last_activity else "none yet" }}</td>
     <td>{% for flag in i.flags %}<span class="pill bad">{{ icon("alert") }}{{ flag }}</span> {% endfor %}</td>
+    <td>{% if i.flags %}<a class="button" href="/reports/draft/{{ i.po_id }}/{{ i.line_no }}">Draft message</a>{% endif %}</td>
   </tr>
   {% endfor %}
   </tbody>

@@ -2268,6 +2268,39 @@ tests = []
 result = "11/13/2026, Claude: all 18 emails were read from the real Gmail test account and all 25 documents read by the real 14b model; 23 of 25 as expected, same as TC-GMAIL-01. Every vendor document also carries sender_not_vendor, as expected (Gmail rewrites From). E07 body: DEF-025 again. E13 body was filed under No order facts (right state, the model called it an acknowledgement). E10 had value_not_in_source on its invoice date: the model read 12/10/2026 as 10 December-as-October (2026-10-12) and the validator caught it, so it works as designed."
 owner = "Passed 11/13/2026 by the owner: all 18 emails still in the test account's Inbox, unread, not moved, starred or deleted after the scan."
 
+[[case]]
+id = "TC-DRAFT-01"
+area = "Drafted follow-ups"
+title = "A flagged line gets a fixed-template draft for each reason, filled from the records"
+priority = "High"
+kind = "automated"
+refs = ["PD-5.3", "REQ-FU-03", "DEC-40", "OPEN-29"]
+steps = ["Covered by the tests named."]
+expected = "Late, no acknowledgement, slipped date and quantity-differs each give one draft naming the PO, line, quantity and dates from accepted records; a line with no flag gives none; record text cannot add lines or headers to the message."
+tests = ["test_drafts.py::test_a_line_with_no_flag_has_no_draft", "test_drafts.py::test_a_late_draft_names_the_po_line_quantity_and_date", "test_drafts.py::test_each_flag_gets_its_own_draft", "test_drafts.py::test_the_slip_and_quantity_drafts_state_both_values", "test_drafts.py::test_record_text_cannot_add_lines_to_the_message"]
+
+[[case]]
+id = "TC-DRAFT-02"
+area = "Drafted follow-ups"
+title = "The draft goes only to the contact on record, and the page needs a sign-in"
+priority = "High"
+kind = "automated"
+refs = ["PD-5.3", "DEC-40 (3)", "DEC-07"]
+steps = ["Covered by the tests named."]
+expected = "With no contact on the vendor the To line says so and the body is still shown; a missing line is a 404; a signed-out visitor is refused; the page has no send action."
+tests = ["test_drafts.py::test_no_contact_is_said_and_the_body_is_still_given", "test_drafts.py::test_the_draft_page_for_a_flagged_line", "test_drafts.py::test_the_open_items_list_links_to_the_draft", "test_drafts.py::test_a_missing_or_closed_line_gets_a_404_and_the_page_needs_a_sign_in"]
+
+[[case]]
+id = "TC-DRAFT-03"
+area = "Drafted follow-ups"
+title = "Draft message button on a late Open items row, and Copy"
+priority = "Medium"
+kind = "browser"
+refs = ["PD-5.3", "DEC-45"]
+steps = ["Open Open items, show Late.", "Click Draft message on the first row.", "Click Copy message."]
+expected = "The draft page says DRAFT and that the app sends nothing, shows the message, and Copy puts it on the clipboard and says Copied."
+tests = []
+
 # =====================================================================================================================
 # Defects. Logged the moment they are found (owner, 2026-11-07).
 

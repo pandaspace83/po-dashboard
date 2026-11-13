@@ -1045,6 +1045,20 @@ def open_items(r: Run) -> None:
     check("All clear" in r.main(r.a), "an empty view does not say All clear")
 
 
+@case("TC-DRAFT-03")
+def draft_message(r: Run) -> None:
+    r.go(r.a, "/reports/open-items?show=late")
+    r.a.click("#results tbody tr:first-child a:has-text('Draft message')")
+    r.a.wait_for_url(re.compile(r".*/reports/draft/.*"))
+    check("DRAFT" in r.main(r.a) and "sends nothing" in r.main(r.a), "the draft page does not say it is a draft")
+    check(r.a.locator("textarea").count() >= 1 and "Hello" in r.a.input_value("textarea"), "no message text")
+    r.a.context.grant_permissions(["clipboard-read", "clipboard-write"])
+    r.a.click("button[data-copy]")
+    r.a.wait_for_selector(".copied:has-text('Copied')")
+    check("Hello" in r.a.evaluate("navigator.clipboard.readText()"), "Copy did not put the message on the clipboard")
+    r.shot(r.a)
+
+
 @case("TC-HOME-04")
 def csv_download(r: Run) -> None:
     r.new_po(r.a, "PO-1003", "Acme", "=1+1", "2", "EA", "1")

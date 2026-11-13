@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block title %}Draft message · {{ app_name }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Draft message</h1>
+  <div class="actions"><a class="button" href="/reports/open-items">{{ icon("search") }}Back to open items</a></div>
+</div>
+{% if not item %}
+<div class="card empty">{{ icon("alert") }}<p><strong>That line is not open, or does not exist.</strong></p><p>There is nothing to draft.</p></div>
+{% else %}
+<p class="muted">PO <a href="/orders/{{ item.po_id }}">{{ item.po_number }}</a>, line {{ item.line_no }}, {{ item.item }}, {{ item.vendor }}.
+  <strong>DRAFT.</strong> Read it, change what you like, copy it and send it from your own mail. This app sends nothing.</p>
+{% for d in drafts %}
+<section class="card">
+  <h2>{{ d.title }}</h2>
+  <p><strong>To:</strong> {% if d.has_contact %}{{ d.to }}{% else %}<span class="pill bad">{{ icon("alert") }}{{ d.to }}</span> <a href="/vendors">Vendors</a>{% endif %}</p>
+  <label for="subject-{{ d.kind }}">Subject</label>
+  <input id="subject-{{ d.kind }}" type="text" value="{{ d.subject }}" maxlength="200">
+  <label for="body-{{ d.kind }}">Message</label>
+  <textarea id="body-{{ d.kind }}" rows="9">{{ d.body }}</textarea>
+  <p><button type="button" class="primary" data-copy="body-{{ d.kind }}">{{ icon("clipboard") }}Copy message</button> <span class="copied muted" role="status"></span></p>
+</section>
+{% else %}
+<div class="card empty">{{ icon("check-circle") }}<p><strong>Nothing to ask the vendor about on this line.</strong></p></div>
+{% endfor %}
+{% endif %}
+{% endblock %}

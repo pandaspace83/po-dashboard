@@ -277,3 +277,20 @@ function vendorPicker(box) {
   });
   if (text.value && !hidden.value) text.setCustomValidity("Pick a vendor from the list.");
 }
+
+// ---- Copy button for a drafted message (PD-5.3): copies the text box named in data-copy. Nothing is sent anywhere.
+document.addEventListener("click", (event) => {
+  const button = event.target instanceof Element ? event.target.closest("button[data-copy]") : null;
+  if (!button) return;
+  const box = document.getElementById(button.getAttribute("data-copy") || "");
+  if (!(box instanceof HTMLTextAreaElement)) return;
+  const done = () => {
+    const note = button.parentElement && button.parentElement.querySelector(".copied");
+    if (note) note.textContent = "Copied";
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(box.value).then(done, () => { box.select(); });
+  } else {
+    box.select();
+  }
+});

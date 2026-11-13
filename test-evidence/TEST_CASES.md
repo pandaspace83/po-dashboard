@@ -4,9 +4,9 @@
 
 PO Dashboard (RaceSpec Internal Dashboard). Scope: Phase 0 and Phase 1: sign-in, people, vendors, purchase orders, imports, the QuickBooks starting load, entries by hand, Home, Open items, Audit, page behaviour, security and speed.
 
-**182 cases:** 51 Critical, 114 High, 17 Medium; 3 terminal, 108 automated, 67 browser, 4 owner only.
+**185 cases:** 51 Critical, 116 High, 18 Medium; 3 terminal, 110 automated, 68 browser, 4 owner only.
 
-Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/browser_evidence.py, on commit 54eb6fe with uncommitted changes: **67 of 67** browser cases pass. Automated tests: `uv run pytest`. Defects: [DEFECTS.md](DEFECTS.md). Sign-off: [SIGN_OFF.md](SIGN_OFF.md).
+Latest Chrome run: 11/13/2026, Google Chrome 158.0.8127.37, by Claude, scripts/browser_evidence.py, on commit f8a7615 with uncommitted changes: **68 of 68** browser cases pass. Automated tests: `uv run pytest`. Defects: [DEFECTS.md](DEFECTS.md). Sign-off: [SIGN_OFF.md](SIGN_OFF.md).
 
 **To run them by hand:**
 
@@ -27,80 +27,80 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 | [TC-SET-03](#tc-set-03) | The app stays local: it refuses other host names and a model server off this Mac | Critical | Automated | Automated tests | — |
 | [TC-SET-04](#tc-set-04) | The commit guard refuses real documents and secrets outside tests/data | Critical | Automated | Automated tests | — |
 | [TC-SET-05](#tc-set-05) | The data folder and database are private to the Mac's user, and upgrades are safe to repeat | High | Automated | Automated tests | — |
-| [TC-SIGN-01](#tc-sign-01) | A signed-out visitor sees only the sign-in page | Critical | Browser | Pass 11/12/2026 | Pass 11/04/2026 (Safari, Chrome) |
-| [TC-SIGN-02](#tc-sign-02) | A wrong password and an unknown email get the same message | Critical | Browser | Pass 11/12/2026 | Pass 11/04/2026 (Safari, Chrome) |
-| [TC-SIGN-03](#tc-sign-03) | Signing in opens Home, with the account menu at the top right | High | Browser | Pass 11/12/2026 | Pass 11/06/2026 |
-| [TC-SIGN-04](#tc-sign-04) | An admin adds a person and sees the temporary password once | Critical | Browser | Pass 11/12/2026 | Pass 11/04/2026 (Safari, Chrome) |
-| [TC-SIGN-05](#tc-sign-05) | A temporary password leads only to Change password, which refuses a weak password | Critical | Browser | Pass 11/12/2026 | Pass 11/04/2026 (Safari, Chrome) |
-| [TC-SIGN-06](#tc-sign-06) | A buyer cannot open the admin screens | Critical | Browser | Pass 11/12/2026 | Pass 11/05/2026 (Safari, Chrome), before DEF-002 was found: retest needed |
-| [TC-SIGN-07](#tc-sign-07) | A disabled person is cut off and gets the ordinary refusal | Critical | Browser | Pass 11/12/2026 | Pass 11/04/2026 (Safari, Chrome) |
-| [TC-SIGN-08](#tc-sign-08) | Five wrong passwords lock the account, even against the right one, until 15 minutes pass or an admin unlocks it | Critical | Browser | Pass 11/12/2026 | Pass 11/04/2026 (Safari, Chrome) |
+| [TC-SIGN-01](#tc-sign-01) | A signed-out visitor sees only the sign-in page | Critical | Browser | Pass 11/13/2026 | Pass 11/04/2026 (Safari, Chrome) |
+| [TC-SIGN-02](#tc-sign-02) | A wrong password and an unknown email get the same message | Critical | Browser | Pass 11/13/2026 | Pass 11/04/2026 (Safari, Chrome) |
+| [TC-SIGN-03](#tc-sign-03) | Signing in opens Home, with the account menu at the top right | High | Browser | Pass 11/13/2026 | Pass 11/06/2026 |
+| [TC-SIGN-04](#tc-sign-04) | An admin adds a person and sees the temporary password once | Critical | Browser | Pass 11/13/2026 | Pass 11/04/2026 (Safari, Chrome) |
+| [TC-SIGN-05](#tc-sign-05) | A temporary password leads only to Change password, which refuses a weak password | Critical | Browser | Pass 11/13/2026 | Pass 11/04/2026 (Safari, Chrome) |
+| [TC-SIGN-06](#tc-sign-06) | A buyer cannot open the admin screens | Critical | Browser | Pass 11/13/2026 | Pass 11/05/2026 (Safari, Chrome), before DEF-002 was found: retest needed |
+| [TC-SIGN-07](#tc-sign-07) | A disabled person is cut off and gets the ordinary refusal | Critical | Browser | Pass 11/13/2026 | Pass 11/04/2026 (Safari, Chrome) |
+| [TC-SIGN-08](#tc-sign-08) | Five wrong passwords lock the account, even against the right one, until 15 minutes pass or an admin unlocks it | Critical | Browser | Pass 11/13/2026 | Pass 11/04/2026 (Safari, Chrome) |
 | [TC-SIGN-09](#tc-sign-09) | 30 idle minutes sign a person out, even with a page that updates itself left open | High | Automated | Automated tests | — |
 | [TC-SIGN-10](#tc-sign-10) | The session cookie is locked down, and the last admin cannot be removed | Critical | Automated | Automated tests | Pass 11/04/2026 (Safari, Chrome) |
-| [TC-SIGN-11](#tc-sign-11) | Sign out, then sign in again, with no security-token error | Medium | Browser | Pass 11/12/2026 | Pass 11/06/2026 |
-| [TC-VIMP-01](#tc-vimp-01) | A vendor file (Excel or CSV) creates the vendors with their domains | High | Browser | Pass 11/12/2026 | Pass 11/06/2026 (CSV); the .xlsx file: no problem reported 11/07/2026 |
-| [TC-VIMP-02](#tc-vimp-02) | Uploading the same vendor file again changes nothing | Critical | Browser | Pass 11/12/2026 | Pass 11/06/2026 |
-| [TC-VIMP-03](#tc-vimp-03) | Each vendor row needs an email, and an email or domain held by another vendor skips only that row | Critical | Browser | Pass 11/12/2026 | Pass 11/06/2026 |
+| [TC-SIGN-11](#tc-sign-11) | Sign out, then sign in again, with no security-token error | Medium | Browser | Pass 11/13/2026 | Pass 11/06/2026 |
+| [TC-VIMP-01](#tc-vimp-01) | A vendor file (Excel or CSV) creates the vendors with their domains | High | Browser | Pass 11/13/2026 | Pass 11/06/2026 (CSV); the .xlsx file: no problem reported 11/07/2026 |
+| [TC-VIMP-02](#tc-vimp-02) | Uploading the same vendor file again changes nothing | Critical | Browser | Pass 11/13/2026 | Pass 11/06/2026 |
+| [TC-VIMP-03](#tc-vimp-03) | Each vendor row needs an email, and an email or domain held by another vendor skips only that row | Critical | Browser | Pass 11/13/2026 | Pass 11/06/2026 |
 | [TC-VIMP-04](#tc-vimp-04) | An existing vendor with a new email gets the new domain, and its other details are kept | High | Automated | Automated tests | Pass 11/06/2026 |
-| [TC-VIMP-05](#tc-vimp-05) | An old Excel file (.xls) is refused with what to do | Medium | Browser | Pass 11/12/2026 | No problem reported 11/07/2026 (QuickBooks check step 2) |
-| [TC-VEN-01](#tc-ven-01) | A vendor is added on its own page and lands on its vendor page | High | Browser | Pass 11/12/2026 | Pass 11/05/2026 (Safari, Chrome) |
-| [TC-VEN-02](#tc-ven-02) | A vendor name that already exists, in any case, is refused and the boxes keep what was typed | High | Browser | Pass 11/12/2026 | Pass 11/05/2026 (Safari, Chrome) |
-| [TC-VEN-03](#tc-ven-03) | A domain belongs to one vendor only, so a reply can never match the wrong vendor | Critical | Browser | Pass 11/12/2026 | Pass 11/06/2026 |
-| [TC-VEN-04](#tc-ven-04) | Domains are checked, added and removed on the vendor page | Medium | Browser | Pass 11/12/2026 | Pass 11/05/2026 (Safari, Chrome) |
-| [TC-VEN-05](#tc-ven-05) | Saving a vendor shows a Saved note and the page does not jump | Medium | Browser | Pass 11/12/2026 | Pass 11/06/2026 |
-| [TC-VEN-06](#tc-ven-06) | A vendor with no domain is marked, because its replies cannot be matched | High | Browser | Pass 11/12/2026 | Pass 11/05/2026 (Safari, Chrome) |
-| [TC-VEN-07](#tc-ven-07) | The vendor list searches as you type, sorts by heading, and / jumps to search | Medium | Browser | Pass 11/12/2026 | Pass 11/06/2026 |
-| [TC-VEN-08](#tc-ven-08) | Markup typed into a vendor name is shown as text, never run | Critical | Browser | Pass 11/12/2026 | Pass 11/05/2026 (Safari, Chrome) |
-| [TC-PO-01](#tc-po-01) | A PO entered by hand keeps exact numbers and starts as Sent | Critical | Browser | Pass 11/12/2026 | Pass 11/05/2026 (Safari, Chrome) |
-| [TC-PO-02](#tc-po-02) | Reload after creating a PO never creates a second one | Critical | Browser | Pass 11/12/2026 | Pass 11/06/2026 |
-| [TC-PO-03](#tc-po-03) | A wrong line value is refused naming the line and field, and every box keeps what was typed | High | Browser | Pass 11/12/2026 | Pass 11/06/2026 |
-| [TC-PO-04](#tc-po-04) | More than 4 decimal places is refused; nothing is ever rounded | Critical | Browser | Pass 11/12/2026 | Pass 11/05/2026 (Safari, Chrome) |
-| [TC-PO-05](#tc-po-05) | The vendor box searches as you type, and a name not picked from the list is refused | High | Browser | Pass 11/12/2026 | Pass 11/06/2026 |
+| [TC-VIMP-05](#tc-vimp-05) | An old Excel file (.xls) is refused with what to do | Medium | Browser | Pass 11/13/2026 | No problem reported 11/07/2026 (QuickBooks check step 2) |
+| [TC-VEN-01](#tc-ven-01) | A vendor is added on its own page and lands on its vendor page | High | Browser | Pass 11/13/2026 | Pass 11/05/2026 (Safari, Chrome) |
+| [TC-VEN-02](#tc-ven-02) | A vendor name that already exists, in any case, is refused and the boxes keep what was typed | High | Browser | Pass 11/13/2026 | Pass 11/05/2026 (Safari, Chrome) |
+| [TC-VEN-03](#tc-ven-03) | A domain belongs to one vendor only, so a reply can never match the wrong vendor | Critical | Browser | Pass 11/13/2026 | Pass 11/06/2026 |
+| [TC-VEN-04](#tc-ven-04) | Domains are checked, added and removed on the vendor page | Medium | Browser | Pass 11/13/2026 | Pass 11/05/2026 (Safari, Chrome) |
+| [TC-VEN-05](#tc-ven-05) | Saving a vendor shows a Saved note and the page does not jump | Medium | Browser | Pass 11/13/2026 | Pass 11/06/2026 |
+| [TC-VEN-06](#tc-ven-06) | A vendor with no domain is marked, because its replies cannot be matched | High | Browser | Pass 11/13/2026 | Pass 11/05/2026 (Safari, Chrome) |
+| [TC-VEN-07](#tc-ven-07) | The vendor list searches as you type, sorts by heading, and / jumps to search | Medium | Browser | Pass 11/13/2026 | Pass 11/06/2026 |
+| [TC-VEN-08](#tc-ven-08) | Markup typed into a vendor name is shown as text, never run | Critical | Browser | Pass 11/13/2026 | Pass 11/05/2026 (Safari, Chrome) |
+| [TC-PO-01](#tc-po-01) | A PO entered by hand keeps exact numbers and starts as Sent | Critical | Browser | Pass 11/13/2026 | Pass 11/05/2026 (Safari, Chrome) |
+| [TC-PO-02](#tc-po-02) | Reload after creating a PO never creates a second one | Critical | Browser | Pass 11/13/2026 | Pass 11/06/2026 |
+| [TC-PO-03](#tc-po-03) | A wrong line value is refused naming the line and field, and every box keeps what was typed | High | Browser | Pass 11/13/2026 | Pass 11/06/2026 |
+| [TC-PO-04](#tc-po-04) | More than 4 decimal places is refused; nothing is ever rounded | Critical | Browser | Pass 11/13/2026 | Pass 11/05/2026 (Safari, Chrome) |
+| [TC-PO-05](#tc-po-05) | The vendor box searches as you type, and a name not picked from the list is refused | High | Browser | Pass 11/13/2026 | Pass 11/06/2026 |
 | [TC-PO-06](#tc-po-06) | An existing PO number is refused in any case | Critical | Automated | Automated tests | — |
-| [TC-PO-07](#tc-po-07) | The PO list filters as you choose, reads dates as MM/DD/YYYY, and Clear resets it | High | Browser | Pass 11/12/2026 | Pass 11/06/2026 |
+| [TC-PO-07](#tc-po-07) | The PO list filters as you choose, reads dates as MM/DD/YYYY, and Clear resets it | High | Browser | Pass 11/13/2026 | Pass 11/06/2026 |
 | [TC-PO-08](#tc-po-08) | The PO list shows 50 a page and sorts by any heading | Medium | Automated | Automated tests | — |
-| [TC-PO-09](#tc-po-09) | A buyer, not only an admin, can use Vendors and Purchase orders | High | Browser | Pass 11/12/2026 | Pass 11/05/2026 (Safari, Chrome) |
-| [TC-PIMP-01](#tc-pimp-01) | A PO file imports every PO and line, and the template downloads | High | Browser | Pass 11/12/2026 | Pass 11/06/2026 |
-| [TC-PIMP-02](#tc-pimp-02) | Importing the same file again adds nothing and overwrites nothing | Critical | Browser | Pass 11/12/2026 | Pass 11/06/2026 |
-| [TC-PIMP-03](#tc-pimp-03) | One bad row rejects the whole file, naming the row | Critical | Browser | Pass 11/12/2026 | Pass 11/05/2026 (Safari, Chrome) |
+| [TC-PO-09](#tc-po-09) | A buyer, not only an admin, can use Vendors and Purchase orders | High | Browser | Pass 11/13/2026 | Pass 11/05/2026 (Safari, Chrome) |
+| [TC-PIMP-01](#tc-pimp-01) | A PO file imports every PO and line, and the template downloads | High | Browser | Pass 11/13/2026 | Pass 11/06/2026 |
+| [TC-PIMP-02](#tc-pimp-02) | Importing the same file again adds nothing and overwrites nothing | Critical | Browser | Pass 11/13/2026 | Pass 11/06/2026 |
+| [TC-PIMP-03](#tc-pimp-03) | One bad row rejects the whole file, naming the row | Critical | Browser | Pass 11/13/2026 | Pass 11/05/2026 (Safari, Chrome) |
 | [TC-PIMP-04](#tc-pimp-04) | A vendor not in the app is refused, never guessed or created | Critical | Automated | Automated tests | — |
 | [TC-PIMP-05](#tc-pimp-05) | Excel files with real date cells, Windows-1252 accents and formulas are read safely | High | Automated | Automated tests | — |
-| [TC-PIMP-06](#tc-pimp-06) | The QuickBooks report uploaded on Import CSV or Excel becomes the QuickBooks preview | High | Browser | Pass 11/12/2026 | Not yet run |
-| [TC-QB-01](#tc-qb-01) | The preview shows what the file would do and changes nothing | Critical | Browser | Pass 11/12/2026 | Step 4 failed 11/07/2026: DEF-001 |
-| [TC-QB-02](#tc-qb-02) | Create loads all of them or none, and lands on the PO list | Critical | Browser | Pass 11/12/2026 | Not yet run |
-| [TC-QB-03](#tc-qb-03) | Back and Create again can never load the file twice | Critical | Browser | Pass 11/12/2026 | Not yet run |
-| [TC-QB-04](#tc-qb-04) | A loaded PO keeps the QuickBooks date, the customer, and what was already received | High | Browser | Pass 11/12/2026 | Not yet run |
-| [TC-QB-05](#tc-qb-05) | A unit price that cannot be exact is rounded to 4 places, and the line's history says so | Critical | Browser | Pass 11/12/2026 | Not yet run |
-| [TC-QB-06](#tc-qb-06) | Loaded POs are not flagged for an acknowledgement the app never had the chance to see | High | Browser | Pass 11/12/2026 | Not yet run |
-| [TC-QB-07](#tc-qb-07) | Loading the same file again creates nothing; adding the waiting vendor lets its PO in | Critical | Browser | Pass 11/12/2026 | Not yet run |
-| [TC-QB-08](#tc-qb-08) | A file that is not the report is refused naming what is missing; the app's own file is pointed to Import | Medium | Browser | Pass 11/12/2026 | Not yet run |
+| [TC-PIMP-06](#tc-pimp-06) | The QuickBooks report uploaded on Import CSV or Excel becomes the QuickBooks preview | High | Browser | Pass 11/13/2026 | Not yet run |
+| [TC-QB-01](#tc-qb-01) | The preview shows what the file would do and changes nothing | Critical | Browser | Pass 11/13/2026 | Step 4 failed 11/07/2026: DEF-001 |
+| [TC-QB-02](#tc-qb-02) | Create loads all of them or none, and lands on the PO list | Critical | Browser | Pass 11/13/2026 | Not yet run |
+| [TC-QB-03](#tc-qb-03) | Back and Create again can never load the file twice | Critical | Browser | Pass 11/13/2026 | Not yet run |
+| [TC-QB-04](#tc-qb-04) | A loaded PO keeps the QuickBooks date, the customer, and what was already received | High | Browser | Pass 11/13/2026 | Not yet run |
+| [TC-QB-05](#tc-qb-05) | A unit price that cannot be exact is rounded to 4 places, and the line's history says so | Critical | Browser | Pass 11/13/2026 | Not yet run |
+| [TC-QB-06](#tc-qb-06) | Loaded POs are not flagged for an acknowledgement the app never had the chance to see | High | Browser | Pass 11/13/2026 | Not yet run |
+| [TC-QB-07](#tc-qb-07) | Loading the same file again creates nothing; adding the waiting vendor lets its PO in | Critical | Browser | Pass 11/13/2026 | Not yet run |
+| [TC-QB-08](#tc-qb-08) | A file that is not the report is refused naming what is missing; the app's own file is pointed to Import | Medium | Browser | Pass 11/13/2026 | Not yet run |
 | [TC-QB-09](#tc-qb-09) | The company's real export previews with counts that match QuickBooks | Critical | Owner only | — | Not yet run (Claude's dry run 11/06/2026: 0 problems; counts only) |
-| [TC-QB-10](#tc-qb-10) | A Shipping or Freight row in the report is listed as skipped and never becomes a PO line | High | Browser | Pass 11/12/2026 | Not yet run |
+| [TC-QB-10](#tc-qb-10) | A Shipping or Freight row in the report is listed as skipped and never becomes a PO line | High | Browser | Pass 11/13/2026 | Not yet run |
 | [TC-QB-11](#tc-qb-11) | Charge names come from a setting; only a whole item name (or the part before a colon) counts, and a file of only charges is not an error | High | Automated | Automated tests | — |
-| [TC-EVT-01](#tc-evt-01) | A short confirmation at another price is recorded and the purchaser is told to update the PO | Critical | Browser | Pass 11/12/2026 | Pass 11/05/2026 (Safari, Chrome) |
-| [TC-EVT-02](#tc-evt-02) | A later promised date is shown as a slip | High | Browser | Pass 11/12/2026 | Pass 11/05/2026 (Safari, Chrome) |
-| [TC-EVT-03](#tc-evt-03) | Shipments move a line from Partially shipped to Shipped, with who entered them | Critical | Browser | Pass 11/12/2026 | Pass 11/05/2026 (Safari, Chrome) |
-| [TC-EVT-04](#tc-evt-04) | An invoice starts at the PO price; a short-confirmed line stays open until someone settles it | Critical | Browser | Pass 11/12/2026 | Pass 11/05/2026 (Safari, Chrome) |
-| [TC-EVT-05](#tc-evt-05) | Over-billing and a price above the PO are flagged and still recorded | Critical | Browser | Pass 11/12/2026 | Pass 11/05/2026 (Safari, Chrome) |
-| [TC-EVT-06](#tc-evt-06) | Removing an entry needs a reason and undoes its effect | High | Browser | Pass 11/12/2026 | Pass 11/05/2026 (Safari, Chrome) |
+| [TC-EVT-01](#tc-evt-01) | A short confirmation at another price is recorded and the purchaser is told to update the PO | Critical | Browser | Pass 11/13/2026 | Pass 11/05/2026 (Safari, Chrome) |
+| [TC-EVT-02](#tc-evt-02) | A later promised date is shown as a slip | High | Browser | Pass 11/13/2026 | Pass 11/05/2026 (Safari, Chrome) |
+| [TC-EVT-03](#tc-evt-03) | Shipments move a line from Partially shipped to Shipped, with who entered them | Critical | Browser | Pass 11/13/2026 | Pass 11/05/2026 (Safari, Chrome) |
+| [TC-EVT-04](#tc-evt-04) | An invoice starts at the PO price; a short-confirmed line stays open until someone settles it | Critical | Browser | Pass 11/13/2026 | Pass 11/05/2026 (Safari, Chrome) |
+| [TC-EVT-05](#tc-evt-05) | Over-billing and a price above the PO are flagged and still recorded | Critical | Browser | Pass 11/13/2026 | Pass 11/05/2026 (Safari, Chrome) |
+| [TC-EVT-06](#tc-evt-06) | Removing an entry needs a reason and undoes its effect | High | Browser | Pass 11/13/2026 | Pass 11/05/2026 (Safari, Chrome) |
 | [TC-EVT-07](#tc-evt-07) | Reload after recording or removing anything repeats nothing | Critical | Automated | Automated tests | Pass 11/05/2026 (Safari, Chrome) |
-| [TC-EVT-08](#tc-evt-08) | A promised date in the past makes the line late, on the PO, in the list and in Late only | High | Browser | Pass 11/12/2026 | Pass 11/05/2026 (Safari, Chrome) |
-| [TC-EVT-09](#tc-evt-09) | Settling by hand needs a reason, stays in place, and can be reopened with a reason | High | Browser | Pass 11/12/2026 | Pass 11/06/2026 |
-| [TC-EVT-10](#tc-evt-10) | A line's timeline keeps everything that happened, including what was taken back | High | Browser | Pass 11/12/2026 | Pass 11/06/2026 |
+| [TC-EVT-08](#tc-evt-08) | A promised date in the past makes the line late, on the PO, in the list and in Late only | High | Browser | Pass 11/13/2026 | Pass 11/05/2026 (Safari, Chrome) |
+| [TC-EVT-09](#tc-evt-09) | Settling by hand needs a reason, stays in place, and can be reopened with a reason | High | Browser | Pass 11/13/2026 | Pass 11/06/2026 |
+| [TC-EVT-10](#tc-evt-10) | A line's timeline keeps everything that happened, including what was taken back | High | Browser | Pass 11/13/2026 | Pass 11/06/2026 |
 | [TC-EVT-11](#tc-evt-11) | The status of every line follows the agreed table in every combination | Critical | Automated | Automated tests | — |
-| [TC-HOME-01](#tc-home-01) | Home shows the six counts and a Needs attention list with the next step | High | Browser | Pass 11/12/2026 | Pass 11/06/2026 |
-| [TC-HOME-02](#tc-home-02) | Home updates itself within a minute | High | Browser | Pass 11/12/2026 | Pass 11/06/2026 |
-| [TC-HOME-03](#tc-home-03) | Open items filters as you choose, and a late tile opens it filtered | Medium | Browser | Pass 11/12/2026 | Pass 11/06/2026 |
-| [TC-HOME-04](#tc-home-04) | The Open items CSV downloads as a file and a formula in a cell stays plain text | Critical | Browser | Pass 11/12/2026 | Pass 11/06/2026 |
+| [TC-HOME-01](#tc-home-01) | Home shows the six counts and a Needs attention list with the next step | High | Browser | Pass 11/13/2026 | Pass 11/06/2026 |
+| [TC-HOME-02](#tc-home-02) | Home updates itself within a minute | High | Browser | Pass 11/13/2026 | Pass 11/06/2026 |
+| [TC-HOME-03](#tc-home-03) | Open items filters as you choose, and a late tile opens it filtered | Medium | Browser | Pass 11/13/2026 | Pass 11/06/2026 |
+| [TC-HOME-04](#tc-home-04) | The Open items CSV downloads as a file and a formula in a cell stays plain text | Critical | Browser | Pass 11/13/2026 | Pass 11/06/2026 |
 | [TC-HOME-05](#tc-home-05) | A PO sent with no acknowledgement is flagged only after two working days | High | Automated | Automated tests | — |
-| [TC-AUD-01](#tc-aud-01) | An admin sees every change, newest first, and can narrow it | High | Browser | Pass 11/12/2026 | Pass 11/06/2026 |
+| [TC-AUD-01](#tc-aud-01) | An admin sees every change, newest first, and can narrow it | High | Browser | Pass 11/13/2026 | Pass 11/06/2026 |
 | [TC-AUD-02](#tc-aud-02) | Every change to the ledger writes an audit record with who and where, and nothing secret | Critical | Automated | Automated tests | — |
-| [TC-WEB-01](#tc-web-01) | Pages change without a white flash, and Back and Forward work | Medium | Browser | Pass 11/12/2026 | Pass 11/06/2026 |
-| [TC-WEB-02](#tc-web-02) | At phone width the page never scrolls sideways | High | Browser | Pass 11/12/2026 | Pass 11/06/2026 |
-| [TC-WEB-03](#tc-web-03) | Everything can be reached with the keyboard | Medium | Browser | Pass 11/12/2026 | Pass 11/06/2026 |
-| [TC-WEB-04](#tc-web-04) | Dark mode on the Mac leaves the app light and readable | Medium | Browser | Pass 11/12/2026 | Pass 11/04/2026 (Safari, Chrome) |
+| [TC-WEB-01](#tc-web-01) | Pages change without a white flash, and Back and Forward work | Medium | Browser | Pass 11/13/2026 | Pass 11/06/2026 |
+| [TC-WEB-02](#tc-web-02) | At phone width the page never scrolls sideways | High | Browser | Pass 11/13/2026 | Pass 11/06/2026 |
+| [TC-WEB-03](#tc-web-03) | Everything can be reached with the keyboard | Medium | Browser | Pass 11/13/2026 | Pass 11/06/2026 |
+| [TC-WEB-04](#tc-web-04) | Dark mode on the Mac leaves the app light and readable | Medium | Browser | Pass 11/13/2026 | Pass 11/04/2026 (Safari, Chrome) |
 | [TC-WEB-05](#tc-web-05) | Every page answers within 0.3 seconds with a year's worth of data | High | Automated | Automated tests | — |
-| [TC-WEB-06](#tc-web-06) | A mistyped address or an unreadable form shows a page a person can read | Medium | Browser | Pass 11/12/2026 | Not yet run |
+| [TC-WEB-06](#tc-web-06) | A mistyped address or an unreadable form shows a page a person can read | Medium | Browser | Pass 11/13/2026 | Not yet run |
 | [TC-SEC-01](#tc-sec-01) | Every change needs the session's token and must come from the app's own pages | Critical | Automated | Automated tests | — |
 | [TC-SEC-02](#tc-sec-02) | Pages carry the security headers, are not cached, and run no inline script or style | High | Automated | Automated tests | — |
 | [TC-SEC-03](#tc-sec-03) | Hostile spreadsheets are refused: macros, zip bombs, entity tricks, huge sheets, links to files | Critical | Automated | Automated tests | — |
@@ -136,7 +136,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 | [TC-MAIL-24](#tc-mail-24) | A hostile message cannot exhaust the app while it is stored, and a silent connection cannot hold up the Gmail sign-in | High | Automated | Automated tests | — |
 | [TC-MAIL-25](#tc-mail-25) | An admin connects, reconnects and disconnects the one mailbox on the Mailboxes screen, and the return from Google is checked | High | Automated | Automated tests | — |
 | [TC-MAIL-26](#tc-mail-26) | From another computer or with HTTPS on, the screen explains how to connect instead of failing | Medium | Automated | Automated tests | — |
-| [TC-MAIL-27](#tc-mail-27) | In Chrome the connect round trip works, even though the sign-in cookie is not sent when Google sends the browser back | High | Browser | Pass 11/12/2026 | Not yet run |
+| [TC-MAIL-27](#tc-mail-27) | In Chrome the connect round trip works, even though the sign-in cookie is not sent when Google sends the browser back | High | Browser | Pass 11/13/2026 | Not yet run |
 | [TC-MAIL-28](#tc-mail-28) | The real Google account connects through the Mailboxes screen (owner's check) | High | Owner only | — | Not yet run |
 | [TC-QUE-01](#tc-que-01) | The queue tables exist, the entries link to their documents, and the database refuses nonsense | High | Automated | Automated tests | — |
 | [TC-QUE-02](#tc-que-02) | Every read document is queued once, and the scanner queues what it reads | High | Automated | Automated tests | — |
@@ -144,7 +144,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 | [TC-QUE-04](#tc-que-04) | The extractor stores a read exactly, and every failure ends the way the design says | High | Automated | Automated tests | — |
 | [TC-QUE-05](#tc-que-05) | A long document is cut to the reading window, the quoted earlier messages first, and it says so | High | Automated | Automated tests | — |
 | [TC-QUE-06](#tc-que-06) | The gateway tells an answer that will fail again from an error worth trying again | High | Automated | Automated tests | — |
-| [TC-QUE-07](#tc-que-07) | Failed documents are listed on their own page, and a person can Retry or Dismiss them | High | Browser | Pass 11/12/2026 | Not yet run |
+| [TC-QUE-07](#tc-que-07) | Failed documents are listed on their own page, and a person can Retry or Dismiss them | High | Browser | Pass 11/13/2026 | Not yet run |
 | [TC-QUE-08](#tc-que-08) | Only the model gateway reaches the model server, and Home says when it cannot be reached | High | Automated | Automated tests | — |
 | [TC-VAL-01](#tc-val-01) | Every flag is named as in the golden set and raised by its own case, at its level | High | Automated | Automated tests | — |
 | [TC-VAL-02](#tc-val-02) | A value the model gave that is not in the document's text is flagged, by field and line | High | Automated | Automated tests | — |
@@ -157,13 +157,13 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 | [TC-MATCH-04](#tc-match-04) | With no number at all, equal items and quantities on one open PO of the sender's vendor propose it | High | Automated | Automated tests | — |
 | [TC-MATCH-05](#tc-match-05) | Emailed POs find their vendor; documents with no order facts and the company's own mail are filed | High | Automated | Automated tests | — |
 | [TC-MATCH-06](#tc-match-06) | The extractor stores the match, the state and the flags (no text), and the lists and candidates work | High | Automated | Automated tests | — |
-| [TC-REV-01](#tc-rev-01) | A person reviews a read document: the lists, the text beside the fields and the PO line, Reject, Attach and File | High | Browser | Pass 11/12/2026 | Not yet run |
+| [TC-REV-01](#tc-rev-01) | A person reviews a read document: the lists, the text beside the fields and the PO line, Reject, Attach and File | High | Browser | Pass 11/13/2026 | Not yet run |
 | [TC-REV-02](#tc-rev-02) | The lists and Home count what waits, and an unknown place shows the first list | High | Automated | Automated tests | — |
 | [TC-REV-03](#tc-rev-03) | The message page shows the escaped text, editable fields, the PO line beside each line and the ticks | High | Automated | Automated tests | — |
 | [TC-REV-04](#tc-rev-04) | Reject needs a reason, File moves a document, and a stale page is refused; each is audited | High | Automated | Automated tests | — |
 | [TC-REV-05](#tc-rev-05) | An unmatched document is attached to a PO a person chooses and validated against it again | High | Automated | Automated tests | — |
 | [TC-REV-06](#tc-rev-06) | The original is a download; only a PDF or a plain picture may open in the browser, under a sandbox policy | High | Automated | Automated tests | — |
-| [TC-ACC-01](#tc-acc-01) | A person accepts a read document: the entry is recorded from the values in the form, linked to the document, under their name | High | Browser | Pass 11/12/2026 | Not yet run |
+| [TC-ACC-01](#tc-acc-01) | A person accepts a read document: the entry is recorded from the values in the form, linked to the document, under their name | High | Browser | Pass 11/13/2026 | Not yet run |
 | [TC-ACC-02](#tc-acc-02) | Accept records an acknowledgement, a shipment (every tracking number) and an invoice (with charges) in one transaction | High | Automated | Automated tests | — |
 | [TC-ACC-03](#tc-acc-03) | Accept is refused, and keeps nothing, when a tick is missing, a line or field is wrong, the page is old or the document was already accepted | High | Automated | Automated tests | — |
 | [TC-ACC-04](#tc-acc-04) | A line that matches no PO line is assigned or left out; nothing is guessed | High | Automated | Automated tests | — |
@@ -184,16 +184,16 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 | [TC-CO-05](#tc-co-05) | Every customer PO goes through one intake: created, skipped as a copy, a pending revision, or waiting for a customer | High | Automated | Automated tests | — |
 | [TC-CO-06](#tc-co-06) | A revised customer PO keeps the original and every revision, and changes nothing until a person approves it | High | Automated | Automated tests | — |
 | [TC-CO-07](#tc-co-07) | A customer PO file (CSV or Excel) is read, previewed, and filed all or nothing | High | Automated | Automated tests | — |
-| [TC-CO-08](#tc-co-08) | The customer screens: add a customer, file orders by hand and by file, approve a revision, resolve a waiting order | High | Browser | Pass 11/12/2026 | Not yet run |
+| [TC-CO-08](#tc-co-08) | The customer screens: add a customer, file orders by hand and by file, approve a revision, resolve a waiting order | High | Browser | Pass 11/13/2026 | Not yet run |
 | [TC-CO-10](#tc-co-10) | A QuickBooks sales export is read by a configurable column mapping, and nothing is invented | High | Automated | Automated tests | — |
 | [TC-CO-11](#tc-co-11) | An upload is planned without changing anything, then kept with its file, rows and period, and never overwrites an accepted invoice | High | Automated | Automated tests | — |
 | [TC-CO-12](#tc-co-12) | A customer name an export uses that the app does not know is linked by a person, never guessed, and remembered | High | Automated | Automated tests | — |
-| [TC-CO-09](#tc-co-09) | The Sales invoices screens: upload, check the columns, see what it would do, keep it, and look at invoices, uploads and unknown names | High | Browser | Pass 11/12/2026 | Not yet run |
+| [TC-CO-09](#tc-co-09) | The Sales invoices screens: upload, check the columns, see what it would do, keep it, and look at invoices, uploads and unknown names | High | Browser | Pass 11/13/2026 | Not yet run |
 | [TC-CO-13](#tc-co-13) | The reconciliation rules, one by one, on plain records | High | Automated | Automated tests | — |
 | [TC-CO-14](#tc-co-14) | T-7: the owner's ten reconciliation scenarios and their variants, end to end | High | Automated | Automated tests | — |
 | [TC-CO-15](#tc-co-15) | What a run keeps, a person's decisions, and the pages that re-run it | High | Automated | Automated tests | — |
 | [TC-CO-16](#tc-co-16) | The reconciliation screens: order list with status and CSV, order page, exception queue, a person's decisions, settling an invoice | High | Automated | Automated tests | Not yet run |
-| [TC-CO-17](#tc-co-17) | The reconciliation screens in Chrome: list, order page, decisions, exception queue, invoice review | High | Browser | Pass 11/12/2026 | Not yet run |
+| [TC-CO-17](#tc-co-17) | The reconciliation screens in Chrome: list, order page, decisions, exception queue, invoice review | High | Browser | Pass 11/13/2026 | Not yet run |
 | [TC-CO-18](#tc-co-18) | Phase 8 security and regression: hostile uploads, the token and Origin on every change, an audit row for every action, the upgrade | High | Automated | Automated tests | Not yet run |
 | [TC-CO-19](#tc-co-19) | T-7 end to end through the screens: customers, POs by file, two uploads on different days, every scenario, and a person settling what waits | High | Automated | Automated tests | Not yet run |
 | [TC-OPS-01](#tc-ops-01) | A backup restores to exactly what was backed up; it never overwrites, never deletes, and refuses unsafe places | Critical | Automated | Automated tests | — |
@@ -204,6 +204,9 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 | [TC-OPS-06](#tc-ops-06) | A save from a page that is out of date is refused | High | Automated | Automated tests | — |
 | [TC-GMAIL-01](#tc-gmail-01) | 18 made-up emails (25 documents) read by the real scanner and the real 14b model land where they should | High | Terminal | — | — |
 | [TC-GMAIL-02](#tc-gmail-02) | The same 18 emails through the real Gmail test account (owner's check) | High | Owner only | — | Passed 11/13/2026 by the owner: all 18 emails still in the test account's Inbox, unread, not moved, starred or deleted after the scan. |
+| [TC-DRAFT-01](#tc-draft-01) | A flagged line gets a fixed-template draft for each reason, filled from the records | High | Automated | Automated tests | — |
+| [TC-DRAFT-02](#tc-draft-02) | The draft goes only to the contact on record, and the page needs a sign-in | High | Automated | Automated tests | — |
+| [TC-DRAFT-03](#tc-draft-03) | Draft message button on a late Open items row, and Copy | Medium | Browser | Pass 11/13/2026 | — |
 
 ## Set-up and running
 
@@ -310,7 +313,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Automated tests:** `test_gate.py::test_every_route_refuses_a_request_with_no_session`, `test_gate.py::test_a_browser_is_sent_to_the_sign_in_page_and_a_script_gets_401`
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Pass 11/04/2026 (Safari, Chrome).
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Pass 11/04/2026 (Safari, Chrome).
 
 <details><summary>Screenshot</summary>
 
@@ -334,7 +337,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Automated tests:** `test_auth.py::test_wrong_password_and_unknown_email_get_the_same_refusal`, `test_gate.py::test_wrong_password_and_unknown_email_look_the_same`
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Pass 11/04/2026 (Safari, Chrome).
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Pass 11/04/2026 (Safari, Chrome).
 
 <details><summary>Screenshot</summary>
 
@@ -358,7 +361,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Automated tests:** `test_gate.py::test_sign_in_sets_a_locked_down_cookie_and_opens_the_home_page`
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Pass 11/06/2026.
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Pass 11/06/2026.
 
 <details><summary>Screenshot</summary>
 
@@ -383,7 +386,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Automated tests:** `test_gate.py::test_admin_adds_a_person_and_sees_the_temporary_password_once`, `test_gate.py::test_a_reload_after_adding_a_person_repeats_nothing`, `test_gate.py::test_the_shown_password_expires_and_belongs_to_one_admin`
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Pass 11/04/2026 (Safari, Chrome).
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Pass 11/04/2026 (Safari, Chrome).
 
 <details><summary>Screenshot</summary>
 
@@ -409,7 +412,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Automated tests:** `test_gate.py::test_a_temporary_password_can_reach_nothing_until_it_is_changed`, `test_auth.py::test_weak_passwords_are_refused`, `test_auth.py::test_changing_the_password_ends_other_sessions_and_clears_the_flag`
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Pass 11/04/2026 (Safari, Chrome).
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Pass 11/04/2026 (Safari, Chrome).
 
 <details><summary>Screenshot</summary>
 
@@ -433,7 +436,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Automated tests:** `test_gate.py::test_a_buyer_gets_403_on_the_admin_screens`, `test_gate.py::test_a_refusal_in_the_browser_is_a_page_not_raw_json`, `test_audit_screen.py::test_a_buyer_and_a_stranger_cannot_see_it`
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Pass 11/05/2026 (Safari, Chrome), before DEF-002 was found: retest needed.
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Pass 11/05/2026 (Safari, Chrome), before DEF-002 was found: retest needed.
 
 <details><summary>Screenshot</summary>
 
@@ -458,7 +461,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Automated tests:** `test_auth.py::test_a_disabled_account_gets_the_ordinary_refusal`, `test_gate.py::test_a_disabled_person_is_cut_off_at_once`
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Pass 11/04/2026 (Safari, Chrome).
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Pass 11/04/2026 (Safari, Chrome).
 
 <details><summary>Screenshot</summary>
 
@@ -483,7 +486,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Automated tests:** `test_auth.py::test_five_failures_lock_the_account_even_for_the_right_password`, `test_gate.py::test_five_wrong_passwords_lock_the_account_in_the_browser_too`
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Pass 11/04/2026 (Safari, Chrome).
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Pass 11/04/2026 (Safari, Chrome).
 
 <details><summary>Screenshot</summary>
 
@@ -542,7 +545,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Automated tests:** `test_gate.py::test_sign_out_ends_the_session`, `test_gate.py::test_a_new_sign_in_never_reuses_a_token`
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Pass 11/06/2026.
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Pass 11/06/2026.
 
 <details><summary>Screenshot</summary>
 
@@ -568,7 +571,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Automated tests:** `test_vendor_import.py::test_a_new_vendor_is_created_with_its_domains_and_the_domain_of_its_contact_email`, `test_sheets.py::test_vendors_can_be_uploaded_as_an_excel_file`, `test_vendor_import.py::test_the_page_opens_with_the_cursor_on_the_file_chooser_and_offers_a_template`
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Pass 11/06/2026 (CSV); the .xlsx file: no problem reported 11/07/2026.
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Pass 11/06/2026 (CSV); the .xlsx file: no problem reported 11/07/2026.
 
 <details><summary>Screenshot</summary>
 
@@ -591,7 +594,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Automated tests:** `test_vendor_import.py::test_uploading_the_same_file_again_changes_nothing`
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Pass 11/06/2026.
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Pass 11/06/2026.
 
 <details><summary>Screenshot</summary>
 
@@ -614,7 +617,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Automated tests:** `test_vendor_import.py::test_the_vendor_name_and_an_email_are_required`, `test_vendor_import.py::test_an_email_already_the_contact_of_another_vendor_is_refused`, `test_vendor_import.py::test_a_domain_owned_by_another_vendor_skips_only_that_row`
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Pass 11/06/2026.
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Pass 11/06/2026.
 
 <details><summary>Screenshot</summary>
 
@@ -654,7 +657,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Automated tests:** `test_sheets.py::test_files_that_are_not_readable_spreadsheets_are_refused`
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: No problem reported 11/07/2026 (QuickBooks check step 2).
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: No problem reported 11/07/2026 (QuickBooks check step 2).
 
 <details><summary>Screenshot</summary>
 
@@ -680,7 +683,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Automated tests:** `test_orders_web.py::test_a_vendor_is_added_and_listed_with_its_domains`, `test_orders_web.py::test_each_new_form_page_has_the_cursor_ready_in_one_box`
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Pass 11/05/2026 (Safari, Chrome).
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Pass 11/05/2026 (Safari, Chrome).
 
 <details><summary>Screenshot</summary>
 
@@ -703,7 +706,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Automated tests:** `test_orders.py::test_a_vendor_name_is_unique_ignoring_case`, `test_orders_web.py::test_a_refused_vendor_keeps_what_was_typed_and_says_why`
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Pass 11/05/2026 (Safari, Chrome).
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Pass 11/05/2026 (Safari, Chrome).
 
 <details><summary>Screenshot</summary>
 
@@ -726,7 +729,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Automated tests:** `test_orders.py::test_a_domain_belongs_to_one_vendor`, `test_orders_web.py::test_adding_a_domain_already_held_in_any_case_says_so`
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Pass 11/06/2026.
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Pass 11/06/2026.
 
 <details><summary>Screenshot</summary>
 
@@ -751,7 +754,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Automated tests:** `test_orders.py::test_a_domain_must_look_like_one`, `test_orders_web.py::test_domains_are_added_and_removed_from_the_vendor_page`
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Pass 11/05/2026 (Safari, Chrome).
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Pass 11/05/2026 (Safari, Chrome).
 
 <details><summary>Screenshot</summary>
 
@@ -774,7 +777,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Automated tests:** `test_orders_web.py::test_a_save_shows_a_fixed_saved_note_that_cannot_be_forged`, `test_orders_web.py::test_a_vendor_can_be_edited_and_the_change_is_audited_with_who_and_where`
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Pass 11/06/2026.
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Pass 11/06/2026.
 
 <details><summary>Screenshot</summary>
 
@@ -798,7 +801,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Automated tests:** `test_orders_web.py::test_a_vendor_is_added_and_listed_with_its_domains`
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Pass 11/05/2026 (Safari, Chrome).
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Pass 11/05/2026 (Safari, Chrome).
 
 <details><summary>Screenshot</summary>
 
@@ -824,7 +827,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Automated tests:** `test_vendor_import.py::test_vendor_search_finds_by_name_or_domain_and_treats_wildcards_as_text`, `test_web_standards.py::test_a_heading_sorts_and_a_second_click_reverses`
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Pass 11/06/2026.
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Pass 11/06/2026.
 
 <details><summary>Screenshot</summary>
 
@@ -848,7 +851,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Automated tests:** `test_vendor_import.py::test_markup_in_a_vendor_name_is_shown_as_text`, `test_orders_web.py::test_what_people_type_is_escaped_everywhere_it_is_shown`
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Pass 11/05/2026 (Safari, Chrome).
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Pass 11/05/2026 (Safari, Chrome).
 
 <details><summary>Screenshot</summary>
 
@@ -874,7 +877,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Automated tests:** `test_orders_web.py::test_a_po_is_entered_and_its_page_shows_lines_in_exact_numbers`, `test_orders.py::test_a_po_is_created_with_its_lines_in_order`
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Pass 11/05/2026 (Safari, Chrome).
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Pass 11/05/2026 (Safari, Chrome).
 
 <details><summary>Screenshot</summary>
 
@@ -898,7 +901,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Automated tests:** `test_orders_web.py::test_reloading_after_creating_a_po_does_not_create_another`
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Pass 11/06/2026.
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Pass 11/06/2026.
 
 <details><summary>Screenshot</summary>
 
@@ -921,7 +924,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Automated tests:** `test_orders_web.py::test_a_refused_po_keeps_every_box_and_lists_every_problem`, `test_orders.py::test_a_bad_line_value_is_refused_naming_the_line_and_field`
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Pass 11/06/2026.
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Pass 11/06/2026.
 
 <details><summary>Screenshot</summary>
 
@@ -944,7 +947,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Automated tests:** `test_ledger.py::test_too_many_decimal_places_are_refused_not_rounded`, `test_ledger.py::test_floats_and_other_inexact_values_are_refused`, `test_orders.py::test_the_numbers_in_a_file_are_exact`
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Pass 11/05/2026 (Safari, Chrome).
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Pass 11/05/2026 (Safari, Chrome).
 
 <details><summary>Screenshot</summary>
 
@@ -968,7 +971,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Automated tests:** `test_vendor_import.py::test_the_po_form_and_filters_use_the_search_box_not_a_long_list`
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Pass 11/06/2026.
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Pass 11/06/2026.
 
 <details><summary>Screenshot</summary>
 
@@ -1010,7 +1013,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Automated tests:** `test_web_standards.py::test_filters_update_the_list_in_place_and_keep_the_sort`, `test_orders_web.py::test_the_list_shows_open_and_closed_pos_and_searches_literally`, `test_expected.py::test_sent_dates_filter_and_a_wrong_value_is_reported_not_trusted`
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Pass 11/06/2026.
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Pass 11/06/2026.
 
 <details><summary>Screenshot</summary>
 
@@ -1050,7 +1053,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Automated tests:** `test_orders_web.py::test_a_buyer_not_only_an_admin_can_use_them`
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Pass 11/05/2026 (Safari, Chrome).
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Pass 11/05/2026 (Safari, Chrome).
 
 <details><summary>Screenshot</summary>
 
@@ -1076,7 +1079,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Automated tests:** `test_orders_web.py::test_a_csv_file_is_uploaded_and_the_person_lands_on_the_list`, `test_orders.py::test_the_sample_file_imports_every_po_and_line`, `test_orders_web.py::test_the_template_downloads_as_csv_and_names_every_column`
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Pass 11/06/2026.
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Pass 11/06/2026.
 
 <details><summary>Screenshot</summary>
 
@@ -1099,7 +1102,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Automated tests:** `test_orders.py::test_an_existing_po_number_is_never_overwritten`
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Pass 11/06/2026.
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Pass 11/06/2026.
 
 <details><summary>Screenshot</summary>
 
@@ -1122,7 +1125,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Automated tests:** `test_orders.py::test_one_bad_row_rejects_the_whole_file_and_every_problem_is_listed`, `test_orders.py::test_a_file_that_fails_midway_leaves_nothing_behind`, `test_orders_web.py::test_a_bad_file_imports_nothing_and_the_page_lists_the_rows`
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Pass 11/05/2026 (Safari, Chrome).
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Pass 11/05/2026 (Safari, Chrome).
 
 <details><summary>Screenshot</summary>
 
@@ -1180,7 +1183,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Automated tests:** `test_quickbooks.py::test_the_report_uploaded_on_the_import_page_becomes_the_quickbooks_preview`, `test_quickbooks.py::test_a_file_that_is_neither_still_gets_the_import_pages_own_message`
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Not yet run.
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Not yet run.
 
 <details><summary>Screenshot</summary>
 
@@ -1207,7 +1210,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Automated tests:** `test_quickbooks.py::test_the_page_previews_then_creates_and_reload_cannot_repeat_it`, `test_quickbooks.py::test_the_plan_reads_lines_and_skips_headings_and_totals`
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Step 4 failed 11/07/2026: DEF-001.
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Step 4 failed 11/07/2026: DEF-001.
 
 <details><summary>Screenshot</summary>
 
@@ -1230,7 +1233,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Automated tests:** `test_quickbooks.py::test_the_load_creates_the_pos_as_the_owner_decided`, `test_quickbooks.py::test_a_failure_part_way_creates_nothing`
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Not yet run.
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Not yet run.
 
 <details><summary>Screenshot</summary>
 
@@ -1253,7 +1256,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Automated tests:** `test_quickbooks.py::test_the_page_previews_then_creates_and_reload_cannot_repeat_it`, `test_quickbooks.py::test_one_persons_preview_cannot_be_used_by_another`, `test_quickbooks.py::test_a_preview_expires_after_15_minutes`
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Not yet run.
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Not yet run.
 
 <details><summary>Screenshot</summary>
 
@@ -1276,7 +1279,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Automated tests:** `test_quickbooks.py::test_the_po_page_shows_the_quickbooks_date_the_customer_and_the_history`
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Not yet run.
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Not yet run.
 
 <details><summary>Screenshot</summary>
 
@@ -1299,7 +1302,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Automated tests:** `test_quickbooks.py::test_a_unit_price_is_exact_or_rounded_to_four_places`
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Not yet run.
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Not yet run.
 
 <details><summary>Screenshot</summary>
 
@@ -1322,7 +1325,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Automated tests:** `test_quickbooks.py::test_loaded_pos_are_not_flagged_for_an_acknowledgement_the_app_never_saw`
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Not yet run.
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Not yet run.
 
 <details><summary>Screenshot</summary>
 
@@ -1346,7 +1349,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Automated tests:** `test_quickbooks.py::test_loading_again_changes_nothing_and_a_new_vendor_lets_a_waiting_po_in`, `test_quickbooks.py::test_a_po_number_already_in_the_app_is_never_changed`
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Not yet run.
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Not yet run.
 
 <details><summary>Screenshot</summary>
 
@@ -1376,7 +1379,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Automated tests:** `test_quickbooks.py::test_a_file_that_is_not_the_report_is_refused_naming_what_is_missing`, `test_quickbooks.py::test_the_apps_own_import_file_on_the_quickbooks_page_says_where_it_goes`, `test_quickbooks.py::test_a_hostile_or_wrong_file_is_a_clear_message`
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Not yet run.
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Not yet run.
 
 <details><summary>Screenshot</summary>
 
@@ -1419,7 +1422,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Expected:** The preview says 2 rows are skipped as a charge, not goods, and names each with its PO and item; the charge rows are no problem and no new line (the earlier cases have already loaded these POs, so nothing is new).
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Not yet run.
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Not yet run.
 
 <details><summary>Screenshot</summary>
 
@@ -1462,7 +1465,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Automated tests:** `test_entries_web.py::test_a_short_confirmation_tells_the_purchaser_to_update_the_original_po`, `test_events.py::test_a_different_price_is_flagged_next_to_the_line`, `test_status.py::test_a_line_confirmed_short_never_closes_by_itself`
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Pass 11/05/2026 (Safari, Chrome).
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Pass 11/05/2026 (Safari, Chrome).
 
 <details><summary>Screenshot</summary>
 
@@ -1485,7 +1488,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Automated tests:** `test_entries_web.py::test_a_later_promised_date_is_shown_as_a_slip`, `test_events.py::test_promised_dates_are_kept_and_a_later_date_is_a_slip`
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Pass 11/05/2026 (Safari, Chrome).
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Pass 11/05/2026 (Safari, Chrome).
 
 <details><summary>Screenshot</summary>
 
@@ -1509,7 +1512,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Automated tests:** `test_events.py::test_a_partial_then_full_shipment_moves_the_line`, `test_expected.py::test_known_carriers_get_a_link_to_their_own_page`, `test_entries_web.py::test_a_po_goes_from_sent_to_closed_through_the_pages`
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Pass 11/05/2026 (Safari, Chrome).
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Pass 11/05/2026 (Safari, Chrome).
 
 <details><summary>Screenshot</summary>
 
@@ -1532,7 +1535,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Automated tests:** `test_entries_web.py::test_the_invoice_form_starts_with_the_price_on_the_po`, `test_status.py::test_a_line_confirmed_short_never_closes_by_itself`, `test_events.py::test_a_partial_invoice_closes_only_what_it_covers`
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Pass 11/05/2026 (Safari, Chrome).
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Pass 11/05/2026 (Safari, Chrome).
 
 <details><summary>Screenshot</summary>
 
@@ -1555,7 +1558,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Automated tests:** `test_entries_web.py::test_a_different_price_and_over_billing_are_flagged_and_still_recorded`, `test_events.py::test_over_billing_is_flagged_but_still_recorded`
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Pass 11/05/2026 (Safari, Chrome).
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Pass 11/05/2026 (Safari, Chrome).
 
 <details><summary>Screenshot</summary>
 
@@ -1579,7 +1582,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Automated tests:** `test_entries_web.py::test_an_entry_is_removed_with_a_reason_and_its_effect_goes`, `test_events.py::test_removal_is_audited_with_what_the_entry_said_and_why`
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Pass 11/05/2026 (Safari, Chrome).
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Pass 11/05/2026 (Safari, Chrome).
 
 <details><summary>Screenshot</summary>
 
@@ -1620,7 +1623,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Automated tests:** `test_expected.py::test_a_late_line_is_flagged_on_the_po_page_and_the_list_and_a_filter_finds_it`, `test_expected.py::test_a_line_is_late_the_day_after_its_date_and_not_on_the_day`
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Pass 11/05/2026 (Safari, Chrome).
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Pass 11/05/2026 (Safari, Chrome).
 
 <details><summary>Screenshot</summary>
 
@@ -1644,7 +1647,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Automated tests:** `test_closing.py::test_a_reason_is_required_and_a_choice_too`, `test_closing.py::test_reopening_needs_a_reason_and_puts_the_line_back`, `test_closing.py::test_a_closed_line_cannot_be_settled_again_and_is_not_offered`
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Pass 11/06/2026.
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Pass 11/06/2026.
 
 <details><summary>Screenshot</summary>
 
@@ -1673,7 +1676,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Automated tests:** `test_closing.py::test_the_timeline_lists_what_happened_to_a_line_in_order`, `test_closing.py::test_the_timeline_keeps_an_entry_that_was_taken_back`
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Pass 11/06/2026.
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Pass 11/06/2026.
 
 <details><summary>Screenshot</summary>
 
@@ -1715,7 +1718,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Automated tests:** `test_reports.py::test_the_dashboard_shows_the_counts_and_links_to_the_report`, `test_reports.py::test_the_to_do_list_puts_the_most_urgent_first_and_says_what_to_do`
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Pass 11/06/2026.
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Pass 11/06/2026.
 
 <details><summary>Screenshot</summary>
 
@@ -1739,7 +1742,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Automated tests:** `test_web_standards.py::test_a_background_update_does_not_count_as_activity`
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Pass 11/06/2026.
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Pass 11/06/2026.
 
 <details><summary>Screenshot</summary>
 
@@ -1763,7 +1766,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Automated tests:** `test_reports.py::test_the_report_page_filters_and_downloads`, `test_reports.py::test_late_slipped_and_update_flags_are_counted_from_the_same_list`
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Pass 11/06/2026.
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Pass 11/06/2026.
 
 <details><summary>Screenshot</summary>
 
@@ -1787,7 +1790,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Automated tests:** `test_reports.py::test_the_csv_has_the_columns_and_neutralises_formulas`, `test_reports.py::test_a_cell_that_would_run_as_a_formula_is_made_plain_text`, `test_web_standards.py::test_downloads_are_plain_links_not_page_swaps`
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Pass 11/06/2026.
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Pass 11/06/2026.
 
 <details><summary>Screenshot</summary>
 
@@ -1831,7 +1834,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Automated tests:** `test_audit_screen.py::test_an_admin_sees_the_trail_and_the_cursor_starts_in_the_first_box`, `test_audit_screen.py::test_filters_narrow_the_list_and_a_wrong_date_is_reported`, `test_audit_screen.py::test_the_screen_only_reads`
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Pass 11/06/2026.
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Pass 11/06/2026.
 
 <details><summary>Screenshot</summary>
 
@@ -1874,7 +1877,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Automated tests:** `test_web_standards.py::test_signed_in_pages_load_htmx_from_this_site_with_the_safe_settings`, `test_web_standards.py::test_a_refused_form_sent_by_htmx_is_kept_out_of_the_history`
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Pass 11/06/2026.
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Pass 11/06/2026.
 
 <details><summary>Screenshot</summary>
 
@@ -1895,7 +1898,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Expected:** No sideways scrolling of the page. The top bar scrolls sideways; tables scroll inside their box; buttons are easy to tap.
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Pass 11/06/2026.
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Pass 11/06/2026.
 
 <details><summary>Screenshot</summary>
 
@@ -1919,7 +1922,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Automated tests:** `test_gate.py::test_the_cursor_is_ready_in_the_first_box_of_every_form_page`
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Pass 11/06/2026.
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Pass 11/06/2026.
 
 <details><summary>Screenshot</summary>
 
@@ -1940,7 +1943,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Expected:** The app stays in its one light theme and is readable.
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Pass 11/04/2026 (Safari, Chrome).
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Pass 11/04/2026 (Safari, Chrome).
 
 <details><summary>Screenshot</summary>
 
@@ -1980,7 +1983,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Automated tests:** `test_gate.py::test_a_mistyped_address_and_an_unreadable_form_are_pages_too`, `test_gate.py::test_a_script_still_gets_the_short_json_answer`
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Not yet run.
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Not yet run.
 
 <details><summary>Screenshot</summary>
 
@@ -2618,7 +2621,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Automated tests:** `test_mailboxes.py::test_connecting_goes_to_google_and_back_and_saves_the_mailbox`
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Not yet run.
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Not yet run.
 
 <details><summary>Screenshot</summary>
 
@@ -2784,7 +2787,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Automated tests:** `test_failed_documents.py::test_the_list_shows_each_failed_document_with_its_message_and_why`, `test_failed_documents.py::test_only_failed_documents_that_nobody_dismissed_are_listed`, `test_failed_documents.py::test_markup_in_a_subject_is_shown_as_text`, `test_failed_documents.py::test_an_empty_list_says_so`, `test_failed_documents.py::test_retry_puts_the_document_back_with_its_tries_reset_and_it_is_audited`, `test_failed_documents.py::test_dismiss_needs_a_reason_files_the_document_and_says_who_and_why`, `test_failed_documents.py::test_a_page_that_is_out_of_date_is_refused_and_changes_nothing`, `test_failed_documents.py::test_a_document_that_is_not_failed_cannot_be_retried_or_dismissed`, `test_failed_documents.py::test_everyone_signed_in_may_use_it_and_nobody_else`, `test_failed_documents.py::test_every_action_needs_the_security_token`, `test_failed_documents.py::test_home_counts_the_waiting_and_the_failed`, `test_failed_documents.py::test_no_document_words_are_in_the_page_except_the_message_it_came_in`
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Not yet run.
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Not yet run.
 
 <details><summary>Screenshot</summary>
 
@@ -3025,7 +3028,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Expected:** Each step works as described, in Chrome, with no script error.
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Not yet run.
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Not yet run.
 
 <details><summary>Screenshot</summary>
 
@@ -3153,7 +3156,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Expected:** The entry holds the price typed, not the model's; the document shows Accepted; the PO timeline links back to the message.
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Not yet run.
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Not yet run.
 
 <details><summary>Screenshot</summary>
 
@@ -3538,7 +3541,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Automated tests:** `test_customer_pages.py::test_everyone_signed_in_can_use_the_customer_screens_and_the_nav_shows_them`, `test_customer_pages.py::test_every_change_needs_the_security_token`, `test_customer_pages.py::test_a_customer_is_added_and_its_page_shows_the_names_and_domains`, `test_customer_pages.py::test_a_bad_customer_is_refused_and_the_boxes_keep_what_was_typed`, `test_customer_pages.py::test_a_customer_is_changed_with_a_saved_note_and_a_stale_page_is_refused`, `test_customer_pages.py::test_names_and_domains_are_added_and_removed_from_the_page`, `test_customer_pages.py::test_a_customer_can_be_made_inactive_and_then_takes_no_new_orders`, `test_customer_pages.py::test_the_customer_search_answers_with_names_only_and_a_wildcard_is_just_text`, `test_customer_pages.py::test_markup_in_a_customer_or_po_number_is_shown_as_text`, `test_customer_pages.py::test_an_order_is_filed_by_hand_and_its_page_shows_the_lines_and_totals`, `test_customer_pages.py::test_a_bad_order_lists_every_problem_and_keeps_every_box`, `test_customer_pages.py::test_the_same_order_again_changes_nothing_and_says_so`, `test_customer_pages.py::test_a_changed_order_is_a_revision_the_page_shows_the_changes_and_a_person_approves_it`, `test_customer_pages.py::test_a_revision_can_be_rejected_with_a_reason_and_a_stale_page_is_refused`, `test_customer_pages.py::test_an_order_that_does_not_exist_is_a_readable_page`, `test_customer_pages.py::test_the_template_downloads_and_is_a_file_the_import_reads`, `test_customer_pages.py::test_a_file_is_previewed_first_then_filed_when_confirmed_and_nothing_is_filed_before`, `test_customer_pages.py::test_a_wrong_or_missing_preview_token_files_nothing`, `test_customer_pages.py::test_the_same_file_again_is_skipped_and_a_changed_one_becomes_a_revision`, `test_customer_pages.py::test_an_unknown_customer_waits_and_a_person_files_it_by_choosing_one`, `test_customer_pages.py::test_a_waiting_order_can_make_its_customer_or_be_rejected_with_a_reason`, `test_customer_pages.py::test_a_bad_file_files_nothing_and_every_problem_is_listed_by_row`, `test_customer_pages.py::test_a_file_over_the_size_limit_or_with_no_file_is_refused`, `test_customer_pages.py::test_an_upload_without_the_header_token_is_refused`, `test_customer_pages.py::test_the_list_filters_by_search_customer_and_state_and_sorts`
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Not yet run.
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Not yet run.
 
 <details><summary>Screenshot</summary>
 
@@ -3659,7 +3662,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Automated tests:** `test_sales_pages.py::test_everyone_signed_in_can_use_the_screens_and_each_change_needs_the_token`, `test_sales_pages.py::test_a_status_or_message_in_the_address_cannot_change_a_page`, `test_sales_pages.py::test_the_preview_says_what_the_file_would_do_and_keeps_nothing`, `test_sales_pages.py::test_a_wrong_mapping_is_shown_again_without_losing_the_file_and_a_chosen_one_changes_the_level`, `test_sales_pages.py::test_rows_that_are_not_read_are_counted_with_their_reasons`, `test_sales_pages.py::test_a_file_that_is_not_a_sales_export_or_is_damaged_gets_one_plain_message`, `test_sales_pages.py::test_confirming_keeps_the_upload_and_the_pages_show_it`, `test_sales_pages.py::test_a_saved_mapping_is_suggested_for_the_next_file_that_has_its_columns`, `test_sales_pages.py::test_the_dates_are_needed_and_a_forgotten_one_leaves_the_preview_to_try_again`, `test_sales_pages.py::test_the_same_file_again_is_recognised_and_cannot_be_kept`, `test_sales_pages.py::test_a_later_export_that_changes_an_invoice_leaves_the_accepted_figures_and_says_so`, `test_sales_pages.py::test_an_invoice_page_shows_its_lines_and_what_is_not_goods`, `test_sales_pages.py::test_markup_in_a_file_name_a_customer_or_a_reference_is_shown_as_text`, `test_sales_pages.py::test_the_list_filters_by_search_kind_state_and_whether_the_customer_is_chosen`, `test_sales_pages.py::test_a_name_the_app_does_not_know_is_linked_by_choosing_or_making_a_customer`, `test_sales_pages.py::test_an_invoice_or_upload_that_does_not_exist_is_a_readable_page`
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Not yet run.
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Not yet run.
 
 <details><summary>Screenshot</summary>
 
@@ -3783,7 +3786,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Expected:** In Chrome: the list shows the new columns without a second top-bar row; the filter and CSV work; the queue lists the exception and the unmatched invoice; linking from the invoice page lands on the order page showing the person's decision; withdrawing it brings the exception back; a changed invoice shows its review form and settling it clears the exception.
 
-**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Not yet run.
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: Not yet run.
 
 <details><summary>Screenshot</summary>
 
@@ -3989,3 +3992,62 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 **Expected:** The report matches TC-GMAIL-01 (allowing for sender flags) and Gmail shows every email unread, unmoved and undeleted.
 
 **Latest:** Owner: Passed 11/13/2026 by the owner: all 18 emails still in the test account's Inbox, unread, not moved, starred or deleted after the scan..
+
+
+## Drafted follow-ups
+
+<a id="tc-draft-01"></a>
+
+### TC-DRAFT-01: A flagged line gets a fixed-template draft for each reason, filled from the records
+
+**Priority:** High · **How:** Automated · **Refs:** PD-5.3, REQ-FU-03, DEC-40, OPEN-29
+
+**Steps**
+
+1. Covered by the tests named.
+
+**Expected:** Late, no acknowledgement, slipped date and quantity-differs each give one draft naming the PO, line, quantity and dates from accepted records; a line with no flag gives none; record text cannot add lines or headers to the message.
+
+**Automated tests:** `test_drafts.py::test_a_line_with_no_flag_has_no_draft`, `test_drafts.py::test_a_late_draft_names_the_po_line_quantity_and_date`, `test_drafts.py::test_each_flag_gets_its_own_draft`, `test_drafts.py::test_the_slip_and_quantity_drafts_state_both_values`, `test_drafts.py::test_record_text_cannot_add_lines_to_the_message`
+
+**Latest:** Owner: not recorded.
+
+
+<a id="tc-draft-02"></a>
+
+### TC-DRAFT-02: The draft goes only to the contact on record, and the page needs a sign-in
+
+**Priority:** High · **How:** Automated · **Refs:** PD-5.3, DEC-40 (3), DEC-07
+
+**Steps**
+
+1. Covered by the tests named.
+
+**Expected:** With no contact on the vendor the To line says so and the body is still shown; a missing line is a 404; a signed-out visitor is refused; the page has no send action.
+
+**Automated tests:** `test_drafts.py::test_no_contact_is_said_and_the_body_is_still_given`, `test_drafts.py::test_the_draft_page_for_a_flagged_line`, `test_drafts.py::test_the_open_items_list_links_to_the_draft`, `test_drafts.py::test_a_missing_or_closed_line_gets_a_404_and_the_page_needs_a_sign_in`
+
+**Latest:** Owner: not recorded.
+
+
+<a id="tc-draft-03"></a>
+
+### TC-DRAFT-03: Draft message button on a late Open items row, and Copy
+
+**Priority:** Medium · **How:** Browser · **Refs:** PD-5.3, DEC-45
+
+**Steps**
+
+1. Open Open items, show Late.
+2. Click Draft message on the first row.
+3. Click Copy message.
+
+**Expected:** The draft page says DRAFT and that the app sends nothing, shows the message, and Copy puts it on the clipboard and says Copied.
+
+**Latest:** Claude, Chrome: Pass 11/13/2026. Owner: not recorded.
+
+<details><summary>Screenshot</summary>
+
+![TC-DRAFT-03 in Chrome](screenshots/TC-DRAFT-03.png)
+
+</details>
