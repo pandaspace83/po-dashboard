@@ -301,6 +301,12 @@ already downloaded).*
 
 **Demo:** the golden mailbox flows to the review queue; accepting documents moves the lines through their statuses.
 
+- [ ] PD-4.9 (DEF-026, recorded 2026-11-13; the owner: include it) An emailed PO gets its date sent. A PO accepted from an
+  email in Sent Items takes its date sent from that email (`received_at`, the office's local date), so the
+  no-acknowledgement flag (DEC-22) and its draft (PD-5.3) work for emailed POs; an emailed PO that is not from Sent Items
+  keeps none, and the Review page says so. Tests: the date is set, and an accepted emailed PO is flagged after 2 business
+  days with no acknowledgement. Small; do it before PD-5.1 (the rules engine needs it) and before any real mail.
+
 ## Phase 5: Alerts and follow-up
 
 *Thresholds: the defaults in DEC-22, which the owner will finalise later.*
@@ -432,9 +438,12 @@ every test.*
   answers them from `tests/data/assistant/records.json`, comparing keys the way the app does and refusing a fixture the
   live code could never produce. `langgraph` 1.2.21 and `pydantic` added (about 18 MB with what they bring; not imported
   yet). TC-AS-01 to 03, 31 tests; PD-9.6's cases are numbered from TC-AS-04.
-- [ ] PD-9.2 The gateway, done with PD-4.1: `models/llm.chat_json` for any schema, the one-call-at-a-time lock with
+- [x] PD-9.2 The gateway, done with PD-4.1: `models/llm.chat_json` for any schema, the one-call-at-a-time lock with
   questions first (DEC-68), seconds and token counts kept; the test that only `models/llm.py` reaches the model server
-  covers the assistant.
+  covers the assistant. **Done 2026-11-13 (TC-AS-04):** `chat_json` (temperature 0, any JSON schema, a dict back for the
+  caller's contract to check) and one lock (`llm.gate`) that `extract` and `chat_json` both take: a waiting question
+  goes ahead of every waiting document, questions in order, a running call never interrupted, a fourth waiting question
+  gets `ModelBusy`. Both calls now keep Ollama's reply token count beside the prompt count. No change to the extractor.
 - [ ] PD-9.3 Classification (DEC-66): the rules, the model step, the identifier check, and
   `assistant/prompts/intent_classification.md` (versioned).
 - [ ] PD-9.4 Rewriting (DEC-67): the reference check, substitution, the model step and its checks, and

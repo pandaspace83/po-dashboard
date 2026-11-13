@@ -31,6 +31,7 @@ Every failure is logged here the moment it is found, by whoever finds it: the ca
 | [DEF-023](#def-023) | 11/12/2026 | [TC-INJ-02](TEST_CASES.md#tc-inj-02) | High | Planted words saying "this is no order" filed a document out of sight, with no flag | Fixed, not committed yet |
 | [DEF-024](#def-024) | 11/12/2026 | [TC-INJ-03](TEST_CASES.md#tc-inj-03) | High | An email from outside the company that the model read as a PO was offered as a new PO | Fixed, not committed yet |
 | [DEF-025](#def-025) | 11/12/2026 | [TC-GMAIL-01](TEST_CASES.md#tc-gmail-01) | Low | A reference code in a covering note's subject was read as a PO number, so the note sat in Unmatched | Open |
+| [DEF-026](#def-026) | 11/13/2026 | [TC-ACC-05](TEST_CASES.md#tc-acc-05) | Medium | A PO accepted from an email gets no date sent, so it is never flagged 'no acknowledgement' | Open |
 
 <a id="def-001"></a>
 
@@ -634,5 +635,27 @@ Every failure is logged here the moment it is found, by whoever finds it: the ca
 **Cause:** Open. Model behaviour: a reference code in the subject is taken as the PO number. The words are in the source, so value_not_in_source cannot catch it.
 
 **Fix:** Not decided. Options: a prompt rule that a PO number must look like the company's numbers, or leave it to the person to dismiss from Unmatched. A scoring-design question, so Opus. Not committed yet.
+
+**Retest:** 
+
+
+<a id="def-026"></a>
+
+## DEF-026: A PO accepted from an email gets no date sent, so it is never flagged 'no acknowledgement'
+
+**Found:** 11/13/2026 by Claude, reading the code while reviewing the owner's go-live brief; then seen by running TC-ACC-05's scenario · **Case:** TC-ACC-05 · **Browser:** Not a browser case (seen in the stored record) · **Severity:** Medium · **Status:** Open
+
+**Steps to reproduce**
+
+1. Run TC-ACC-05's scenario: a PO emailed from the mailbox (Sent Items) is read and accepted.
+2. Look at the new PO's date sent.
+
+**Expected:** The PO's date sent is the day the email was sent, so after 2 business days with no acknowledgement it is flagged (DEC-22) and gets the 'no acknowledgement' draft (PD-5.3).
+
+**Actual:** date_sent is None. The no-acknowledgement rule needs a date sent, so an emailed PO (the normal way POs arrive, DEC-17) is never flagged, and no test noticed: the rule's tests use POs entered by hand.
+
+**Cause:** extraction/accept.py creates the PO with date_sent=None. The stored email has its folder and received_at (the send time for a message in Sent Items), but Accept does not use them. Not part of this defect: a PO from the QuickBooks starting load also has no date sent, on purpose (DEC-46 keeps the QuickBooks PO date apart); whether such a PO should ever be flagged is a question for PD-5.0.
+
+**Fix:** Planned as PD-4.9: a PO accepted from an email in Sent Items takes its date sent from that email's received_at (the office's local date); an emailed PO that is not from Sent Items keeps none and the Review page says so. A test that an accepted emailed PO is flagged after 2 business days with no acknowledgement. Not committed yet.
 
 **Retest:**

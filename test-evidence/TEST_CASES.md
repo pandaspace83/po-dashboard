@@ -4,7 +4,7 @@
 
 PO Dashboard (RaceSpec Internal Dashboard). Scope: Phase 0 and Phase 1: sign-in, people, vendors, purchase orders, imports, the QuickBooks starting load, entries by hand, Home, Open items, Audit, page behaviour, security and speed.
 
-**188 cases:** 52 Critical, 118 High, 18 Medium; 3 terminal, 113 automated, 68 browser, 4 owner only.
+**189 cases:** 52 Critical, 119 High, 18 Medium; 3 terminal, 114 automated, 68 browser, 4 owner only.
 
 Latest Chrome run: 11/13/2026, Google Chrome 158.0.8127.37, by Claude, scripts/browser_evidence.py, on commit f8a7615 with uncommitted changes: **68 of 68** browser cases pass. Automated tests: `uv run pytest`. Defects: [DEFECTS.md](DEFECTS.md). Sign-off: [SIGN_OFF.md](SIGN_OFF.md).
 
@@ -210,6 +210,7 @@ Latest Chrome run: 11/13/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 | [TC-AS-01](#tc-as-01) | Every hand-over between the assistant's steps is checked, and the model's reply cannot set what code works out | High | Automated | Automated tests | — |
 | [TC-AS-02](#tc-as-02) | The read interface finds a record only by an equal key and filters as the pages do | High | Automated | Automated tests | — |
 | [TC-AS-03](#tc-as-03) | The assistant can only read: no method that writes, made-up records, nothing imported that writes or mails | Critical | Automated | Automated tests | — |
+| [TC-AS-04](#tc-as-04) | The assistant's model call goes through the gateway, one call at a time, questions first | High | Automated | Automated tests | — |
 
 ## Set-up and running
 
@@ -4105,5 +4106,22 @@ Latest Chrome run: 11/13/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 **Expected:** The interface has six read methods and nothing else; a row it returns cannot be changed, and changing a returned list leaves the records alone. Every address in the fixtures is at example.com. No module in the assistant imports mail, intake, Accept, the importers, the reconciliation store or decisions, the ledger's writers, sign-in or sqlite3.
 
 **Automated tests:** `test_assistant_backend.py::test_the_backend_only_reads`, `test_assistant_backend.py::test_the_fixtures_are_in_tests_data_and_made_up`, `test_assistant_backend.py::test_the_assistant_imports_nothing_that_writes_mails_or_files_documents`
+
+**Latest:** Owner: not recorded.
+
+
+<a id="tc-as-04"></a>
+
+### TC-AS-04: The assistant's model call goes through the gateway, one call at a time, questions first
+
+**Priority:** High · **How:** Automated · **Refs:** PD-9.2, DEC-68, DEC-01, NFR-10, ARCHITECTURE §17.5
+
+**Steps**
+
+1. Covered by the tests named, with the model server replaced.
+
+**Expected:** chat_json sends any schema at temperature 0 and keeps the call's seconds and Ollama's prompt and reply token counts; a reply that is not a JSON object, or is cut off, is a bad answer; errors are sorted and hold no question text. Only one call runs at a time; a question waiting takes the next turn ahead of every waiting document, questions go in order, a running call is not interrupted, and a fourth waiting question is told the assistant is busy. Only models/llm.py reaches the model server (TC-QUE-08 covers the assistant too).
+
+**Automated tests:** `test_llm_gateway.py::test_chat_json_sends_any_schema_at_temperature_zero_and_keeps_seconds_and_tokens`, `test_llm_gateway.py::test_extract_keeps_the_reply_token_count_too`, `test_llm_gateway.py::test_a_reply_that_is_not_a_json_object_is_a_bad_answer`, `test_llm_gateway.py::test_a_reply_cut_off_at_the_limit_is_a_bad_answer`, `test_llm_gateway.py::test_errors_are_sorted_and_hold_no_question_text`, `test_llm_gateway.py::test_the_gate_is_free_again_after_an_error`, `test_llm_gateway.py::test_one_call_at_a_time_questions_first_in_order_and_a_fourth_is_busy`, `test_llm_gateway.py::test_two_calls_never_overlap`, `test_llm.py::test_only_the_gateway_talks_to_the_model_server`
 
 **Latest:** Owner: not recorded.
