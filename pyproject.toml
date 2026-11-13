@@ -32,7 +32,7 @@ dev = [
     "mypy>=1.13",
     "types-openpyxl>=3.1.5.20261017",
     "xlsxwriter==3.2.9",
-    "reportlab==4.4.4",
+    "reportlab==5.1.0",
 ]
 
 [project.scripts]
