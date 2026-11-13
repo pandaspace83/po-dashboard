@@ -817,6 +817,26 @@ def quickbooks_wrong_files(r: Run) -> None:
     r.a.wait_for_url(re.compile(r".*/orders/import$"))
 
 
+@case("TC-QB-10")
+def quickbooks_charge_rows(r: Run) -> None:
+    """A Shipping row and a Freight sub-item row in the report are listed as skipped, never made lines (DEC-55)."""
+    sample = (DATA / "quickbooks_open_pos_110526.csv").read_text(encoding="utf-8", errors="replace")
+    extra = ",10/20/2026,5001,,Acme Fasteners,Acme Fasteners,,,1,0,,1,12.00,,Shipping,,12.00,,,\n"
+    extra += ",10/20/2026,5001,,Acme Fasteners,Acme Fasteners,,,1,0,,1,30.00,,Freight:Inbound,,30.00,,,\n"
+    charges = r.work / "Open POs 110526 Charges.CSV"
+    charges.write_text(sample + extra, encoding="utf-8")
+    r.go(r.a, "/orders/quickbooks")
+    r.upload(r.a, charges, "button:has-text('Show what it would do')")
+    r.a.wait_for_selector("text=skipped: a charge, not goods", timeout=10000)
+    page = r.main(r.a)
+    check("2</strong> rows skipped" in r.a.inner_html("main") and "PO 5001 Shipping" in page
+          and "PO 5001 Freight:Inbound" in page, "the charge rows are not listed in the preview")  # fmt: skip
+    # earlier cases already loaded these POs, so nothing is new: the charge rows are still read, and still skipped
+    check("Nothing new to create" in page and "Nothing can be created until" not in page,
+          "a charge row was treated as a problem or a new line")  # fmt: skip
+    r.shot(r.a)
+
+
 # ---------------------------------------------------------------------------------------------------------------------
 # Entries by hand
 

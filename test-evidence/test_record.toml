@@ -719,6 +719,31 @@ tests = []
 was = "QuickBooks check #14"
 owner = "Not yet run (Claude's dry run 11/06/2026: 0 problems; counts only)"
 
+[[case]]
+id = "TC-QB-10"
+area = "QuickBooks starting load"
+title = "A Shipping or Freight row in the report is listed as skipped and never becomes a PO line"
+priority = "High"
+kind = "browser"
+refs = ["PD-4.5a", "DEC-55", "DEC-48"]
+steps = ["Load from QuickBooks with a report that has a Shipping row and a Freight:Inbound row under PO 5001, and press Show what it would do."]
+expected = "The preview says 2 rows are skipped as a charge, not goods, and names each with its PO and item; the charge rows are no problem and no new line (the earlier cases have already loaded these POs, so nothing is new)."
+tests = []
+owner = "Not yet run"
+
+
+[[case]]
+id = "TC-QB-11"
+area = "QuickBooks starting load"
+title = "Charge names come from a setting; only a whole item name (or the part before a colon) counts, and a file of only charges is not an error"
+priority = "High"
+kind = "automated"
+refs = ["PD-4.5a", "DEC-55"]
+steps = ["Covered by the tests named."]
+expected = "Shipping and Freight are charges by default; the po_charge_items setting adds more; Freight Brackets is goods; a charge row makes no line and is counted in the audit; a file with only charge rows has no problem and nothing to create."
+tests = ["test_quickbooks.py::test_shipping_and_freight_rows_are_skipped_and_listed_not_made_lines", "test_quickbooks.py::test_more_charge_names_come_from_a_setting_and_a_goods_name_that_only_contains_one_is_kept", "test_quickbooks.py::test_a_charge_row_never_becomes_a_line_and_a_file_of_only_charges_is_not_an_error", "test_quickbooks.py::test_the_preview_lists_the_skipped_charges"]
+
+
 # ---------------------------------------------------------------------------------------------------------------------
 # Entries by hand: acknowledgements, shipments, invoices, settling
 
@@ -2645,4 +2670,23 @@ cause = "The message page always drew its fields from the model's answer; the ac
 fix = "An accepted document now shows the values kept in final (the model's answer stays in the row). A test checks the page after Accept."
 retest = "11/12/2026, Claude in Chrome: pass (all 66 cases passed). Owner's retest: not needed."
 retest_evidence = "screenshots/TC-ACC-01-2.png"
+status = "Fixed and retested"
+
+
+[[defect]]
+id = "DEF-021"
+found = "11/12/2026"
+found_by = "Claude, browser evidence run in Chrome"
+case = "TC-QB-10"
+browser = "Google Chrome (scripts/browser_evidence.py)"
+severity = "Low"
+title = "The charge-row browser check expected 6 new lines, but the earlier cases had already loaded those POs"
+steps = ["Run scripts/browser_evidence.py with the new TC-QB-10."]
+expected = "The preview lists the two charge rows as skipped."
+actual = "The preview did list them, but the check also looked for '6 lines to create'. By then TC-QB-02 and TC-QB-07 had loaded every PO in the file, so the preview rightly said 'Nothing new to create'."
+failure_evidence = "screenshots/DEF-021-before.png"
+cause = "A flaw in the new script, not in the app: it assumed a fresh database."
+fix = "The script checks that the charge rows are listed as skipped, that nothing is a problem, and that the preview says nothing is new."
+retest = "11/12/2026, Claude in Chrome: pass (all 67 cases passed). Owner's retest: not needed for the script."
+retest_evidence = "screenshots/TC-QB-10.png"
 status = "Fixed and retested"

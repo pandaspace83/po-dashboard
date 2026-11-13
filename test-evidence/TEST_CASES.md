@@ -4,9 +4,9 @@
 
 PO Dashboard (RaceSpec Internal Dashboard). Scope: Phase 0 and Phase 1: sign-in, people, vendors, purchase orders, imports, the QuickBooks starting load, entries by hand, Home, Open items, Audit, page behaviour, security and speed.
 
-**170 cases:** 46 Critical, 107 High, 17 Medium; 2 terminal, 99 automated, 66 browser, 3 owner only.
+**172 cases:** 46 Critical, 109 High, 17 Medium; 2 terminal, 100 automated, 67 browser, 3 owner only.
 
-Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/browser_evidence.py, on commit a3a206e with uncommitted changes: **66 of 66** browser cases pass. Automated tests: `uv run pytest`. Defects: [DEFECTS.md](DEFECTS.md). Sign-off: [SIGN_OFF.md](SIGN_OFF.md).
+Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/browser_evidence.py, on commit a8e5795 with uncommitted changes: **67 of 67** browser cases pass. Automated tests: `uv run pytest`. Defects: [DEFECTS.md](DEFECTS.md). Sign-off: [SIGN_OFF.md](SIGN_OFF.md).
 
 **To run them by hand:**
 
@@ -75,6 +75,8 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 | [TC-QB-07](#tc-qb-07) | Loading the same file again creates nothing; adding the waiting vendor lets its PO in | Critical | Browser | Pass 11/12/2026 | Not yet run |
 | [TC-QB-08](#tc-qb-08) | A file that is not the report is refused naming what is missing; the app's own file is pointed to Import | Medium | Browser | Pass 11/12/2026 | Not yet run |
 | [TC-QB-09](#tc-qb-09) | The company's real export previews with counts that match QuickBooks | Critical | Owner only | — | Not yet run (Claude's dry run 11/06/2026: 0 problems; counts only) |
+| [TC-QB-10](#tc-qb-10) | A Shipping or Freight row in the report is listed as skipped and never becomes a PO line | High | Browser | Pass 11/12/2026 | Not yet run |
+| [TC-QB-11](#tc-qb-11) | Charge names come from a setting; only a whole item name (or the part before a colon) counts, and a file of only charges is not an error | High | Automated | Automated tests | — |
 | [TC-EVT-01](#tc-evt-01) | A short confirmation at another price is recorded and the purchaser is told to update the PO | Critical | Browser | Pass 11/12/2026 | Pass 11/05/2026 (Safari, Chrome) |
 | [TC-EVT-02](#tc-evt-02) | A later promised date is shown as a slip | High | Browser | Pass 11/12/2026 | Pass 11/05/2026 (Safari, Chrome) |
 | [TC-EVT-03](#tc-evt-03) | Shipments move a line from Partially shipped to Shipped, with who entered them | Critical | Browser | Pass 11/12/2026 | Pass 11/05/2026 (Safari, Chrome) |
@@ -1393,6 +1395,44 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 **Expected:** The counts of POs, lines, partly received lines and rounded prices match QuickBooks; 0 problems. Write no names or figures anywhere in the repository.
 
 **Latest:** Owner: Not yet run (Claude's dry run 11/06/2026: 0 problems; counts only).
+
+
+<a id="tc-qb-10"></a>
+
+### TC-QB-10: A Shipping or Freight row in the report is listed as skipped and never becomes a PO line
+
+**Priority:** High · **How:** Browser · **Refs:** PD-4.5a, DEC-55, DEC-48
+
+**Steps**
+
+1. Load from QuickBooks with a report that has a Shipping row and a Freight:Inbound row under PO 5001, and press Show what it would do.
+
+**Expected:** The preview says 2 rows are skipped as a charge, not goods, and names each with its PO and item; the charge rows are no problem and no new line (the earlier cases have already loaded these POs, so nothing is new).
+
+**Latest:** Claude, Chrome: Pass 11/12/2026. Owner: Not yet run.
+
+<details><summary>Screenshot</summary>
+
+![TC-QB-10 in Chrome](screenshots/TC-QB-10.png)
+
+</details>
+
+
+<a id="tc-qb-11"></a>
+
+### TC-QB-11: Charge names come from a setting; only a whole item name (or the part before a colon) counts, and a file of only charges is not an error
+
+**Priority:** High · **How:** Automated · **Refs:** PD-4.5a, DEC-55
+
+**Steps**
+
+1. Covered by the tests named.
+
+**Expected:** Shipping and Freight are charges by default; the po_charge_items setting adds more; Freight Brackets is goods; a charge row makes no line and is counted in the audit; a file with only charge rows has no problem and nothing to create.
+
+**Automated tests:** `test_quickbooks.py::test_shipping_and_freight_rows_are_skipped_and_listed_not_made_lines`, `test_quickbooks.py::test_more_charge_names_come_from_a_setting_and_a_goods_name_that_only_contains_one_is_kept`, `test_quickbooks.py::test_a_charge_row_never_becomes_a_line_and_a_file_of_only_charges_is_not_an_error`, `test_quickbooks.py::test_the_preview_lists_the_skipped_charges`
+
+**Latest:** Owner: not recorded.
 
 
 ## Entries by hand

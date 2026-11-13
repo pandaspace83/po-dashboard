@@ -308,6 +308,74 @@ def test_the_apps_own_import_file_on_the_quickbooks_page_says_where_it_goes(vend
     assert '<a class="button" href="/orders/import">' in page.text
 
 
+# ---- charge rows are not goods (DEC-55)
+
+
+def _with_charges(*rows: tuple[str, str, str]) -> bytes:
+    """The sample with extra rows, each (PO number, item, amount), as QuickBooks lists a Shipping or Freight line."""
+    table = read_table(raw(), NAME)
+    width = len(table[0])
+    for number_, item, amount in rows:
+        cells = [""] * width
+        for name, value in {"date": "10/20/2026", "num": number_, "source name": "Acme Fasteners", "qty": "1",
+                            "rcv'd": "0", "amount": amount, "item": item}.items():  # fmt: skip
+            cells[[c.strip().lower() for c in table[0]].index(name)] = value
+        table.append(cells)
+    out = io.StringIO()
+    import csv
+
+    csv.writer(out).writerows(table)
+    return out.getvalue().encode("utf-8")
+
+
+def test_shipping_and_freight_rows_are_skipped_and_listed_not_made_lines(env, vendors: TestClient) -> None:  # noqa: ANN001
+    found = plan(env, _with_charges(("5001", "Shipping", "12.00"), ("5001", "Freight:Inbound", "30.00")))
+    assert not found.problems and found.ready
+    assert [(c.po_number, c.item) for c in found.skipped] == [("5001", "Shipping"), ("5001", "Freight:Inbound")]
+    assert [line.item for line in found.create[0].lines] == ["Bolts:M8", "Nuts:M8", "Washers:M8"]  # the sample's own
+    assert plan(env).skipped == []
+
+
+def test_more_charge_names_come_from_a_setting_and_a_goods_name_that_only_contains_one_is_kept(
+    env, vendors: TestClient  # noqa: ANN001
+) -> None:
+    data = _with_charges(("5001", "Handling", "5.00"), ("5001", "Freight Brackets", "9.00"))
+    with Session(env[1]) as db:
+        assert [c.item for c in qb.plan_load(db, data, NAME).skipped] == []  # not in the default list
+        kept = [line.item for line in qb.plan_load(db, data, NAME).create[0].lines]
+        assert kept[-2:] == ["Handling", "Freight Brackets"]
+        from po_dashboard.db.customers import Setting
+
+        row = db.get(Setting, "po_charge_items")  # the migration's defaults are rows; a missing row falls back
+        if row is None:
+            db.add(Setting(key="po_charge_items", value="x"))
+            row = db.get(Setting, "po_charge_items")
+        assert row is not None
+        row.value = "Shipping, Freight, HANDLING"
+        db.commit()
+        found = qb.plan_load(db, data, NAME)
+    assert [c.item for c in found.skipped] == ["Handling"]  # whole name only: "Freight Brackets" is goods
+    assert found.create[0].lines[-1].item == "Freight Brackets"
+
+
+def test_a_charge_row_never_becomes_a_line_and_a_file_of_only_charges_is_not_an_error(env, vendors: TestClient) -> None:  # noqa: ANN001
+    load(env, _with_charges(("5001", "Shipping", "12.00")))
+    with Session(env[1]) as db:
+        items = db.scalars(select(L.POLine.item).join(L.PurchaseOrder).where(L.PurchaseOrder.po_number == "5001")).all()
+        assert sorted(items) == ["Bolts:M8", "Nuts:M8", "Washers:M8"]
+        audited = db.scalars(select(AuditLog).where(AuditLog.action == "quickbooks.load")).one()
+        assert '"charge_rows_skipped": 1' in (audited.after or "")
+    header = ",".join(read_table(raw(), NAME)[0])
+    only = (header + "\n" + ",10/20/2026,6001,,,Acme Fasteners,,,1,0,,,5.00,,Shipping,,,,,\n").encode()
+    found = plan(env, only)
+    assert [c.item for c in found.skipped] == ["Shipping"] and not found.problems and not found.ready
+
+
+def test_the_preview_lists_the_skipped_charges(vendors: TestClient) -> None:
+    text = _preview(vendors, _with_charges(("5001", "Shipping", "12.00"))).text
+    assert "skipped: a charge, not goods" in text and "PO 5001 Shipping" in text
+
+
 def test_the_load_needs_a_sign_in(env) -> None:  # noqa: ANN001
     anonymous = new_client(env[0])
     for method, path in (("GET", "/orders/quickbooks"), ("POST", "/orders/quickbooks"),

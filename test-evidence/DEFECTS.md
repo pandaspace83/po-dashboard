@@ -26,6 +26,7 @@ Every failure is logged here the moment it is found, by whoever finds it: the ca
 | [DEF-018](#def-018) | 11/12/2026 | [TC-CO-08](TEST_CASES.md#tc-co-08) | Medium | The admin's top bar wrapped onto two rows once the Review link was added | Fixed and retested |
 | [DEF-019](#def-019) | 11/12/2026 | [TC-REV-01](TEST_CASES.md#tc-rev-01) | Low | The Review browser check clicked the wrong link and typed a PO number the app rightly refused | Fixed and retested |
 | [DEF-020](#def-020) | 11/12/2026 | [TC-ACC-01](TEST_CASES.md#tc-acc-01) | Medium | After Accept, the Review page showed the model's values, not the ones the person accepted | Fixed and retested |
+| [DEF-021](#def-021) | 11/12/2026 | [TC-QB-10](TEST_CASES.md#tc-qb-10) | Low | The charge-row browser check expected 6 new lines, but the earlier cases had already loaded those POs | Fixed and retested |
 
 <a id="def-001"></a>
 
@@ -517,3 +518,30 @@ Every failure is logged here the moment it is found, by whoever finds it: the ca
 **Retest:** 11/12/2026, Claude in Chrome: pass (all 66 cases passed). Owner's retest: not needed.
 
 ![DEF-020 retested](screenshots/TC-ACC-01-2.png)
+
+
+<a id="def-021"></a>
+
+## DEF-021: The charge-row browser check expected 6 new lines, but the earlier cases had already loaded those POs
+
+**Found:** 11/12/2026 by Claude, browser evidence run in Chrome · **Case:** TC-QB-10 · **Browser:** Google Chrome (scripts/browser_evidence.py) · **Severity:** Low · **Status:** Fixed and retested
+
+**Steps to reproduce**
+
+1. Run scripts/browser_evidence.py with the new TC-QB-10.
+
+**Expected:** The preview lists the two charge rows as skipped.
+
+**Actual:** The preview did list them, but the check also looked for '6 lines to create'. By then TC-QB-02 and TC-QB-07 had loaded every PO in the file, so the preview rightly said 'Nothing new to create'.
+
+**Seen:** screenshots/DEF-021-before.png
+
+![DEF-021 as found](screenshots/DEF-021-before.png)
+
+**Cause:** A flaw in the new script, not in the app: it assumed a fresh database.
+
+**Fix:** The script checks that the charge rows are listed as skipped, that nothing is a problem, and that the preview says nothing is new. Not committed yet.
+
+**Retest:** 11/12/2026, Claude in Chrome: pass (all 67 cases passed). Owner's retest: not needed for the script.
+
+![DEF-021 retested](screenshots/TC-QB-10.png)

@@ -1,11 +1,11 @@
 {
   "date": "11/12/2026",
-  "started": "2026-11-12T20:40:44",
+  "started": "2026-11-12T21:00:04",
   "browser": "Google Chrome 158.0.8127.37",
   "by": "Claude, scripts/browser_evidence.py",
-  "commit": "a3a206e with uncommitted changes",
-  "passed": 66,
-  "total": 66,
+  "commit": "a8e5795 with uncommitted changes",
+  "passed": 67,
+  "total": 67,
   "problems": [],
   "cases": {
     "TC-SIGN-01": {
@@ -38,7 +38,7 @@
       "screenshots": [
         "screenshots/TC-SIGN-04.png"
       ],
-      "seconds": 2.6
+      "seconds": 2.7
     },
     "TC-SIGN-05": {
       "result": "Pass",
@@ -46,7 +46,7 @@
       "screenshots": [
         "screenshots/TC-SIGN-05.png"
       ],
-      "seconds": 3.6
+      "seconds": 3.7
     },
     "TC-SIGN-06": {
       "result": "Pass",
@@ -198,7 +198,7 @@
       "screenshots": [
         "screenshots/TC-PO-03.png"
       ],
-      "seconds": 4.5
+      "seconds": 4.6
     },
     "TC-PO-04": {
       "result": "Pass",
@@ -270,7 +270,7 @@
       "screenshots": [
         "screenshots/TC-QB-01.png"
       ],
-      "seconds": 2.7
+      "seconds": 2.8
     },
     "TC-QB-02": {
       "result": "Pass",
@@ -330,6 +330,14 @@
       ],
       "seconds": 3.2
     },
+    "TC-QB-10": {
+      "result": "Pass",
+      "detail": "",
+      "screenshots": [
+        "screenshots/TC-QB-10.png"
+      ],
+      "seconds": 1.8
+    },
     "TC-EVT-01": {
       "result": "Pass",
       "detail": "",
@@ -344,7 +352,7 @@
       "screenshots": [
         "screenshots/TC-EVT-02.png"
       ],
-      "seconds": 1.5
+      "seconds": 1.6
     },
     "TC-EVT-03": {
       "result": "Pass",
@@ -352,7 +360,7 @@
       "screenshots": [
         "screenshots/TC-EVT-03.png"
       ],
-      "seconds": 2.8
+      "seconds": 2.7
     },
     "TC-EVT-04": {
       "result": "Pass",
@@ -360,7 +368,7 @@
       "screenshots": [
         "screenshots/TC-EVT-04.png"
       ],
-      "seconds": 1.5
+      "seconds": 1.6
     },
     "TC-EVT-05": {
       "result": "Pass",
@@ -409,7 +417,7 @@
       "screenshots": [
         "screenshots/TC-HOME-01.png"
       ],
-      "seconds": 0.5
+      "seconds": 0.4
     },
     "TC-HOME-02": {
       "result": "Pass",
@@ -501,7 +509,7 @@
         "screenshots/TC-QUE-07.png",
         "screenshots/TC-QUE-07-2.png"
       ],
-      "seconds": 1.3
+      "seconds": 1.4
     },
     "TC-REV-01": {
       "result": "Pass",
@@ -512,7 +520,7 @@
         "screenshots/TC-REV-01-3.png",
         "screenshots/TC-REV-01-4.png"
       ],
-      "seconds": 1.4
+      "seconds": 1.3
     },
     "TC-ACC-01": {
       "result": "Pass",
@@ -522,7 +530,7 @@
         "screenshots/TC-ACC-01-2.png",
         "screenshots/TC-ACC-01-3.png"
       ],
-      "seconds": 0.7
+      "seconds": 0.8
     },
     "TC-CO-08": {
       "result": "Pass",
@@ -537,7 +545,7 @@
         "screenshots/TC-CO-08-7.png",
         "screenshots/TC-CO-08-8.png"
       ],
-      "seconds": 4.5
+      "seconds": 4.6
     },
     "TC-CO-09": {
       "result": "Pass",
@@ -550,7 +558,7 @@
         "screenshots/TC-CO-09-5.png",
         "screenshots/TC-CO-09-6.png"
       ],
-      "seconds": 5.1
+      "seconds": 5.2
     },
     "TC-CO-17": {
       "result": "Pass",

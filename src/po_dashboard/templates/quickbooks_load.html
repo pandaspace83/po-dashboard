@@ -23,6 +23,7 @@
     {% if plan.existing %}<li><strong>{{ plan.existing|length }}</strong> already in the app, left as they are: {{ plan.existing[:20]|join(", ") }}{% if plan.existing|length > 20 %} and {{ plan.existing|length - 20 }} more{% endif %}.</li>{% endif %}
     {% if plan.received %}<li><strong>{{ plan.received|length }}</strong> line{{ "" if plan.received|length == 1 else "s" }} partly received in QuickBooks: each gets "received per QuickBooks", and shows what is still to come.</li>{% endif %}
     {% if plan.rounded %}<li><strong>{{ plan.rounded|length }}</strong> unit price{{ "" if plan.rounded|length == 1 else "s" }} that QuickBooks' total does not divide into exactly, rounded to 4 places (each line's history says so): {% for o, l in plan.rounded[:10] %}PO {{ o.po_number }} {{ l.item }} ({{ l.amount }} ÷ {{ l.qty|quantity }} = {{ l.price }}){{ "; " if not loop.last }}{% endfor %}.</li>{% endif %}
+    {% if plan.skipped %}<li><strong>{{ plan.skipped|length }}</strong> row{{ "" if plan.skipped|length == 1 else "s" }} skipped: a charge, not goods (they would never close): {% for c in plan.skipped[:10] %}PO {{ c.po_number }} {{ c.item }} (row {{ c.row }}){{ "; " if not loop.last }}{% endfor %}{% if plan.skipped|length > 10 %} and {{ plan.skipped|length - 10 }} more{% endif %}.</li>{% endif %}
     {% if plan.ignored_columns %}<li class="muted">Columns not used: {{ plan.ignored_columns|join(", ") }}. Dates and sending come from emails, not from these.</li>{% endif %}
   </ul>
   {% if token %}

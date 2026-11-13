@@ -1,8 +1,9 @@
 """The QuickBooks starting load (DEC-46, PD-1.10a): open POs from QuickBooks' "Open POs" report, as exported.
 
 The report is grouped by item: a heading row names the item, then its PO lines, then a "Total" row. A row with a PO
-number (`Num`) is a line; every other row is skipped. Columns are found by name. Reading never changes anything;
-`plan_load` says what would happen and `apply_load` does it, all or nothing.
+number (`Num`) is a line, unless its item is a charge (Shipping and Freight, and more names in the `po_charge_items`
+setting: DEC-55), which would never close and is listed as skipped; every other row is skipped. Columns are found by
+name. Reading never changes anything; `plan_load` says what would happen and `apply_load` does it, all or nothing.
 
 What is not read, on purpose: `Other 1` (lead times typed by hand), `Print`, `Deliv Date`, `Due Date`, `P. O. #`,
 `S. O. #`: dates and sending come from emails only (DEC-41, DEC-43).
@@ -17,6 +18,7 @@ from datetime import date
 from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 
 from sqlalchemy import func, select
+from sqlalchemy import text as sql
 from sqlalchemy.orm import Session
 
 from po_dashboard.auth.service import audit
@@ -75,6 +77,25 @@ class QBLine:
     rounded: bool
 
 
+CHARGE_SETTING = "po_charge_items"
+DEFAULT_CHARGES = "shipping,freight"  # rows that are charges, not goods (DEC-55)
+
+
+def charge_names(db: Session) -> frozenset[str]:
+    """The item names that are charges: the shared `setting` table's row if there is one, else the default. Read with
+    plain SQL so purchasing code stays apart from the customer side (DEC-56)."""
+    value = db.execute(sql("select value from setting where key = :key"), {"key": CHARGE_SETTING}).scalar()
+    listed = value if isinstance(value, str) else DEFAULT_CHARGES
+    return frozenset(part.strip().lower() for part in listed.split(",") if part.strip())
+
+
+@dataclass(frozen=True)
+class SkippedCharge:
+    row: int
+    po_number: str
+    item: str
+
+
 @dataclass
 class QBOrder:
     po_number: str
@@ -92,6 +113,7 @@ class LoadPlan:
     existing: list[str] = field(default_factory=list)  # PO numbers already in the app: left alone
     problems: list[RowError] = field(default_factory=list)
     ignored_columns: list[str] = field(default_factory=list)
+    skipped: list[SkippedCharge] = field(default_factory=list)  # charge rows: not goods, never a PO line (DEC-55)
 
     @property
     def lines_to_create(self) -> int:
@@ -112,6 +134,13 @@ class LoadPlan:
     @property
     def ready(self) -> bool:
         return not self.problems and self.export_date is not None and bool(self.create)
+
+
+def is_charge(item: str, charges: frozenset[str]) -> bool:
+    """Whether a report row's item is a charge: its whole name, or the part before the first colon (a QuickBooks
+    sub-item such as "Freight:Inbound"), is in the list, ignoring case."""
+    name = item.strip().lower()
+    return name in charges or name.split(":", 1)[0].strip() in charges
 
 
 def export_date_from_name(filename: str | None) -> date | None:
@@ -184,11 +213,15 @@ def plan_load(db: Session, raw: bytes, filename: str | None, export_date: date |
         index = where.get(name)
         return cells[index].strip() if index is not None and index < len(cells) else ""
 
+    charges = charge_names(db)
     found: dict[str, QBOrder] = {}
     for row_number, cells in enumerate(table[1:], start=2):
         number_ = cell(cells, "num")
         if not number_:
             continue  # an item heading, a "Total" row or a blank row
+        if is_charge(cell(cells, "item"), charges):
+            plan.skipped.append(SkippedCharge(row_number, number_[:64], cell(cells, "item")[:200]))
+            continue
         try:
             line = _line(cells, cell, row_number)
             vendor_name = text(cell(cells, "source name"), "Source Name (the vendor)", longest=200, required=True) or ""
@@ -226,7 +259,7 @@ def plan_load(db: Session, raw: bytes, filename: str | None, export_date: date |
         else:
             order.vendor_id = vendor.id
             plan.create.append(order)
-    if not found and not plan.problems:
+    if not found and not plan.problems and not plan.skipped:
         plan.problems.append(RowError(None, "The file has no PO lines (no row has a Num)."))
     return plan
 
@@ -298,6 +331,7 @@ def apply_load(
         after={
             "export": exported.isoformat(), "created": len(plan.create), "lines": plan.lines_to_create,
             "waiting_for_vendor": len(plan.waiting), "already_in_app": len(plan.existing),
+            "charge_rows_skipped": len(plan.skipped),
         },
     )  # fmt: skip
     return LoadResult([order.po_number for order in plan.create], plan.lines_to_create, len(plan.waiting),

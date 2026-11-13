@@ -2,7 +2,7 @@
 
 > **Status, 2026-11-12:** Phases 0 to 3 are built. **Phase 4 is in progress:** its design is written (PD-4.0, DEC-54) and
 > the queue, the extractor, the model gateway, the validator, matching, the Review screens and Accept are built (PD-4.0a
-> to PD-4.5); PD-4.5a (the QuickBooks charge rows) comes next. **Phase 8 (customer orders and invoice reconciliation)**, which the owner asked for first, is built
+> to PD-4.5); PD-4.5a (the QuickBooks charge rows) is done; PD-4.6 comes next. **Phase 8 (customer orders and invoice reconciliation)**, which the owner asked for first, is built
 > (PD-8.0 to PD-8.7); only PD-8.8, customer POs from email, waits for Phase 4. Left from Phase 3: the owner's check of the Mailboxes screen with the real
 > Google account (TC-MAIL-28). **Order (owner, 2026-11-12), focus: Gmail testing, PO matching, drafting, chat.**
 > (1) Phase 4 without PD-4.7. (2) Gmail end to end on synthetic mail. (3) Drafted follow-ups (PD-5.3 pulled forward,
@@ -256,8 +256,12 @@ already downloaded).*
   **Choices:** a discount charge is typed with a minus sign; an acknowledgement that lists no lines is accepted as
   "acknowledged, no details"; Reject was already built in PD-4.4. **Also:** the `.tuples()` deprecation warnings in the
   extraction code are gone.
-- [ ] PD-4.5a The QuickBooks load skips charge rows, Shipping and Freight by default and more in a setting, and the
-  preview lists them (DEC-55).
+- [x] PD-4.5a The QuickBooks load skips charge rows, Shipping and Freight by default and more in a setting, and the
+  preview lists them (DEC-55). **Done 2026-11-12 (TC-QB-10, TC-QB-11).** `plan_load` skips a row whose item (the whole
+  name, or the part before a colon, ignoring case) is in the `po_charge_items` setting (default `shipping,freight`;
+  `Freight Brackets` is goods), lists it in the preview as "skipped: a charge, not goods", and counts it in the load's
+  audit. A file of only charges has nothing to create and no error. There is still no screen to edit the setting; it is
+  a row in the `setting` table.
 - [ ] PD-4.6 Pipeline tests with a stub model; security tests with a stub that obeys planted instructions, proving the
   validator, the ticks and the person contain it (Opus).
 - [~] PD-4.7 The golden set through the whole pipeline: each PDF, scan and spreadsheet inside an email from its vendor's
