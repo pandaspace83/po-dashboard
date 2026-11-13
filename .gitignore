@@ -62,3 +62,6 @@ LEARNING_JOURNAL.md
 
 # VS Code workspace files are laptop-only
 *.code-workspace
+
+# Claude Code settings for this Mac only (permission allowlist with local paths)
+.claude/
