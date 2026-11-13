@@ -60,6 +60,7 @@ would notice on their own. It is judged by whether it helps with that, not by wh
 | 6 | The company's mail system, the office Mac, running for real | Not started |
 | 7 | A second machine, the final audit, release | Not started |
 | 8 | Customer orders: customer POs reconciled against QuickBooks sales invoices (asked for 2026-11-12, built before Phase 4 resumes) | Built on synthetic records (PD-8.0 to 8.7): customers, customer POs, the QuickBooks sales import, the matching engine, the screens and exception queue. Not yet tried on a real export (OPEN-22); customer POs by email wait for Phase 4 (PD-8.8) |
+| 9 | The assistant: questions about the records, with sources (asked for 2026-11-12) | Approved 2026-11-13; documents done (PD-9.0). Stage 1 (standalone, synthetic records, stub model) is next; the page comes after the owner's review |
 
 ## The documents
 

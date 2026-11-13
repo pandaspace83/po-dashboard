@@ -7,7 +7,7 @@
 > (PD-8.0 to PD-8.7); only PD-8.8, customer POs from email, waits for Phase 4. Left from Phase 3: the owner's check of the Mailboxes screen with the real
 > Google account (TC-MAIL-28). **Order (owner, 2026-11-12), focus: Gmail testing, PO matching, drafting, chat.**
 > (1) Phase 4 without PD-4.7. (2) Gmail end to end on synthetic mail. (3) Drafted follow-ups (PD-5.3 pulled forward,
-> from the flags that already exist). (4) Chat (Phase 9, proposed). (5) Then Outlook (Phase 6), the rest of Phase 5 and
+> from the flags that already exist). (4) Chat (Phase 9, approved 2026-11-13; Stage 1 first). (5) Then Outlook (Phase 6), the rest of Phase 5 and
 > PD-8.8. **Gate:** PD-4.7 (the accuracy baseline on the 14b model) must run before any real mail is read or Outlook is
 > connected (DEC-13). The deferred list below waits until the front end, backend and AI layer are finished.
 > **Sources:** [REQUIREMENTS.md](REQUIREMENTS.md), [ARCHITECTURE.md](ARCHITECTURE.md), [DECISIONS.md](DECISIONS.md).
@@ -408,16 +408,19 @@ PD-8.4 rules review. Synthetic data only until the owner shows a real export (OP
 **Demo:** upload a synthetic QuickBooks export; the order list shows matched, partial, over-invoiced, not found and needs
 review, each linked to its evidence; a person settles an ambiguous match and the audit trail shows it.
 
-## Phase 9: Assistant: questions about the records (proposed)
+## Phase 9: Assistant: questions about the records (approved 2026-11-13)
 
-*The owner's brief of 2026-11-12. Design: ARCHITECTURE §17; DEC-64 to DEC-69 (all Proposed); OPEN-26 to OPEN-31.
-**Nothing is built until the owner gives the go-ahead and places this phase in the order (OPEN-26).** Opus for PD-9.0 and
-the evaluation design in PD-9.6; Sonnet for PD-9.1 to PD-9.5. Stage 1 is standalone: no page, no route, no live
-database, and a stub model in every test.*
+*The owner's brief of 2026-11-12. Design: ARCHITECTURE §17; DEC-64 to DEC-69; OPEN-26 to OPEN-31. **Go-ahead given by the
+owner on 2026-11-13** (after Gmail end to end and drafting, per OPEN-26). Opus for PD-9.0 and the evaluation design in
+PD-9.6; Sonnet for PD-9.1 to PD-9.5. Stage 1 is standalone: no page, no route, no live database, and a stub model in
+every test.*
 
-- [~] PD-9.0 Documentation pass (DEC-25). **Started 2026-11-12:** the impact assessment and the design (ARCHITECTURE
-  §17), DEC-64 to DEC-69 proposed, OPEN-26 to OPEN-31 asked, RISK-18 to RISK-21. **Waiting for:** the owner's answers
-  and go-ahead; then the REQ-AS requirements, the README status table and the TC-AS cases in the test record.
+- [x] PD-9.0 Documentation pass (DEC-25). **Done 2026-11-13:** OPEN-26, 27, 28 and 30 answered (LangGraph with the
+  guards; as-proposed access; tens of seconds acceptable, ask before any timed 14b run). DEC-65 Decided; DEC-64, 66 to 69
+  Assumed until the owner's review at PD-9.7. REQ-AS-01 to 10 written; README status table updated. The TC-AS cases are
+  added to the test record with their tests (the record refuses an automated case with no test): TC-AS-01 to 11 are
+  planned from the PD-9.6 list. Still open: OPEN-29 (assistant drafts beyond fixed templates) and OPEN-31 (vendor
+  performance) wait for Stage 2; the office Mac's memory (OPEN-28, OPEN-32) for any second model.
 
 **Stage 1: the foundation, standalone.**
 

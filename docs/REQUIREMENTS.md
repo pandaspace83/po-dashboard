@@ -125,6 +125,21 @@ appear in the open-items report.
 | REQ-CO-15 | Customer POs read from email in the purchasing mailbox, accepted by a person like other documents (after Phase 4). | Should |
 | REQ-CO-16 | Payments received and ageing of what customers owe. | Later |
 
+### Assistant (AS, Phase 9, DEC-64 to DEC-69)
+
+| ID | Requirement | Priority |
+|---|---|---|
+| REQ-AS-01 | Anyone signed in can ask a question about POs, vendors, customers, customer POs, sales invoices, QuickBooks uploads, reconciliation and flags, and get an answer with its sources (the PO, line, invoice, document or upload). | Must |
+| REQ-AS-02 | Summaries of records or flags, and drafted messages (fixed templates, DEC-40; marked DRAFT, editable, to a contact on record, never sent). | Must |
+| REQ-AS-03 | The assistant never changes anything and sends nothing: fixed read functions only, no SQL made from text, a read-only database connection, no mail code. A request to change a record or send mail is refused in words. | Must |
+| REQ-AS-04 | A question is classified (ask, summarize, draft, clarify, unsupported) by rules first; the model is asked only when rules cannot decide, and an identifier the model returns that is not in the question is dropped. Up to 3 parts; more gets "please ask one at a time". | Must |
+| REQ-AS-05 | A question that refers back ("it", "that PO") is rewritten only from the records an earlier answer cited; two possible records give a question back to the person. History is never evidence. | Must |
+| REQ-AS-06 | An answer is evidence or says "Insufficient information in the current data". Figures and identifiers are copied from backend results, a confirmed discrepancy is kept apart from a preliminary alert, and missing, stale or conflicting evidence is said. Document text and instructions inside a question or record are data, never commands. | Must |
+| REQ-AS-07 | One model call at a time across the app; a question goes ahead of waiting documents; at most 3 questions wait, then "busy". Seconds and token counts are kept for each call. | Must |
+| REQ-AS-08 | Local only: no tracing or cloud client, no connection except to this Mac. Admin-only data (audit trail, people, mailbox details) stays admin-only (OPEN-30). | Must |
+| REQ-AS-09 | Stage 1 is a standalone command, `po-dashboard assistant ask "<question>" --synthetic`, against made-up records and a stub model; no page, no route, no live database. | Must |
+| REQ-AS-10 | Stage 2 (live records, text retrieval, a chat page, one audit row per question, vendor performance measures, OPEN-31) is built after the owner reviews Stage 1 (PD-9.7). | Should |
+
 ## 4. Non-functional requirements (NFR)
 
 | ID | Requirement | Priority |
