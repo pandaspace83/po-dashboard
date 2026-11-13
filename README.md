@@ -8,8 +8,8 @@ that leaves the office is the connection to the mailbox.
 
 Python (FastAPI, SQLite), server-rendered pages with HTMX, and Ollama with `qwen2.5:14b-instruct`. macOS only for now.
 
-> **Status: Phases 0 to 3 are built. Phase 4 (reading documents with the model) is in progress and paused for Phase 8
-> (customer orders), built except reading customer POs from email (PD-8.8), which needs Phase 4.** The table below is
+> **Status: Phases 0 to 3 and Phase 8 (customer orders) are built. Phase 4 (reading documents with the model) is built
+> except its scoring run on the real model (PD-4.7), which waits until the build is finished.** The table below is
 > updated at the end of every phase, and the detail is in [docs/PLAN.md](docs/PLAN.md).
 
 ## What it is for
@@ -55,7 +55,7 @@ would notice on their own. It is judged by whether it helps with that, not by wh
 | 1 | Sign-in, purchase orders, vendors, imports, line status, dashboard, audit trail | Done |
 | 2 | The golden set and the scoring code | Done (the full model score comes with Phase 4) |
 | 3 | Mail sources, storing and reading documents, the scanner, Gmail, the Mailboxes screen | Built; the Gmail check with the real account is the owner's last step |
-| 4 | Reading documents with the model, matching, validation, the review queue | In progress: design done; the queue, the extractor, the model gateway, the validator, matching, the Review screens and Accept built |
+| 4 | Reading documents with the model, matching, validation, the review queue | Built and tested with a stub model, including one that obeys planted instructions (PD-4.6, DEC-73). The accuracy score on the 14b model (PD-4.7) waits until the build is finished |
 | 5 | Alerts and follow-up | Not started |
 | 6 | The company's mail system, the office Mac, running for real | Not started |
 | 7 | A second machine, the final audit, release | Not started |

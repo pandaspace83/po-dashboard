@@ -106,8 +106,8 @@
         <p><label class="check"><input type="checkbox" name="tick_{{ t.flag }}" value="1"> I checked: {{ t.words }}</label></p>
         {% endfor %}
         <div class="form-actions">
-          <button type="submit" class="primary" {{ "disabled" if d.differences or (d.po and d.row.doc_type == "purchase_order") else "" }}>{{ icon("check-circle") }}Accept</button>
-          <span class="muted">{% if d.po and d.row.doc_type == "purchase_order" %}This PO number is already recorded, so there is nothing to accept.{% else %}Accepting records the values above, as you have them, against {% if d.po %}PO {{ d.po.po_number }}{% else %}a new PO{% endif %}, under your name.{% endif %}</span>
+          <button type="submit" class="primary" {{ "disabled" if d.cannot_accept else "" }}>{{ icon("check-circle") }}Accept</button>
+          <span class="muted">{% if d.cannot_accept %}{{ d.cannot_accept }}{% else %}Accepting records the values above, as you have them, against {% if d.po %}PO {{ d.po.po_number }}{% else %}a new PO{% endif %}, under your name.{% endif %}</span>
         </div>
         {% endif %}
       </form>

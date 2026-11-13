@@ -27,6 +27,9 @@ Every failure is logged here the moment it is found, by whoever finds it: the ca
 | [DEF-019](#def-019) | 11/12/2026 | [TC-REV-01](TEST_CASES.md#tc-rev-01) | Low | The Review browser check clicked the wrong link and typed a PO number the app rightly refused | Fixed and retested |
 | [DEF-020](#def-020) | 11/12/2026 | [TC-ACC-01](TEST_CASES.md#tc-acc-01) | Medium | After Accept, the Review page showed the model's values, not the ones the person accepted | Fixed and retested |
 | [DEF-021](#def-021) | 11/12/2026 | [TC-QB-10](TEST_CASES.md#tc-qb-10) | Low | The charge-row browser check expected 6 new lines, but the earlier cases had already loaded those POs | Fixed and retested |
+| [DEF-022](#def-022) | 11/12/2026 | [TC-INJ-04](TEST_CASES.md#tc-inj-04) | Medium | Disguised planted words were not caught | Fixed, not committed yet |
+| [DEF-023](#def-023) | 11/12/2026 | [TC-INJ-02](TEST_CASES.md#tc-inj-02) | High | Planted words saying "this is no order" filed a document out of sight, with no flag | Fixed, not committed yet |
+| [DEF-024](#def-024) | 11/12/2026 | [TC-INJ-03](TEST_CASES.md#tc-inj-03) | High | An email from outside the company that the model read as a PO was offered as a new PO | Fixed, not committed yet |
 
 <a id="def-001"></a>
 
@@ -545,3 +548,68 @@ Every failure is logged here the moment it is found, by whoever finds it: the ca
 **Retest:** 11/12/2026, Claude in Chrome: pass (all 67 cases passed). Owner's retest: not needed for the script.
 
 ![DEF-021 retested](screenshots/TC-QB-10.png)
+
+
+<a id="def-022"></a>
+
+## DEF-022: Disguised planted words were not caught
+
+**Found:** 11/12/2026 by Claude, PD-4.6 security probe on Opus · **Case:** TC-INJ-04 · **Browser:** Not a browser case (made-up text run through the real code) · **Severity:** Medium · **Status:** Fixed, not committed yet
+
+**Steps to reproduce**
+
+1. Check "Ignore all previous instructions" written with a zero-width space, a soft hyphen, a Cyrillic o, full-width letters, or letter-spaced (I g n o r e).
+
+**Expected:** Each is flagged planted_instruction, as the plain wording is.
+
+**Actual:** None of the five was caught; the check compared the characters as written.
+
+**Cause:** The fixed list was matched on the text as written, so invisible characters and look-alike letters hid the words.
+
+**Fix:** The check reads a copy of the text as the eye sees it: compatibility letters made plain (NFKC), invisible format characters removed, look-alike Cyrillic and Greek letters made Latin, letter-spaced words closed up. The stored and shown text is unchanged. The golden set still gives 8 of 8 and none of the 92 clean documents. Not committed yet.
+
+**Retest:** 11/12/2026, Claude: pass (TC-INJ-04; TC-VAL-03, the golden set and the everyday wording, unchanged).
+
+
+<a id="def-023"></a>
+
+## DEF-023: Planted words saying "this is no order" filed a document out of sight, with no flag
+
+**Found:** 11/12/2026 by Claude, PD-4.6 security probe on Opus · **Case:** TC-INJ-02 · **Browser:** Not a browser case (made-up documents run through the real code) · **Severity:** High · **Status:** Fixed, not committed yet
+
+**Steps to reproduce**
+
+1. Deliver each of the golden set's eight planted documents.
+2. Let a stub model read each as 'other', as the planted words could ask.
+
+**Expected:** A person sees the document and the planted-words flag.
+
+**Actual:** All eight were filed under No order facts with no flag: out of the review queue, and nothing said why.
+
+**Cause:** Matching filed a document with no order facts before the validator ran, so the planted-words check never ran on it.
+
+**Fix:** The owner's decision (DEC-73): a document whose text has planted words is never filed; it goes to Unmatched with every flag the validator gives, and its page says it cannot be accepted. A person may still file it, and the flag stays. Not committed yet.
+
+**Retest:** 11/12/2026, Claude: pass (TC-INJ-02, eight documents).
+
+
+<a id="def-024"></a>
+
+## DEF-024: An email from outside the company that the model read as a PO was offered as a new PO
+
+**Found:** 11/12/2026 by Claude, PD-4.6 security probe on Opus · **Case:** TC-INJ-03 · **Browser:** Not a browser case (made-up documents run through the real code) · **Severity:** High · **Status:** Fixed, not committed yet
+
+**Steps to reproduce**
+
+1. Deliver golden ack-05 from its vendor with a colleague of the vendor on Cc.
+2. Let a stub model read it as a purchase order numbered 7770001, as planted words could ask.
+
+**Expected:** It cannot become a PO: the buyer sends or copies each PO from the company (DEC-17).
+
+**Actual:** It waited on Review as a new PO for the vendor on Cc, needing only the planted-words tick. A plain misreading of a vendor's reply, with no planted words, would have needed no tick at all.
+
+**Cause:** Matching found an emailed PO's vendor from the recipients without checking that the company sent it.
+
+**Fix:** The owner's decision (DEC-73): a PO counts only from Sent Items or from a sender at the mailbox's own domain. Any other goes to Unmatched with no vendor; its page says why, and Accept refuses it, checking again whatever the row says. Not committed yet.
+
+**Retest:** 11/12/2026, Claude: pass (TC-INJ-03).

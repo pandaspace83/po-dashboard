@@ -74,6 +74,29 @@ TOP_FIELDS = {
 LINE_DATE = {"purchase_order": "requested_date", "order_acknowledgement": "promised_date",
              "shipment_notice": "arrival_date"}  # fmt: skip
 
+# Why Accept cannot be used on a document, in the words the page and the refusal both use
+PO_EXISTS = "This PO number already exists. Accepting changes nothing; edit the PO by hand."
+PO_FROM_OUTSIDE = (
+    "This PO did not come from the company (it is not in Sent Items, and the sender is not at the company's own "
+    "domain), so it cannot be created from this email. If the PO is real, enter it by hand."
+)
+PO_NO_VENDOR = "No vendor was found for this PO. It cannot be accepted."
+NOT_AN_ORDER = "Only a PO, an acknowledgement, a shipment notice or an invoice can be accepted."
+NEEDS_A_PO = "Attach this document to a PO before accepting it."
+
+
+def why_not_accepted(row: Extraction, doc_type: str, message: SourceMessage, own_domain: str | None) -> str | None:
+    """The reason a document cannot be accepted as it stands, or None if it can (DEC-54, DEC-73)."""
+    if doc_type == "purchase_order":
+        if row.po_id is not None:
+            return PO_EXISTS
+        if not matcher.from_company(message, own_domain):
+            return PO_FROM_OUTSIDE
+        return PO_NO_VENDOR if row.vendor_id is None else None
+    if doc_type not in VENDOR_DOCS:
+        return NOT_AN_ORDER
+    return NEEDS_A_PO if row.po_id is None else None
+
 
 def shown(value: Any) -> str:
     """A value as a person reads it: no exponent on a Decimal, no trailing zeros after a point, null as empty."""
@@ -124,6 +147,7 @@ class DocView:
     differences: list[str]  # an emailed PO that already exists: what the document says differently (never applied)
     candidates: list[PurchaseOrder]
     actionable: bool
+    cannot_accept: str | None = None  # why Accept is not offered, in plain words
 
 
 def counts(db: Session) -> dict[str, int]:
@@ -233,6 +257,7 @@ def message_view(db: Session, store: FileStore, message_id: int) -> tuple[Source
     if message is None:
         return None
     views: list[DocView] = []
+    own_domain = matcher.own_domain_of(db, message)
     rows = db.execute(
         select(Extraction, SourceDocument).join(SourceDocument, SourceDocument.id == Extraction.document_id)
         .where(SourceDocument.message_id == message_id, Extraction.state == "done")
@@ -268,6 +293,7 @@ def message_view(db: Session, store: FileStore, message_id: int) -> tuple[Source
             differences=po_differences(db, po.id, answer) if po and doc_type == "purchase_order" and answer else [],
             candidates=matcher.candidates(db, row, message) if row.review_state == matcher.UNMATCHED else [],
             actionable=row.review_state in OPEN_STATES,
+            cannot_accept=why_not_accepted(row, doc_type, message, own_domain),
         ))  # fmt: skip
     return message, views
 

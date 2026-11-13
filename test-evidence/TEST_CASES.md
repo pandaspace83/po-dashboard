@@ -4,9 +4,9 @@
 
 PO Dashboard (RaceSpec Internal Dashboard). Scope: Phase 0 and Phase 1: sign-in, people, vendors, purchase orders, imports, the QuickBooks starting load, entries by hand, Home, Open items, Audit, page behaviour, security and speed.
 
-**172 cases:** 46 Critical, 109 High, 17 Medium; 2 terminal, 100 automated, 67 browser, 3 owner only.
+**180 cases:** 51 Critical, 112 High, 17 Medium; 2 terminal, 108 automated, 67 browser, 3 owner only.
 
-Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/browser_evidence.py, on commit a8e5795 with uncommitted changes: **67 of 67** browser cases pass. Automated tests: `uv run pytest`. Defects: [DEFECTS.md](DEFECTS.md). Sign-off: [SIGN_OFF.md](SIGN_OFF.md).
+Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/browser_evidence.py, on commit 54eb6fe with uncommitted changes: **67 of 67** browser cases pass. Automated tests: `uv run pytest`. Defects: [DEFECTS.md](DEFECTS.md). Sign-off: [SIGN_OFF.md](SIGN_OFF.md).
 
 **To run them by hand:**
 
@@ -169,6 +169,14 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 | [TC-ACC-04](#tc-acc-04) | A line that matches no PO line is assigned or left out; nothing is guessed | High | Automated | Automated tests | — |
 | [TC-ACC-05](#tc-acc-05) | An emailed PO is created for its vendor; a revised one shows its differences only and changes nothing | High | Automated | Automated tests | — |
 | [TC-ACC-06](#tc-acc-06) | The PO's timeline shows each accepted line's source document | Medium | Automated | Automated tests | — |
+| [TC-PIPE-01](#tc-pipe-01) | Mail in a folder mailbox flows to Review, and accepting each document moves the PO's lines from Sent to Closed | Critical | Automated | Automated tests | — |
+| [TC-PIPE-02](#tc-pipe-02) | Scanning again and restarting the extractor read nothing twice | High | Automated | Automated tests | — |
+| [TC-INJ-01](#tc-inj-01) | A model that obeys the planted words: the golden set's eight planted documents reach no PO until a person checks and corrects them | Critical | Automated | Automated tests | — |
+| [TC-INJ-02](#tc-inj-02) | Told "this is no order", a document with planted words is never filed out of sight | Critical | Automated | Automated tests | — |
+| [TC-INJ-03](#tc-inj-03) | Only the company's own mail brings a new PO, whatever the model reads | Critical | Automated | Automated tests | — |
+| [TC-INJ-04](#tc-inj-04) | Disguised planted words are caught, and words the list does not know still cannot move a PO or its quantities | High | Automated | Automated tests | — |
+| [TC-INJ-05](#tc-inj-05) | The model's answer is data: it cannot set its own flags, state, PO or ticks, and no shape of answer breaks a page | Critical | Automated | Automated tests | — |
+| [TC-INJ-06](#tc-inj-06) | Through the app's own model call, the planted words reach the model only inside the fence | High | Automated | Automated tests | — |
 | [TC-CO-01](#tc-co-01) | The customer-side tables are new, leave every purchasing record unchanged, and the two workflows stay apart | High | Automated | Automated tests | — |
 | [TC-CO-02](#tc-co-02) | The database itself enforces the customer-side rules | High | Automated | Automated tests | — |
 | [TC-CO-03](#tc-co-03) | The settings have owner-approved defaults, and a missing or damaged value falls back to its default | High | Automated | Automated tests | — |
@@ -3245,6 +3253,146 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 **Expected:** An acknowledgement, shipment or invoice line accepted from a document carries a link to that document's Review page; entries typed by hand carry none.
 
 **Automated tests:** `test_accept.py::test_the_pos_timeline_links_each_accepted_line_to_its_source_document`
+
+**Latest:** Owner: not recorded.
+
+
+## Pipeline
+
+<a id="tc-pipe-01"></a>
+
+### TC-PIPE-01: Mail in a folder mailbox flows to Review, and accepting each document moves the PO's lines from Sent to Closed
+
+**Priority:** Critical · **How:** Automated · **Refs:** PD-4.6, DEC-54, ARCHITECTURE §6, §13, REQ-DB-02
+
+**Steps**
+
+1. Covered by the tests named: the real scanner, folder mail source, text step, extractor, matching, validator, pages and ledger, with a stub model that reads each document perfectly.
+
+**Expected:** An emailed PO from Sent Items becomes a PO (Sent); the vendor's acknowledgement makes both lines Acknowledged; a covering note is filed and its attached PDF shipment notice makes the lines Shipped and Partially shipped; the invoice closes both lines and the PO. Clean documents need no tick; each entry links to its message; the note and its PDF share one Review page; each document is read once.
+
+**Automated tests:** `test_pipeline.py::test_the_mailbox_flows_to_review_and_accepting_moves_the_lines_to_closed`
+
+**Latest:** Owner: not recorded.
+
+
+<a id="tc-pipe-02"></a>
+
+### TC-PIPE-02: Scanning again and restarting the extractor read nothing twice
+
+**Priority:** High · **How:** Automated · **Refs:** PD-4.6, DEC-54
+
+**Steps**
+
+1. Covered by the tests named.
+
+**Expected:** A second scan stores and reads nothing; a restarted extractor recovers nothing and is idle; no document or extraction is added and the model is not called again.
+
+**Automated tests:** `test_pipeline.py::test_scanning_again_and_restarting_read_nothing_twice`
+
+**Latest:** Owner: not recorded.
+
+
+## Planted instructions
+
+<a id="tc-inj-01"></a>
+
+### TC-INJ-01: A model that obeys the planted words: the golden set's eight planted documents reach no PO until a person checks and corrects them
+
+**Priority:** Critical · **How:** Automated · **Refs:** PD-4.6, DEC-09, DEC-08, RISK-02, T-5
+
+**Steps**
+
+1. Covered by the tests named: each of the eight planted golden documents arrives by email from its vendor's domain and is read by the real text step; the stub model gives PO 7770001 and every quantity 31337, as the planted words ask.
+
+**Expected:** Each goes to Unmatched flagged planted_instruction, with nothing recorded and the planted words shown beside the fields. Attached to its real PO by a person, it is flagged over the order (and totals disagree on an invoice); Accept is refused without the planted-words tick; with the tick and the quantities typed as the document gives them, those are recorded, the model's answer is kept as read, and the audit names the changed fields only. With the quantities alone obeyed, the document is matched and flagged over the order.
+
+**Automated tests:** `test_planted.py::test_an_obeyed_planted_document_reaches_no_po_until_a_person_checks_and_corrects_it`, `test_planted.py::test_quantities_obeyed_on_the_right_po_are_flagged_over_the_order`
+
+**Latest:** Owner: not recorded.
+
+
+<a id="tc-inj-02"></a>
+
+### TC-INJ-02: Told "this is no order", a document with planted words is never filed out of sight
+
+**Priority:** Critical · **How:** Automated · **Refs:** PD-4.6, DEC-73, DEF-023
+
+**Steps**
+
+1. Covered by the tests named: the stub model reads each of the eight planted golden documents as 'other'.
+
+**Expected:** Each goes to Unmatched flagged planted_instruction, and its page says it cannot be accepted; the covering note without planted words is still filed under No order facts. A person can file it, and the flag stays with it.
+
+**Automated tests:** `test_planted.py::test_told_it_is_no_order_a_planted_document_is_never_filed_out_of_sight`
+
+**Latest:** Owner: not recorded.
+
+
+<a id="tc-inj-03"></a>
+
+### TC-INJ-03: Only the company's own mail brings a new PO, whatever the model reads
+
+**Priority:** Critical · **How:** Automated · **Refs:** PD-4.6, DEC-73, DEC-17, DEF-024
+
+**Steps**
+
+1. Covered by the tests named: a vendor's email with a colleague on Cc, read as a new PO because planted words say so, and four emails read as a PO with no planted words at all.
+
+**Expected:** A PO in Sent Items, or copied to the mailbox from the company's own domain, waits for review and can be accepted. A vendor's reply or a stranger's email read as a PO goes to Unmatched with no vendor; its page says it did not come from the company; Accept is refused even with every tick; no PO is created.
+
+**Automated tests:** `test_planted.py::test_told_it_is_a_purchase_order_a_vendors_email_never_becomes_a_new_po`, `test_planted.py::test_only_the_companys_own_mail_brings_a_new_po_whatever_the_model_reads`
+
+**Latest:** Owner: not recorded.
+
+
+<a id="tc-inj-04"></a>
+
+### TC-INJ-04: Disguised planted words are caught, and words the list does not know still cannot move a PO or its quantities
+
+**Priority:** High · **How:** Automated · **Refs:** PD-4.6, DEC-09, DEF-022, ARCHITECTURE §6.3
+
+**Steps**
+
+1. Covered by the tests named.
+
+**Expected:** Zero-width spaces, soft hyphens, direction marks, look-alike Cyrillic letters, full-width letters, letter spacing and no-break spaces do not hide the listed words. Wording no list can know is not flagged, but a PO number it supplies reaches no PO, quantities it supplies are flagged over the order, and the words are shown beside the fields.
+
+**Automated tests:** `test_planted.py::test_disguised_planted_words_are_still_caught`, `test_planted.py::test_words_the_list_does_not_know_still_cannot_move_a_po_or_its_quantities`, `test_validate.py::test_planted_instruction_on_all_eight_golden_documents_and_none_of_the_other_92`
+
+**Latest:** Owner: not recorded.
+
+
+<a id="tc-inj-05"></a>
+
+### TC-INJ-05: The model's answer is data: it cannot set its own flags, state, PO or ticks, and no shape of answer breaks a page
+
+**Priority:** Critical · **How:** Automated · **Refs:** PD-4.6, DEC-09, DEC-13
+
+**Steps**
+
+1. Covered by the tests named: answers with extra keys (flags, review_state, po_id, ticks), and seven answers outside the schema, including HTML in fields.
+
+**Expected:** Flags, state and PO come from plain code only, and Accept still needs the tick. An answer outside the schema either fails in fixed words with no document text, or waits for a person; the Review pages and the Failed list always load; HTML from the model is shown as text; nothing is recorded.
+
+**Automated tests:** `test_planted.py::test_the_models_answer_cannot_set_its_own_flags_state_po_or_ticks`, `test_planted.py::test_an_answer_outside_the_schema_fails_in_fixed_words_or_waits_and_never_breaks_a_page`
+
+**Latest:** Owner: not recorded.
+
+
+<a id="tc-inj-06"></a>
+
+### TC-INJ-06: Through the app's own model call, the planted words reach the model only inside the fence
+
+**Priority:** High · **How:** Automated · **Refs:** PD-4.6, DEC-09, DEC-01
+
+**Steps**
+
+1. Covered by the tests named: the extractor uses models/llm.py, with the model server replaced by one that answers as the planted words ask.
+
+**Expected:** The request carries the fixed system prompt and one user message that is the document between one opening and one closing marker; the planted words are inside it; the obeyed answer ends in Unmatched, flagged, with nothing recorded.
+
+**Automated tests:** `test_planted.py::test_through_the_gateway_the_planted_words_reach_the_model_only_inside_the_fence`
 
 **Latest:** Owner: not recorded.
 

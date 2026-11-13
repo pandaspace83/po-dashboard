@@ -1,8 +1,9 @@
 # PO Dashboard: Plan and To-Do
 
-> **Status, 2026-11-12:** Phases 0 to 3 are built. **Phase 4 is in progress:** its design is written (PD-4.0, DEC-54) and
-> the queue, the extractor, the model gateway, the validator, matching, the Review screens and Accept are built (PD-4.0a
-> to PD-4.5); PD-4.5a (the QuickBooks charge rows) is done; PD-4.6 comes next. **Phase 8 (customer orders and invoice reconciliation)**, which the owner asked for first, is built
+> **Status, 2026-11-12:** Phases 0 to 3 are built. **Phase 4 is built except PD-4.7** (the 14b scoring run, deferred
+> by the owner): the queue, the extractor, the model gateway, the validator, matching, the Review screens and Accept
+> (PD-4.0a to PD-4.5a), and the pipeline and planted-instruction tests (PD-4.6, which led to DEC-73). Next in the
+> owner's order: Gmail end to end on synthetic mail. **Phase 8 (customer orders and invoice reconciliation)**, which the owner asked for first, is built
 > (PD-8.0 to PD-8.7); only PD-8.8, customer POs from email, waits for Phase 4. Left from Phase 3: the owner's check of the Mailboxes screen with the real
 > Google account (TC-MAIL-28). **Order (owner, 2026-11-12), focus: Gmail testing, PO matching, drafting, chat.**
 > (1) Phase 4 without PD-4.7. (2) Gmail end to end on synthetic mail. (3) Drafted follow-ups (PD-5.3 pulled forward,
@@ -262,8 +263,22 @@ already downloaded).*
   `Freight Brackets` is goods), lists it in the preview as "skipped: a charge, not goods", and counts it in the load's
   audit. A file of only charges has nothing to create and no error. There is still no screen to edit the setting; it is
   a row in the `setting` table.
-- [ ] PD-4.6 Pipeline tests with a stub model; security tests with a stub that obeys planted instructions, proving the
-  validator, the ticks and the person contain it (Opus).
+- [x] PD-4.6 Pipeline tests with a stub model; security tests with a stub that obeys planted instructions, proving the
+  validator, the ticks and the person contain it (Opus). **Done 2026-11-12 (TC-PIPE-01, 02 and TC-INJ-01 to 06: 42
+  tests).** `tests/test_pipeline.py`: mail dropped in a folder mailbox goes through the real scanner, text step,
+  extractor, matching, pages and ledger, with a stub that reads perfectly; accepting the PO, acknowledgement, PDF shipment
+  notice and invoice on Review takes both lines from Sent to Closed, and a second scan or a restart reads nothing again.
+  `tests/test_planted.py`: a stub that **obeys** the planted words in the golden set's eight planted documents. A PO
+  number they supply reaches no PO; quantities they supply are flagged over the order; Accept needs the tick; what is
+  recorded is what the person typed. Also tested: the answer cannot set its own flags or state, answers outside the
+  schema never break a page, HTML from the model is shown as text, and through `models/llm.py` the words reach the model
+  only inside the fence. **Found and fixed (DEF-022 to 024):** disguised planted words (zero-width characters,
+  look-alike letters, letter spacing) were not caught; "this is not an order" filed all eight documents with no flag;
+  "this is a purchase order" turned a vendor's email into a new PO waiting for one tick. The owner chose the fixes
+  (DEC-73): planted words are never filed out of sight, and a PO counts only from Sent Items or the company's own
+  domain. The Review page now says why Accept is not offered (an existing PO, a PO from outside, no vendor, not an order,
+  no PO attached). **Left to the person, by design:** a value the planted words supply that is in the text and breaks
+  no rule.
 - [~] PD-4.7 The golden set through the whole pipeline: each PDF, scan and spreadsheet inside an email from its vendor's
   domain (a "please see attached" body, which must land in No order facts); a database built from each case's
   `po_context`; T-1 to T-5 and seconds per document (NFR-11) on the 14b model (Opus). **Skipped by the owner,

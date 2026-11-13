@@ -258,7 +258,9 @@ Nothing is guessed (DEC-09). Matching either finds one answer or leaves the choi
 - **The sender** narrows and ranks suggestions and never ties a document by itself. Accept needs the tick "I checked
   the sender" (`sender_not_vendor`) when the sender is a known domain of a different vendor than the matched PO's, or
   is unknown to the app and only the PO number backs the match (owner, 2026-11-12).
-- **An emailed purchase order** (DEC-17, from the company's own mailbox or Sent Items). The vendor is found from a
+- **An emailed purchase order** (DEC-17, from the company's own mailbox or Sent Items). It counts only when the message
+  is in Sent Items or its sender is at the mailbox's own domain (DEC-73); a vendor's reply, a stranger's email or planted
+  words read as a PO go to Unmatched with no vendor, and Accept refuses them. The vendor is found from a
   recipient's domain (To and Cc, leaving out the mailbox's own domain). No vendor, or two, goes to Unmatched. The PO
   number must be new; if it exists already (resent or revised), it is flagged `po_already_exists`, Review shows how it
   differs, and Accept changes nothing: a person edits the PO by hand (owner, 2026-11-12).
@@ -268,7 +270,9 @@ Nothing is guessed (DEC-09). Matching either finds one answer or leaves the choi
 - **No order facts.** A document read as `other`, or with no PO number, no lines, no tracking number and no invoice
   number, is filed under **No order facts**: kept, searchable, and one click from Review, but never in the queue (owner,
   2026-11-12). The "please see attached" body of a message whose attachment carries the facts lands here. So does any
-  document from Sent Items that is not a purchase order, because the company's own mail never changes a PO.
+  document from Sent Items that is not a purchase order, because the company's own mail never changes a PO. **Except**
+  a document whose text has planted words: it goes to Unmatched with its flags, so "this is not an order" cannot hide it
+  (DEC-73).
 
 ### 6.3 Flags (DEC-54, PD-4.2)
 
@@ -280,7 +284,7 @@ out. A flag never changes anything by itself (DEC-38: flagged, not blocked).
 |---|---|---|
 | `sender_not_vendor` | check, tick | the sender's domain is not the PO's vendor's |
 | `value_not_in_source` | check, tick | a PO number, invoice or tracking number, date, quantity, price or total the model gave is not in the document text. Numbers are compared as decimals (commas, currency signs and trailing zeros ignored), dates in the usual US ways of writing them, codes as letters and digits; in OCR text, O and 0, l and 1, S and 5, B and 8 count as equal |
-| `planted_instruction` | check, tick | the text has words addressed to software that reads it ("ignore previous instructions", "automated reader", and the like: a fixed list, tested against the golden set's eight planted documents and its 92 clean ones) |
+| `planted_instruction` | check, tick | the text has words addressed to software that reads it ("ignore previous instructions", "automated reader", and the like: a fixed list, tested against the golden set's eight planted documents and its 92 clean ones). It reads a copy of the text as the eye sees it: invisible characters removed, look-alike and full-width letters made plain, letter-spaced words closed up (DEF-022) |
 | `line_unassigned` | check, blocks | a line matched no PO line |
 | `po_already_exists` | check | an emailed PO's number exists already; Accept changes nothing |
 | `duplicate` | check | the same PO, type and lines as an extraction already accepted or waiting; or an invoice number or tracking number already recorded for the PO. "Dismiss as a copy" is offered first |
@@ -355,6 +359,14 @@ comes from the stored kind, never the file's claim.
 ignored; the document sits inside a delimited block. The trial prompt scored 8/8 on a document with a planted
 instruction on the 14b model, and 5/8 and 6/8 on the smaller ones, so the prompt alone is not the safeguard. The
 validator and the person are.
+
+**Tested with a model that obeys (PD-4.6, `tests/test_planted.py`).** A stub model does what the planted words in the
+golden set's eight documents say. A PO number they supply reaches no PO (Unmatched); quantities they supply are flagged
+over the order and against the total; the planted-words tick is needed to accept; and what is recorded is what the person
+typed, with the model's answer kept beside it. "This is not an order" and "this is a purchase order" are held by DEC-73.
+Words the fixed list cannot know are not flagged, but the PO and quantity checks still hold, and the text is always
+beside the fields. What only the person can catch: a value the planted words supply that is in the text and breaks no
+rule (an earlier promised date on a first acknowledgement, say). That is why a person accepts every document (DEC-08).
 
 **Model trial, 2026-11-04** (4 made-up documents, 36 fields, repeated twice with identical scores):
 
@@ -697,12 +709,12 @@ A clean-machine rehearsal is a Phase 7 task (NFR-07).
 
 | Layer | What | Where |
 |---|---|---|
-| Unit | status engine, rules engine, validator, date and quantity parsing | `tests/unit` |
-| API and pages | accept, reject, close by hand, snooze, CSV export; every state transition | `tests/api` |
-| Pipeline | the folder mail source into the ledger with a **stub model**, so it is fast and repeatable | `tests/pipeline` |
-| Security | hostile attachments, planted instructions with a stub that obeys them, read-only mail (a test fails if any send, move or delete call exists), secrets absent from logs | `tests/security` |
+| Unit | status engine, rules engine, validator, date and quantity parsing | `tests/test_*.py`, one file per area (`test_status.py`, `test_validate.py`, ...) |
+| API and pages | accept, reject, close by hand, snooze, CSV export; every state transition | `tests/test_*_web.py`, `test_review.py`, `test_accept.py`, ... |
+| Pipeline | the folder mail source into the ledger with a **stub model**, so it is fast and repeatable | `tests/test_pipeline.py` |
+| Security | hostile attachments, planted instructions with a stub that obeys them, read-only mail (a test fails if any send, move or delete call exists), secrets absent from logs | `tests/test_hostile.py`, `tests/test_planted.py`, `tests/test_mail_readonly.py`, `tests/test_gate.py` |
 | Golden set | the synthetic documents scored against the real model, field by field | `evals/` |
-| Browser | main flows with Playwright, with an accessibility check | `tests/e2e` |
+| Browser | main flows with Playwright in real Chrome (the planned accessibility check is not built yet) | `scripts/browser_evidence.py` |
 | Soak | 24 hours with a restart in the middle, no message missed or repeated (T-6) | `evals/soak` |
 | By hand | the test record ([test_record.toml](../test-evidence/test_record.toml)): test cases, defects and the user sign-off, with a workbook for each test cycle (PD-1.13) | `test-evidence/` |
 
@@ -737,7 +749,7 @@ po-dashboard/
 | ID | Risk | Mitigation |
 |---|---|---|
 | RISK-01 | The model misreads a document and a person accepts it | Validator flags, source shown beside fields, golden set, human accept (DEC-08) |
-| RISK-02 | Planted instructions in a vendor email | DEC-09: fencing, validation, no model-driven actions, a person accepts |
+| RISK-02 | Planted instructions in a vendor email | DEC-09: fencing, validation, no model-driven actions, a person accepts; DEC-73: never filed out of sight, and no PO from outside the company. Tested with a stub that obeys (PD-4.6) |
 | RISK-03 | The 14b model is too slow or too big for the office Mac | Model is a setting; 16 GB is the practical minimum; target of 2 minutes per document (NFR-11) |
 | RISK-04 | Mailbox permission is broader than intended | Read-only permission on each connected mailbox only, by the method PD-6.0 settles; a Phase 6 check that other mailboxes are refused |
 | RISK-05 | The office Mac sleeps and scans stop | Set not to sleep, catch-up on wake, health banner, `scan_stale` |

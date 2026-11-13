@@ -21,9 +21,10 @@ from sqlalchemy.orm.exc import StaleDataError
 from po_dashboard.auth.service import audit
 from po_dashboard.db.base import utcnow
 from po_dashboard.db.ledger import POLine, PurchaseOrder
+from po_dashboard.db.mail import SourceMessage
 from po_dashboard.db.models import AppUser
 from po_dashboard.db.types import Money
-from po_dashboard.extraction import matcher, schema
+from po_dashboard.extraction import matcher, review, schema
 from po_dashboard.extraction.matching import match_lines
 from po_dashboard.extraction.review import DEFAULT_CURRENCY, TOP_FIELDS, _message_of, _open, shown
 from po_dashboard.extraction.validate import NEEDS_TICK
@@ -111,10 +112,10 @@ def _entry(
     if doc_type == "purchase_order":
         return _new_po(db, row, form, count, actor, client_address)
     if doc_type not in ("order_acknowledgement", "shipment_notice", "invoice"):
-        raise LedgerError("Only a PO, an acknowledgement, a shipment notice or an invoice can be accepted.")
+        raise LedgerError(review.NOT_AN_ORDER)
     po = db.get(PurchaseOrder, row.po_id) if row.po_id else None
     if po is None:
-        raise LedgerError("Attach this document to a PO before accepting it.")
+        raise LedgerError(review.NEEDS_A_PO)
     lines = _assign(db, po, doc_type, form, count)
 
     if doc_type == "order_acknowledgement":
@@ -178,11 +179,15 @@ def _new_po(
     db: Session, row: Any, form: Mapping[str, str], count: int, actor: AppUser, client_address: str | None
 ) -> tuple[str, int]:
     """An emailed PO (DEC-17): the vendor was found from the recipients. The PO number must be new; one that exists is
-    shown as differences only and never changed (the person edits it by hand)."""
+    shown as differences only and never changed (the person edits it by hand). Only the company's own mail brings a
+    new PO (DEC-73), checked here again whatever state the row is in."""
     if row.po_id is not None:
-        raise LedgerError("This PO number already exists. Accepting changes nothing; edit the PO by hand.")
+        raise LedgerError(review.PO_EXISTS)
+    message = db.get(SourceMessage, _message_of(db, row))
+    if message is None or not matcher.from_company(message, matcher.own_domain_of(db, message)):
+        raise LedgerError(review.PO_FROM_OUTSIDE)
     if row.vendor_id is None:
-        raise LedgerError("No vendor was found for this PO. It cannot be accepted.")
+        raise LedgerError(review.PO_NO_VENDOR)
     entries: list[orders.LineInput] = []
     for i in range(count):
         if _field(form, f"line_{i}_skip"):
@@ -254,7 +259,7 @@ def accept(
     flags = [f for f in json.loads(row.flags) if isinstance(f, dict)] if row.flags else []
     names = {str(f.get("flag")) for f in flags}
     if "po_already_exists" in names:
-        raise LedgerError("This PO number already exists. Accepting changes nothing; edit the PO by hand.")
+        raise LedgerError(review.PO_EXISTS)
     needed = sorted(n for n in names if n in NEEDS_TICK)
     missing = [n for n in needed if _field(form, f"tick_{n}") != "1"]
     if missing:

@@ -12,6 +12,7 @@ number, never document text (DEC-13)."""
 from __future__ import annotations
 
 import re
+import unicodedata
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import date, timedelta
@@ -106,9 +107,27 @@ PLANTED_PATTERNS = tuple(re.compile(p) for p in (
 ))  # fmt: skip
 
 
+# Letters from other alphabets that look like Latin ones, as used to disguise the words above (PD-4.6, DEF-022). Only
+# the lower-case forms are needed: the text is lowered first. Used for this check only; the text itself is unchanged.
+LOOK_ALIKES = str.maketrans({
+    "а": "a", "в": "b", "е": "e", "ё": "e", "к": "k", "м": "m", "н": "h", "о": "o", "р": "p", "с": "c", "т": "t",
+    "у": "y", "х": "x", "і": "i", "ї": "i", "ј": "j", "ѕ": "s", "ԁ": "d", "һ": "h", "ӏ": "l", "ԛ": "q", "ԝ": "w",
+    "α": "a", "β": "b", "ε": "e", "η": "n", "ι": "i", "κ": "k", "ν": "v", "ο": "o", "ρ": "p", "τ": "t", "υ": "u",
+    "χ": "x", "ω": "w", "ı": "i", "ɡ": "g",
+})  # fmt: skip
+_SPACED = re.compile(r"\b(?:\w )+\w\b")  # "i g n o r e": single letters one space apart
+
+
+def _undisguised(text: str) -> str:
+    """The text as the eye reads it: full-width and other compatibility letters made plain (NFKC), invisible format
+    characters (zero-width spaces, soft hyphens, direction marks) taken out, look-alike letters made Latin."""
+    text = unicodedata.normalize("NFKC", text)
+    return "".join(c for c in text if unicodedata.category(c) != "Cf").lower().translate(LOOK_ALIKES)
+
+
 def _plain(text: str) -> str:
-    text = re.sub(r"(?m)^[ \t]*(?:>[ \t]?)+", "", text)  # quote marks at the start of a line
-    return "\n".join(re.sub(r"[ \t]+", " ", line).strip() for line in text.lower().splitlines())
+    text = re.sub(r"(?m)^[ \t]*(?:>[ \t]?)+", "", _undisguised(text))  # quote marks at the start of a line
+    return "\n".join(re.sub(r"[ \t]+", " ", line).strip() for line in text.splitlines())
 
 
 def has_planted_instruction(text: str, *, ocr: bool = False) -> bool:
@@ -116,7 +135,8 @@ def has_planted_instruction(text: str, *, ocr: bool = False) -> bool:
     for view in views:
         plain = _plain(view)
         joined = plain.replace("\n", " ")  # a phrase broken across lines, as small print often is
-        if any(p.search(plain) or p.search(joined) for p in PLANTED_PATTERNS):
+        closed_up = _SPACED.sub(lambda run: run.group(0).replace(" ", ""), joined)  # letter-spaced words
+        if any(p.search(plain) or p.search(joined) or p.search(closed_up) for p in PLANTED_PATTERNS):
             return True
     return False
 

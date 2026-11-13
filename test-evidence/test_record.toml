@@ -1854,6 +1854,102 @@ tests = ["test_accept.py::test_the_pos_timeline_links_each_accepted_line_to_its_
 
 
 [[case]]
+id = "TC-PIPE-01"
+area = "Pipeline"
+title = "Mail in a folder mailbox flows to Review, and accepting each document moves the PO's lines from Sent to Closed"
+priority = "Critical"
+kind = "automated"
+refs = ["PD-4.6", "DEC-54", "ARCHITECTURE §6, §13", "REQ-DB-02"]
+steps = ["Covered by the tests named: the real scanner, folder mail source, text step, extractor, matching, validator, pages and ledger, with a stub model that reads each document perfectly."]
+expected = "An emailed PO from Sent Items becomes a PO (Sent); the vendor's acknowledgement makes both lines Acknowledged; a covering note is filed and its attached PDF shipment notice makes the lines Shipped and Partially shipped; the invoice closes both lines and the PO. Clean documents need no tick; each entry links to its message; the note and its PDF share one Review page; each document is read once."
+tests = ["test_pipeline.py::test_the_mailbox_flows_to_review_and_accepting_moves_the_lines_to_closed"]
+
+
+[[case]]
+id = "TC-PIPE-02"
+area = "Pipeline"
+title = "Scanning again and restarting the extractor read nothing twice"
+priority = "High"
+kind = "automated"
+refs = ["PD-4.6", "DEC-54"]
+steps = ["Covered by the tests named."]
+expected = "A second scan stores and reads nothing; a restarted extractor recovers nothing and is idle; no document or extraction is added and the model is not called again."
+tests = ["test_pipeline.py::test_scanning_again_and_restarting_read_nothing_twice"]
+
+
+[[case]]
+id = "TC-INJ-01"
+area = "Planted instructions"
+title = "A model that obeys the planted words: the golden set's eight planted documents reach no PO until a person checks and corrects them"
+priority = "Critical"
+kind = "automated"
+refs = ["PD-4.6", "DEC-09", "DEC-08", "RISK-02", "T-5"]
+steps = ["Covered by the tests named: each of the eight planted golden documents arrives by email from its vendor's domain and is read by the real text step; the stub model gives PO 7770001 and every quantity 31337, as the planted words ask."]
+expected = "Each goes to Unmatched flagged planted_instruction, with nothing recorded and the planted words shown beside the fields. Attached to its real PO by a person, it is flagged over the order (and totals disagree on an invoice); Accept is refused without the planted-words tick; with the tick and the quantities typed as the document gives them, those are recorded, the model's answer is kept as read, and the audit names the changed fields only. With the quantities alone obeyed, the document is matched and flagged over the order."
+tests = ["test_planted.py::test_an_obeyed_planted_document_reaches_no_po_until_a_person_checks_and_corrects_it", "test_planted.py::test_quantities_obeyed_on_the_right_po_are_flagged_over_the_order"]
+
+
+[[case]]
+id = "TC-INJ-02"
+area = "Planted instructions"
+title = "Told \"this is no order\", a document with planted words is never filed out of sight"
+priority = "Critical"
+kind = "automated"
+refs = ["PD-4.6", "DEC-73", "DEF-023"]
+steps = ["Covered by the tests named: the stub model reads each of the eight planted golden documents as 'other'."]
+expected = "Each goes to Unmatched flagged planted_instruction, and its page says it cannot be accepted; the covering note without planted words is still filed under No order facts. A person can file it, and the flag stays with it."
+tests = ["test_planted.py::test_told_it_is_no_order_a_planted_document_is_never_filed_out_of_sight"]
+
+
+[[case]]
+id = "TC-INJ-03"
+area = "Planted instructions"
+title = "Only the company's own mail brings a new PO, whatever the model reads"
+priority = "Critical"
+kind = "automated"
+refs = ["PD-4.6", "DEC-73", "DEC-17", "DEF-024"]
+steps = ["Covered by the tests named: a vendor's email with a colleague on Cc, read as a new PO because planted words say so, and four emails read as a PO with no planted words at all."]
+expected = "A PO in Sent Items, or copied to the mailbox from the company's own domain, waits for review and can be accepted. A vendor's reply or a stranger's email read as a PO goes to Unmatched with no vendor; its page says it did not come from the company; Accept is refused even with every tick; no PO is created."
+tests = ["test_planted.py::test_told_it_is_a_purchase_order_a_vendors_email_never_becomes_a_new_po", "test_planted.py::test_only_the_companys_own_mail_brings_a_new_po_whatever_the_model_reads"]
+
+
+[[case]]
+id = "TC-INJ-04"
+area = "Planted instructions"
+title = "Disguised planted words are caught, and words the list does not know still cannot move a PO or its quantities"
+priority = "High"
+kind = "automated"
+refs = ["PD-4.6", "DEC-09", "DEF-022", "ARCHITECTURE §6.3"]
+steps = ["Covered by the tests named."]
+expected = "Zero-width spaces, soft hyphens, direction marks, look-alike Cyrillic letters, full-width letters, letter spacing and no-break spaces do not hide the listed words. Wording no list can know is not flagged, but a PO number it supplies reaches no PO, quantities it supplies are flagged over the order, and the words are shown beside the fields."
+tests = ["test_planted.py::test_disguised_planted_words_are_still_caught", "test_planted.py::test_words_the_list_does_not_know_still_cannot_move_a_po_or_its_quantities", "test_validate.py::test_planted_instruction_on_all_eight_golden_documents_and_none_of_the_other_92"]
+
+
+[[case]]
+id = "TC-INJ-05"
+area = "Planted instructions"
+title = "The model's answer is data: it cannot set its own flags, state, PO or ticks, and no shape of answer breaks a page"
+priority = "Critical"
+kind = "automated"
+refs = ["PD-4.6", "DEC-09", "DEC-13"]
+steps = ["Covered by the tests named: answers with extra keys (flags, review_state, po_id, ticks), and seven answers outside the schema, including HTML in fields."]
+expected = "Flags, state and PO come from plain code only, and Accept still needs the tick. An answer outside the schema either fails in fixed words with no document text, or waits for a person; the Review pages and the Failed list always load; HTML from the model is shown as text; nothing is recorded."
+tests = ["test_planted.py::test_the_models_answer_cannot_set_its_own_flags_state_po_or_ticks", "test_planted.py::test_an_answer_outside_the_schema_fails_in_fixed_words_or_waits_and_never_breaks_a_page"]
+
+
+[[case]]
+id = "TC-INJ-06"
+area = "Planted instructions"
+title = "Through the app's own model call, the planted words reach the model only inside the fence"
+priority = "High"
+kind = "automated"
+refs = ["PD-4.6", "DEC-09", "DEC-01"]
+steps = ["Covered by the tests named: the extractor uses models/llm.py, with the model server replaced by one that answers as the planted words ask."]
+expected = "The request carries the fixed system prompt and one user message that is the document between one opening and one closing marker; the planted words are inside it; the obeyed answer ends in Unmatched, flagged, with nothing recorded."
+tests = ["test_planted.py::test_through_the_gateway_the_planted_words_reach_the_model_only_inside_the_fence"]
+
+
+[[case]]
 id = "TC-CO-01"
 area = "Customer orders"
 title = "The customer-side tables are new, leave every purchasing record unchanged, and the two workflows stay apart"
@@ -2690,3 +2786,54 @@ fix = "The script checks that the charge rows are listed as skipped, that nothin
 retest = "11/12/2026, Claude in Chrome: pass (all 67 cases passed). Owner's retest: not needed for the script."
 retest_evidence = "screenshots/TC-QB-10.png"
 status = "Fixed and retested"
+
+
+[[defect]]
+id = "DEF-022"
+found = "11/12/2026"
+found_by = "Claude, PD-4.6 security probe on Opus"
+case = "TC-INJ-04"
+browser = "Not a browser case (made-up text run through the real code)"
+severity = "Medium"
+title = "Disguised planted words were not caught"
+steps = ["Check \"Ignore all previous instructions\" written with a zero-width space, a soft hyphen, a Cyrillic o, full-width letters, or letter-spaced (I g n o r e)."]
+expected = "Each is flagged planted_instruction, as the plain wording is."
+actual = "None of the five was caught; the check compared the characters as written."
+cause = "The fixed list was matched on the text as written, so invisible characters and look-alike letters hid the words."
+fix = "The check reads a copy of the text as the eye sees it: compatibility letters made plain (NFKC), invisible format characters removed, look-alike Cyrillic and Greek letters made Latin, letter-spaced words closed up. The stored and shown text is unchanged. The golden set still gives 8 of 8 and none of the 92 clean documents."
+retest = "11/12/2026, Claude: pass (TC-INJ-04; TC-VAL-03, the golden set and the everyday wording, unchanged)."
+status = "Fixed, not committed yet"
+
+
+[[defect]]
+id = "DEF-023"
+found = "11/12/2026"
+found_by = "Claude, PD-4.6 security probe on Opus"
+case = "TC-INJ-02"
+browser = "Not a browser case (made-up documents run through the real code)"
+severity = "High"
+title = "Planted words saying \"this is no order\" filed a document out of sight, with no flag"
+steps = ["Deliver each of the golden set's eight planted documents.", "Let a stub model read each as 'other', as the planted words could ask."]
+expected = "A person sees the document and the planted-words flag."
+actual = "All eight were filed under No order facts with no flag: out of the review queue, and nothing said why."
+cause = "Matching filed a document with no order facts before the validator ran, so the planted-words check never ran on it."
+fix = "The owner's decision (DEC-73): a document whose text has planted words is never filed; it goes to Unmatched with every flag the validator gives, and its page says it cannot be accepted. A person may still file it, and the flag stays."
+retest = "11/12/2026, Claude: pass (TC-INJ-02, eight documents)."
+status = "Fixed, not committed yet"
+
+
+[[defect]]
+id = "DEF-024"
+found = "11/12/2026"
+found_by = "Claude, PD-4.6 security probe on Opus"
+case = "TC-INJ-03"
+browser = "Not a browser case (made-up documents run through the real code)"
+severity = "High"
+title = "An email from outside the company that the model read as a PO was offered as a new PO"
+steps = ["Deliver golden ack-05 from its vendor with a colleague of the vendor on Cc.", "Let a stub model read it as a purchase order numbered 7770001, as planted words could ask."]
+expected = "It cannot become a PO: the buyer sends or copies each PO from the company (DEC-17)."
+actual = "It waited on Review as a new PO for the vendor on Cc, needing only the planted-words tick. A plain misreading of a vendor's reply, with no planted words, would have needed no tick at all."
+cause = "Matching found an emailed PO's vendor from the recipients without checking that the company sent it."
+fix = "The owner's decision (DEC-73): a PO counts only from Sent Items or from a sender at the mailbox's own domain. Any other goes to Unmatched with no vendor; its page says why, and Accept refuses it, checking again whatever the row says."
+retest = "11/12/2026, Claude: pass (TC-INJ-03)."
+status = "Fixed, not committed yet"

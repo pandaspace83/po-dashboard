@@ -15,7 +15,10 @@ The sender never ties a document by itself. It narrows the suggestions and decid
 match. A person still accepts every document (DEC-08).
 
 The outcome is a review state: `waiting` (a match, or a purchase order whose vendor was found), `unmatched` (a person
-picks the PO), or `no_facts` (kept and searchable, never queued). Nothing here writes a document's text anywhere."""
+picks the PO), or `no_facts` (kept and searchable, never queued). Two rules hold whatever the model says (DEC-73, the
+owner, 2026-11-12): a purchase order counts only when the company sent it (Sent Items, or a sender at the mailbox's own
+domain), and a document whose text has planted words is never filed as `no_facts`: it goes to `unmatched`, flagged, so
+"this is not an order" cannot hide it. Nothing here writes a document's text anywhere."""
 
 from __future__ import annotations
 
@@ -47,7 +50,14 @@ from po_dashboard.db.mail import Extraction, SourceDocument, SourceMessage
 from po_dashboard.extraction import schema
 from po_dashboard.extraction.matching import PoLine, item_key
 from po_dashboard.extraction.scoring import norm_id, number
-from po_dashboard.extraction.validate import VENDOR_DOCS, Context, Flag, fingerprint, validate
+from po_dashboard.extraction.validate import (
+    VENDOR_DOCS,
+    Context,
+    Flag,
+    fingerprint,
+    has_planted_instruction,
+    validate,
+)
 from po_dashboard.mail.source import SENT
 
 WAITING, UNMATCHED, NO_FACTS = "waiting", "unmatched", "no_facts"
@@ -78,6 +88,12 @@ def address_domain(address: str | None) -> str | None:
         return None
     domain = found.rsplit("@", 1)[1].strip().lower().rstrip(".")
     return domain or None
+
+
+def from_company(message: SourceMessage, own_domain: str | None) -> bool:
+    """The company sent this message: it is in Sent Items, or its sender is at the mailbox's own domain (DEC-73). Only
+    such a message can bring a new PO; anyone can write "purchase order" in an email."""
+    return message.folder == SENT or (own_domain is not None and address_domain(message.sender) == own_domain)
 
 
 def vendor_of_domain(db: Session, domain: str | None) -> int | None:
@@ -278,12 +294,16 @@ def decide(
         return Decision(state, po_id, vendor_id, flags)
 
     if doc_type == "purchase_order":  # an emailed PO (DEC-17): the vendor from the recipients
-        vendors = recipient_vendors(db, message.recipients, own_domain)
         existing = _by_number(db).get(norm_id(answer.get("po_number")) or "")
+        if not from_company(message, own_domain):  # only the company sends its own POs (DEC-73)
+            return validated(existing, None, UNMATCHED)
+        vendors = recipient_vendors(db, message.recipients, own_domain)
         if len(vendors) != 1 or not norm_id(answer.get("po_number")):
             return validated(existing, None, UNMATCHED)
         return validated(existing, next(iter(vendors)), WAITING, po_exists=existing is not None)
     if message.folder == SENT or not has_order_facts(answer) or doc_type not in VENDOR_DOCS:
+        if has_planted_instruction(text, ocr=ocr):  # never filed silently: a person looks at it (DEC-73)
+            return validated(None, sender_vendor, UNMATCHED)
         # the company's own mail never changes a PO, so Sent Items that are not POs are filed here too
         return Decision(NO_FACTS, flags=[Flag("read_in_part", "check")] if read_in_part else [])
     if force_po_id is not None:
