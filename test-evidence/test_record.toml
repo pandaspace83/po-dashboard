@@ -2265,7 +2265,8 @@ refs = ["PD-4.8", "TC-MAIL-28", "DEC-07"]
 steps = ["Build the set (TC-GMAIL-01) and read SEND_LIST.md.", "Send or import the 18 files into the test account; Gmail rewrites From, so give the vendors the sender's domain or expect sender_not_vendor.", "uv run python scripts/gmail_e2e.py seed, connect on the Mailboxes screen, serve, wait for the scan and the extractor.", "uv run python scripts/gmail_e2e.py report <folder>; then look in Gmail itself."]
 expected = "The report matches TC-GMAIL-01 (allowing for sender flags) and Gmail shows every email unread, unmoved and undeleted."
 tests = []
-owner = "Not yet run"
+result = "11/13/2026, Claude: all 18 emails were read from the real Gmail test account and all 25 documents read by the real 14b model; 23 of 25 as expected, same as TC-GMAIL-01. Every vendor document also carries sender_not_vendor, as expected (Gmail rewrites From). E07 body: DEF-025 again. E13 body was filed under No order facts (right state, the model called it an acknowledgement). E10 had value_not_in_source on its invoice date: the model read 12/10/2026 as 10 December-as-October (2026-10-12) and the validator caught it, so it works as designed."
+owner = "Passed 11/13/2026 by the owner: all 18 emails still in the test account's Inbox, unread, not moved, starred or deleted after the scan."
 
 # =====================================================================================================================
 # Defects. Logged the moment they are found (owner, 2026-11-07).

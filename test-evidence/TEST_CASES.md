@@ -203,7 +203,7 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 | [TC-OPS-05](#tc-ops-05) | Extra security headers are sent, and HSTS only when HTTPS is really on | Medium | Automated | Automated tests | — |
 | [TC-OPS-06](#tc-ops-06) | A save from a page that is out of date is refused | High | Automated | Automated tests | — |
 | [TC-GMAIL-01](#tc-gmail-01) | 18 made-up emails (25 documents) read by the real scanner and the real 14b model land where they should | High | Terminal | — | — |
-| [TC-GMAIL-02](#tc-gmail-02) | The same 18 emails through the real Gmail test account (owner's check) | High | Owner only | — | Not yet run |
+| [TC-GMAIL-02](#tc-gmail-02) | The same 18 emails through the real Gmail test account (owner's check) | High | Owner only | — | Passed 11/13/2026 by the owner: all 18 emails still in the test account's Inbox, unread, not moved, starred or deleted after the scan. |
 
 ## Set-up and running
 
@@ -3988,4 +3988,4 @@ Latest Chrome run: 11/12/2026, Google Chrome 158.0.8127.37, by Claude, scripts/b
 
 **Expected:** The report matches TC-GMAIL-01 (allowing for sender flags) and Gmail shows every email unread, unmoved and undeleted.
 
-**Latest:** Owner: Not yet run.
+**Latest:** Owner: Passed 11/13/2026 by the owner: all 18 emails still in the test account's Inbox, unread, not moved, starred or deleted after the scan..

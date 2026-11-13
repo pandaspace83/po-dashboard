@@ -284,7 +284,7 @@ already downloaded).*
   `po_context`; T-1 to T-5 and seconds per document (NFR-11) on the 14b model (Opus). **Skipped by the owner,
   2026-11-12,** until the front end, backend and AI layer are finished (the deferred list at the top).
 
-- [~] PD-4.8 Gmail end to end on synthetic mail (owner's order, 2026-11-12). **Built and run on the real 14b model through a folder mailbox 2026-11-12 (TC-GMAIL-01: 23 of 25 documents as expected; the two that differ are DEF-025, open). The Gmail leg, TC-GMAIL-02, waits for the owner to send the 18 files (`scripts/gmail_e2e.py`), so this is not ticked.**
+- [x] PD-4.8 Gmail end to end on synthetic mail (owner's order, 2026-11-12). **Done 2026-11-13: run on the real 14b model through a folder mailbox (TC-GMAIL-01) and through the real Gmail test account (TC-GMAIL-02, owner confirmed Gmail untouched): 23 of 25 documents as expected both times; the two that differ are DEF-025 (open) and a wording difference.** `scripts/gmail_e2e.py` (build, folder, seed, report) and `scripts/gmail_e2e_send.py` (sends the made-up set into the test account with an app password typed at a prompt).
   Real Gmail test account (synthetic mail only, DEC-13, DEC-31), real scanner, real `qwen2.5:14b-instruct`, Review and
   Accept. This is not PD-4.7: no scores, no baseline; it shows the path works with real Gmail and the real model.
   Steps: (a) PD-4.8.0 docs: OPERATIONS runbook for the run, cases below added to the test record. (b) Build
